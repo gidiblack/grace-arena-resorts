@@ -14,6 +14,7 @@ body {
   background: var(--background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-plus-jakarta-sans);
 }
 
 * {
@@ -28,10 +29,6 @@ h4,
 h5,
 h6 {
   font-family: var(--font-roboto);
-}
-
-p {
-  font-family: var(--font-plus-jakarta-sans);
 }
 
 a {
