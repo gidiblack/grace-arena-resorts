@@ -1,6 +1,6 @@
 # Software Requirements Specification — Grace Arena Resorts (GAR) Website
 
-**Version:** 1.1
+**Version:** 1.2
 **Date:** March 29, 2026
 **Status:** Draft (Revised)
 **Prepared by:** Software Architecture Team
@@ -126,9 +126,9 @@ A future native mobile app may consume the same API layer, so the backend must b
 
 - **Browsers:** Chrome, Firefox, Safari, Edge (latest 2 major versions)
 - **Devices:** Mobile (320px+), Tablet (768px+), Desktop (1024px+)
-- **Hosting:** Cloud hosting (e.g., Vercel for Next.js frontend, cloud VM or managed service for API)
-- **Database:** PostgreSQL (relational, suitable for transactional booking data)
-- **Runtime:** Node.js 20 LTS or later
+- **Hosting:** Vercel (Next.js frontend + API routes as serverless functions)
+- **Database:** Supabase (managed PostgreSQL with built-in Auth, Storage, and Realtime)
+- **Runtime:** Node.js 20 LTS or later (Vercel serverless runtime)
 
 ### 2.5 Design & Implementation Constraints
 
@@ -147,6 +147,67 @@ A future native mobile app may consume the same API layer, so the backend must b
 - Domain name and SSL certificate are provisioned.
 - Resort provides real menu data, pricing, and operating hours for restaurants and facilities.
 - Email service (SendGrid or equivalent) is configured for transactional email.
+
+### 2.7 Technology Stack
+
+> **Design Note:** This stack is selected to minimize operational complexity for a small team with limited backend experience, while still satisfying all SRS requirements. Every component uses TypeScript end-to-end. Supabase is chosen over a custom backend because it provides managed PostgreSQL, authentication, storage, and auto-generated APIs — removing the need to build, host, and maintain these services independently.
+
+#### 2.7.1 Frontend
+
+| Concern               | Technology                              | Version / Detail                                                                                            |
+| --------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Framework**         | Next.js (Pages Router)                  | v16.x — SSR/SSG for SEO pages, CSR for interactive flows (booking wizard). Deployed on Vercel.              |
+| **UI Library**        | Chakra UI                               | v3.x — component library for accessible, responsive UI. Reduces custom CSS and enforces design consistency. |
+| **Language**          | TypeScript                              | Strict mode. Shared types between frontend and API routes.                                                  |
+| **State Management**  | React Context + `useState`/`useReducer` | No external state library needed for v1.0. Booking wizard state managed via React context.                  |
+| **Forms**             | React Hook Form + Zod                   | Schema-based validation shared between client and server.                                                   |
+| **Date Handling**     | dayjs                                   | Lightweight date manipulation and formatting (`Intl.DateTimeFormat` for display).                           |
+| **Icons**             | react-icons                             | Already installed. Provides icon sets for UI elements.                                                      |
+| **Charts (Admin)**    | Recharts                                | Lightweight charting for admin dashboard (booking trends, revenue, occupancy heatmap).                      |
+| **Rich Text (Admin)** | Tiptap or React-Quill                   | CMS content editing for About, Privacy Policy, and other managed pages.                                     |
+
+#### 2.7.2 Backend & Database
+
+| Concern                 | Technology                                   | Detail                                                                                                                                                                                                        |
+| ----------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Database**            | Supabase (managed PostgreSQL)                | Hosted PostgreSQL instance. Web dashboard for table management, SQL editor, and data inspection. Free tier sufficient for development; Pro tier for production.                                               |
+| **API Layer**           | Next.js API Routes (`/pages/api/`)           | All backend logic lives in `src/pages/api/v1/`. No separate server process. API routes run as serverless functions on Vercel. Each route file maps to one REST endpoint.                                      |
+| **Database Client**     | Supabase JS Client (`@supabase/supabase-js`) | Typed query builder for PostgreSQL. Used in API routes for all database operations. Supports filtering, joins, pagination, and RPC (stored procedures) for complex queries like availability calculations.    |
+| **Authentication**      | Supabase Auth                                | Handles registration, login, email verification, password reset, JWT issuance, and refresh tokens. Row-Level Security (RLS) policies enforce the authorization matrix (Section 4.1). Custom claims for roles. |
+| **File Storage**        | Supabase Storage                             | S3-compatible object storage for media assets (images, videos, PDFs). Bucket policies control access. Serves files via built-in CDN. Maps to the `MediaAsset` entity.                                         |
+| **Background Jobs**     | Supabase Edge Functions + pg_cron            | Cron-based tasks: expire stale pending bookings (every 5 min), retry failed email sends. `pg_cron` runs inside PostgreSQL; Edge Functions handle webhook processing and async tasks.                          |
+| **Realtime (optional)** | Supabase Realtime                            | WebSocket subscriptions for admin dashboard live updates (new bookings, status changes). Optional for v1.0.                                                                                                   |
+| **Schema Validation**   | Zod                                          | Runtime validation on all API route inputs. Schemas shared with React Hook Form on the frontend for consistent validation rules.                                                                              |
+| **PDF Generation**      | @react-pdf/renderer or jsPDF                 | Server-side PDF generation for booking confirmations. Called from `GET /api/v1/bookings/{ref}/pdf`.                                                                                                           |
+
+#### 2.7.3 Third-Party Services
+
+| Concern                 | Provider                   | Integration Method                                                                                         |
+| ----------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Payments**            | Paystack                   | Paystack Inline JS (frontend popup) + REST API (backend webhook verification). NGN only.                   |
+| **Transactional Email** | SendGrid                   | SendGrid Web API v3 from API routes. Supabase Auth handles verification/reset emails automatically.        |
+| **WhatsApp**            | WhatsApp Business          | `wa.me` click-to-chat URLs (v1.0). WhatsApp Cloud API for automated messages (future).                     |
+| **Maps**                | Google Maps                | Maps Embed API (iframe) on Home and Contact pages. Coordinates stored in SystemSetting entity.             |
+| **Analytics**           | Google Analytics 4         | GA4 via Google Tag Manager. Loaded conditionally based on cookie consent.                                  |
+| **CAPTCHA**             | Google reCAPTCHA           | reCAPTCHA v3 (invisible) on all public forms (contact, event inquiry, newsletter, login after 3 failures). |
+| **CDN**                 | Vercel Edge + Supabase CDN | Static assets via Vercel; media files via Supabase Storage CDN.                                            |
+
+#### 2.7.4 Development & DevOps
+
+| Concern                 | Technology                         | Detail                                                                                              |
+| ----------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Language**            | TypeScript (strict mode)           | Single language across frontend, API routes, and database types.                                    |
+| **Package Manager**     | npm                                | Lockfile committed. No Yarn/pnpm migration needed.                                                  |
+| **Linting**             | ESLint + eslint-config-next        | Already configured. Enforces code quality and Next.js best practices.                               |
+| **Formatting**          | Prettier                           | Consistent code formatting across the codebase.                                                     |
+| **Version Control**     | Git + GitHub                       | Branch protection on `main`. PR-based workflow.                                                     |
+| **CI/CD**               | Vercel (auto-deploy)               | Push to `main` → build → deploy (production). Push to feature branches → preview deployments.       |
+| **Environment Vars**    | Vercel Environment Variables       | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `PAYSTACK_SECRET_KEY`, `SENDGRID_API_KEY`. |
+| **Database Migrations** | Supabase CLI + SQL migration files | Migrations in `supabase/migrations/`. Applied via `supabase db push` or CI pipeline.                |
+| **Local Development**   | Supabase CLI (local)               | `supabase start` runs local PostgreSQL, Auth, and Storage. Mirrors production environment.          |
+| **Testing**             | Vitest + React Testing Library     | Unit tests for business logic, component tests for UI. Coverage target ≥ 70% for API routes.        |
+| **Error Monitoring**    | Sentry                             | Error tracking and performance monitoring in production.                                            |
+| **API Documentation**   | Swagger / OpenAPI                  | Auto-generated from Zod schemas. Served at `/api/docs` in development.                              |
 
 ---
 
@@ -1156,7 +1217,7 @@ Each follows a standard CRUD pattern:
 
 ## 4. Server-Side Functional Requirements
 
-> **Design Note:** The backend is designed as a RESTful API (JSON over HTTPS) serving both the Next.js frontend (via SSR data fetching and client-side calls) and the admin CMS. All endpoints are versioned under `/api/v1/`. Authentication uses JWT tokens with short-lived access tokens and long-lived refresh tokens. The database is PostgreSQL for its relational integrity (critical for bookings and room inventory). Redis is used for session/cache storage and rate limiting. File storage uses an S3-compatible object store with CDN delivery.
+> **Design Note:** The backend is implemented as Next.js API Routes (`src/pages/api/v1/`) deployed as serverless functions on Vercel. All database operations use the Supabase JS Client (`@supabase/supabase-js`) to query the managed PostgreSQL instance. Authentication is handled by Supabase Auth with JWT tokens (short-lived access tokens, long-lived refresh tokens) and Row-Level Security (RLS) policies for authorization. File storage uses Supabase Storage (S3-compatible with CDN delivery). Background jobs (pending booking expiry, email retries) use Supabase Edge Functions and `pg_cron`. All endpoints are versioned under `/api/v1/`. Redis is used for rate limiting (via Vercel KV or Upstash).
 
 ### 4.1 Authentication & User Management
 
@@ -1469,7 +1530,7 @@ Cancelled  Cancelled
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | HTTPS            | Enforced on all endpoints; HSTS header                                                                                                                                                                                                                                                                                                 |
 | Input Validation | Server-side validation on all inputs using schema validation (e.g., Zod, Joi)                                                                                                                                                                                                                                                          |
-| SQL Injection    | Parameterized queries via ORM (e.g., Prisma, Drizzle)                                                                                                                                                                                                                                                                                  |
+| SQL Injection    | Parameterized queries via Supabase JS Client (uses parameterized PostgREST queries internally). No raw SQL concatenation.                                                                                                                                                                                                              |
 | XSS              | Output encoding; Content-Security-Policy header; sanitize user-generated content                                                                                                                                                                                                                                                       |
 | CSRF             | SameSite cookies; CSRF token on mutating requests from browser                                                                                                                                                                                                                                                                         |
 | Rate Limiting    | Per-IP and per-user rate limiting on auth, contact, event inquiry, newsletter, and notify-me endpoints. reCAPTCHA v3 on all public form submissions.                                                                                                                                                                                   |
@@ -1500,7 +1561,7 @@ Cancelled  Cancelled
 - CI/CD pipeline: lint → test → build → deploy (staging → production)
 - Automated test coverage target: ≥ 70% for backend business logic
 - API documentation auto-generated (OpenAPI / Swagger)
-- Database migrations managed via ORM migration tool
+- Database migrations managed via Supabase CLI (`supabase/migrations/` directory)
 
 ### 5.6 Internationalization
 
@@ -1786,6 +1847,7 @@ _Detailed wireframes to be produced in design phase based on these specification
 | ------- | -------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1.0     | March 29, 2026 | Architecture Team | Initial SRS draft                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | 1.1     | —              | Architecture Team | Revised per BA critique: added cookie consent banner; global error/loading/empty states; fixed hero video mobile spec; fixed Village max-guests; rewrote booking page as 4-step wizard with per-night pricing; added Auth pages (3.11), Guest Account (3.12), Privacy Policy (3.13), Admin CMS panel (3.14); expanded auth lockout & booking engine specs; added Amenity, RoomTypeAmenity, SystemSetting entities; added calendar availability & PDF endpoints; added SMS deferral note; added CAPTCHA & webhook verification mandates; resolved guest-checkout vs. required-auth contradiction |
+| 1.2     | March 29, 2026 | Architecture Team | Added Section 2.7 Technology Stack specifying concrete implementation choices: Supabase (managed PostgreSQL + Auth + Storage), Next.js API Routes, Chakra UI v3, Paystack, SendGrid, Vercel deployment. Updated Sections 2.4, 4, 5.3, and 5.5 to align with chosen stack.                                                                                                                                                                                                                                                                                                                       |
 
 ---
 
