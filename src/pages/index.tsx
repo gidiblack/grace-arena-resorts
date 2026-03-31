@@ -16,7 +16,7 @@ export default function Home() {
             natural beauty. Whether you're seeking a romantic getaway, a family vacation, or a rejuvenating retreat,
             Grace Arena Resorts promises an unforgettable escape. Indulge in world-class amenities, exquisite dining,
             and personalized service that caters to your every need. Discover a sanctuary of serenity and sophistication
-            at Grace Arena Resorts, where your dream vacation becomes a reality.
+            at Grace Arena Resorts, where your dream vacation becomes a reality. and then some...
           </Text>
         </PageSection>
       </PageWrapper>
