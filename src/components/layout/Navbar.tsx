@@ -109,8 +109,7 @@ const Navbar = () => {
         right={0}
         zIndex={"sticky"}
         w={"full"}
-        border={"1px solid #1E293B"}
-        boxShadow={"xs"}
+        boxShadow={scrolled ? "xs" : "none"}
         justify={"center"}
         bg={scrolled ? "light.500" : "transparent"}>
         <Flex

@@ -32,10 +32,13 @@ const Footer = () => {
       w="full"
       flexDir={"column"}
       bgColor="#F1F5F9"
-      px={[5, null, 6, 8, 10]}
       py={[8, null, 10, 12, 16, 20]}
       alignItems={"center"}>
-      <Flex w={"full"} maxW={{ base: "100vw", "2xl": "90rem" }} justifyContent={"space-between"}>
+      <Flex
+        w={"full"}
+        px={[5, null, 6, 8, 10]}
+        maxW={{ base: "100vw", "2xl": "90rem" }}
+        justifyContent={"space-between"}>
         <SimpleGrid columns={{ base: 2, lg: 6 }} gap={8}>
           <GridItem colSpan={2}>
             <Stack gap={[3, null, 4, 5, 6]}>
