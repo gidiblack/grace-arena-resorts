@@ -120,11 +120,9 @@ const Navbar = () => {
           px={[5, null, 6, 8, 10]}
           py={[2.5, null, 3, 4]}>
           <Link href={ROUTES.home}>
-            <HStack gap={1}>
-              <Image asChild width={"102px"} height={"48px"} position={"relative"} objectFit={"contain"}>
-                <NextImage src={logo.src} alt="grace arena logo" width={102} height={48} />
-              </Image>
-            </HStack>
+            <Image asChild width={"102px"} height={"48px"} position={"relative"} objectFit={"contain"}>
+              <NextImage src={logo.src} alt="grace arena logo" width={102} height={48} />
+            </Image>
           </Link>
           <HStack gap={6} display={{ base: "none", md: "flex" }}>
             {NAV_ITEMS.map(({ label, href }, i) => (
@@ -164,11 +162,9 @@ const Navbar = () => {
           <Drawer.Content bg={"#16191C"} borderBottom={"1px solid #1E293B"} maxW={"full"}>
             <Flex justifyContent={"space-between"} alignItems={"center"} pl={4} py={2} pr={12}>
               <Link href={ROUTES.home}>
-                <HStack gap={1}>
-                  <Image asChild width={"102px"} height={"48px"} position={"relative"} objectFit={"contain"}>
-                    <NextImage src={logo.src} alt="grace arena logo" width={102} height={48} />
-                  </Image>
-                </HStack>
+                <Image asChild width={"102px"} height={"48px"} position={"relative"} objectFit={"contain"}>
+                  <NextImage src={logo.src} alt="grace arena logo" width={102} height={48} />
+                </Image>
               </Link>
               <Link href={ROUTES.booking} display={{ base: "inline-flex", md: "none" }}>
                 <Button size={"sm"}>Book Now</Button>
