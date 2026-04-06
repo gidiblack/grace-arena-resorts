@@ -2,7 +2,7 @@ import React from "react";
 import { Flex, HStack, Icon, Image, Text } from "@chakra-ui/react";
 import Link from "next/link";
 import NextImage from "next/image";
-import logo from "../../../public/logo-icon.png";
+import logo from "../../../public/grace_arena_logo-dark.svg";
 import { FaGithub, FaLinkedin, FaTwitter } from "react-icons/fa";
 
 const Footer = () => {
