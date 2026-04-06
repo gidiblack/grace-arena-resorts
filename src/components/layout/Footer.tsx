@@ -36,9 +36,9 @@ const Footer = () => {
       py={[8, null, 10, 12, 16, 20]}
       alignItems={"center"}>
       <Flex w={"full"} maxW={{ base: "100vw", "2xl": "90rem" }} justifyContent={"space-between"}>
-        <SimpleGrid columns={6} gap={8}>
+        <SimpleGrid columns={{ base: 2, lg: 6 }} gap={8}>
           <GridItem colSpan={2}>
-            <Stack gap={6}>
+            <Stack gap={[3, null, 4, 5, 6]}>
               <Link href={ROUTES.home}>
                 <Image asChild width={"120px"} height={"56px"} position={"relative"} objectFit={"contain"}>
                   <NextImage src={logo.src} alt="grace arena logo" width={120} height={56} />
@@ -53,7 +53,7 @@ const Footer = () => {
               <HStack gap={4}>
                 {SOCIALS.map((social) => (
                   <Link key={social.label} href={social.href} target="_blank" rel="noopener noreferrer">
-                    <Icon as={social.icon} boxSize={6} color={"dark.400"} />
+                    <Icon as={social.icon} boxSize={[4, null, 5, 6]} color={"dark.400"} />
                   </Link>
                 ))}
               </HStack>

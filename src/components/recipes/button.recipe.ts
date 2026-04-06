@@ -18,18 +18,18 @@ export const buttonRecipe = defineRecipe({
       },
       secondary: {
         bg: "dark.400",
-        color: "white.500",
+        color: "light.500",
         _hover: { bg: "dark.400", opacity: 0.9 },
       },
       white: {
-        bg: "white.500",
+        bg: "light.500",
         color: "dark.500",
-        _hover: { bg: "white.500", opacity: 0.9 },
+        _hover: { bg: "light.500", opacity: 0.9 },
       },
       outline: {
         bg: "transparent",
         border: "1px solid accent.500",
-        color: "white.500",
+        color: "light.500",
         _hover: { opacity: 0.9 },
       },
     },
