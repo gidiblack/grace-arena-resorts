@@ -546,3 +546,458 @@ export const MOCK_MEDIA: MediaAssetItem[] = [
     thumbnailUrl: "/assets/suite2.jpg",
   },
 ];
+
+// 8. Resort Buildings & Campus Associations
+export interface BuildingItem {
+  id: string;
+  name: string;
+  campus: "elysian" | "village";
+  campusTitle: string;
+  description: string;
+  totalRooms: number;
+}
+
+export const MOCK_BUILDINGS: BuildingItem[] = [
+  {
+    id: "building-fountain-haven",
+    name: "The Fountain Haven",
+    campus: "elysian",
+    campusTitle: "GAR Elysian",
+    description: "Centrally positioned suites surrounding the tranquil courtyard fountain and private gardens.",
+    totalRooms: 12,
+  },
+  {
+    id: "building-oasis-villa",
+    name: "The Oasis Villa",
+    campus: "elysian",
+    campusTitle: "GAR Elysian",
+    description: "Self-contained luxury apartment suites with private kitchenettes, balconies, and quiet living spaces.",
+    totalRooms: 8,
+  },
+  {
+    id: "building-cabana",
+    name: "The Cabana",
+    campus: "elysian",
+    campusTitle: "GAR Elysian",
+    description: "Elevated suites boasting panoramic resort views, sun terraces, and VIP concierge privileges.",
+    totalRooms: 6,
+  },
+  {
+    id: "building-executive-huts",
+    name: "Executive Huts",
+    campus: "village",
+    campusTitle: "GAR Village",
+    description: "Handcrafted authentic thatched huts combining Yoruba heritage architecture with air-conditioned modern comfort.",
+    totalRooms: 10,
+  },
+  {
+    id: "building-presidential-huts",
+    name: "Presidential Huts",
+    campus: "village",
+    campusTitle: "GAR Village",
+    description: "Exclusive thatched pavilions with private plunge pools, currently undergoing architectural finishing.",
+    totalRooms: 4,
+  },
+  {
+    id: "building-royal-huts",
+    name: "Royal Huts",
+    campus: "village",
+    campusTitle: "GAR Village",
+    description: "Imperial thatched heritage lodges designed for dignitaries, state guests, and royal retreats.",
+    totalRooms: 2,
+  },
+];
+
+// 9. Rooms and Suites Catalog (SRS 3.2 & 4.2)
+export interface RoomAmenitiesJson {
+  inRoom: string[];
+  resort: string[];
+}
+
+export interface RoomTypeItem {
+  id: string;
+  slug: string;
+  name: string;
+  buildingId: string;
+  buildingName: string;
+  campus: "elysian" | "village";
+  campusTitle: string;
+  tier: "Standard" | "Deluxe" | "Premium" | "Executive" | "Presidential" | "Royal";
+  tierColor: string;
+  basePriceNgn: number | null;
+  maxGuests: number | null;
+  image: string;
+  images: string[];
+  isUnderConstruction: boolean;
+  shortDesc: string;
+  keyAmenities: string[];
+  amenities: RoomAmenitiesJson;
+}
+
+export const MOCK_ROOMS: RoomTypeItem[] = [
+  {
+    id: "elysian-fountain-standard",
+    slug: "elysian-fountain-standard",
+    name: "Standard Room",
+    buildingId: "building-fountain-haven",
+    buildingName: "The Fountain Haven",
+    campus: "elysian",
+    campusTitle: "GAR Elysian",
+    tier: "Standard",
+    tierColor: "#3B82F6",
+    basePriceNgn: 60000,
+    maxGuests: 2,
+    image: "/assets/suite2.jpg",
+    images: ["/assets/suite2.jpg", "/assets/suite.jpg"],
+    isUnderConstruction: false,
+    shortDesc: "Cozy refined room with comfortable king bed, vanity setup, and garden views.",
+    keyAmenities: [
+      "King Bed (6×6)",
+      "Air Conditioning",
+      "Prayer Hut Access",
+      "Free Wi-Fi",
+      "Complimentary Breakfast",
+    ],
+    amenities: {
+      inRoom: [
+        "King-size bed 6×6",
+        "Air conditioner & Standing Fan",
+        "Mini refrigerator",
+        "Vanity table & mirror",
+        "Complimentary breakfast for one",
+        "Bath amenities vanity kit",
+        "Water heater",
+        "Tea & coffee making facilities",
+        "Cable TV (DStv) / Netflix",
+        "Intercom phone",
+        "Welcome bottle of water",
+      ],
+      resort: [
+        "Dedicated Prayer Hut",
+        "Swimming Pool & Sundeck",
+        "Fitness Center access",
+        "24/7 Security",
+      ],
+    },
+  },
+  {
+    id: "elysian-fountain-deluxe",
+    slug: "elysian-fountain-deluxe",
+    name: "Deluxe Room",
+    buildingId: "building-fountain-haven",
+    buildingName: "The Fountain Haven",
+    campus: "elysian",
+    campusTitle: "GAR Elysian",
+    tier: "Deluxe",
+    tierColor: "#10B981",
+    basePriceNgn: 70000,
+    maxGuests: 2,
+    image: "/assets/suite.jpg",
+    images: ["/assets/suite.jpg", "/assets/suite2.jpg"],
+    isUnderConstruction: false,
+    shortDesc: "Spacious deluxe comfort featuring relaxation chairs, upgraded vanity, and lush garden vistas.",
+    keyAmenities: [
+      "King Bed",
+      "Relaxation Chairs",
+      "Prayer Hut Access",
+      "Upgraded Bath Kit",
+      "Free Wi-Fi",
+    ],
+    amenities: {
+      inRoom: [
+        "King-size bed & Bed lamps",
+        "Air conditioning & standing fan",
+        "Relaxation chairs & coffee table",
+        "Mini refrigerator",
+        "Deluxe vanity kit (soap, bath gel, body cream, shampoo)",
+        "Water heater",
+        "Complimentary breakfast for one",
+        "Tea & coffee facilities",
+        "Cable TV (DStv)",
+        "Intercom phone",
+        "Welcome pack (water, drink & biscuits)",
+      ],
+      resort: [
+        "The Prayer Hut",
+        "Gym & Pool access",
+        "Full resort grounds access",
+        "Daily room service",
+      ],
+    },
+  },
+  {
+    id: "elysian-oasis-deluxe-suite",
+    slug: "elysian-oasis-deluxe-suite",
+    name: "Deluxe Suite with Kitchenette",
+    buildingId: "building-oasis-villa",
+    buildingName: "The Oasis Villa",
+    campus: "elysian",
+    campusTitle: "GAR Elysian",
+    tier: "Deluxe",
+    tierColor: "#10B981",
+    basePriceNgn: 80000,
+    maxGuests: 2,
+    image: "/assets/suite2.jpg",
+    images: ["/assets/suite2.jpg", "/assets/suite.jpg"],
+    isUnderConstruction: false,
+    shortDesc: "Downstairs private apartment featuring dedicated kitchenette, microwave, and living area.",
+    keyAmenities: [
+      "Private Kitchenette",
+      "Microwave & Cooktop",
+      "Prayer Hut Access",
+      "King Bed",
+      "Satellite TV",
+    ],
+    amenities: {
+      inRoom: [
+        "Exclusive suite with bedroom & kitchenette",
+        "Kitchenette (sink, cupboard, small cooktop)",
+        "Microwave & mini refrigerator",
+        "King-size bed",
+        "Air conditioner & standing fan",
+        "Vanity table / full-length mirror",
+        "Complimentary breakfast for one",
+        "Satellite TV",
+        "Intercom phone",
+        "Welcome drink",
+      ],
+      resort: [
+        "Prayer Hut reservation",
+        "Pool & Fitness Center",
+        "Laundry & Ironing services",
+      ],
+    },
+  },
+  {
+    id: "elysian-oasis-premium-suite",
+    slug: "elysian-oasis-premium-suite",
+    name: "Premium Suite Apartment",
+    buildingId: "building-oasis-villa",
+    buildingName: "The Oasis Villa",
+    campus: "elysian",
+    campusTitle: "GAR Elysian",
+    tier: "Premium",
+    tierColor: "#8B5CF6",
+    basePriceNgn: 90000,
+    maxGuests: 2,
+    image: "/assets/suite.jpg",
+    images: ["/assets/suite.jpg", "/assets/pool.jpg"],
+    isUnderConstruction: false,
+    shortDesc: "Elevated apartment with independent living room, private kitchenette, and scenic balcony view.",
+    keyAmenities: [
+      "Separate Living Room",
+      "Kitchenette",
+      "Prayer Hut Access",
+      "Balcony View",
+      "Microwave",
+    ],
+    amenities: {
+      inRoom: [
+        "Separate living room & bedroom",
+        "Kitchenette with cooktop & microwave",
+        "King-size plush bedding",
+        "Air conditioner in both rooms",
+        "Smart TV with streaming",
+        "Complimentary breakfast for one",
+        "Premium bath products",
+      ],
+      resort: [
+        "The Prayer Hut",
+        "Modern Mall access",
+        "Recreation Park tennis",
+        "Swimming pool",
+      ],
+    },
+  },
+  {
+    id: "elysian-cabana-premium",
+    slug: "elysian-cabana-premium",
+    name: "The Cabana Premium Suite",
+    buildingId: "building-cabana",
+    buildingName: "The Cabana",
+    campus: "elysian",
+    campusTitle: "GAR Elysian",
+    tier: "Premium",
+    tierColor: "#8B5CF6",
+    basePriceNgn: 120000,
+    maxGuests: 2,
+    image: "/assets/gar-elysian.jpg",
+    images: ["/assets/gar-elysian.jpg", "/assets/suite.jpg"],
+    isUnderConstruction: false,
+    shortDesc: "Our flagship luxury cabana suite offering panoramic resort views and bespoke interior styling.",
+    keyAmenities: [
+      "Cabana Terrace",
+      "VIP Lounge Access",
+      "Prayer Hut Access",
+      "King Bed",
+      "Priority Service",
+    ],
+    amenities: {
+      inRoom: [
+        "Expansive cabana terrace",
+        "Super king bed",
+        "High-power AC & mood lighting",
+        "Fully stocked minibar (non-alcoholic)",
+        "Nespresso coffee machine",
+        "Luxury bathrobes and slippers",
+        "Smart 55-inch TV",
+      ],
+      resort: [
+        "VIP Prayer Hut slots",
+        "Pool cabana reservation",
+        "Concierge dining support",
+      ],
+    },
+  },
+  {
+    id: "elysian-cabana-executive",
+    slug: "elysian-cabana-executive",
+    name: "The Cabana Executive Twin Suite",
+    buildingId: "building-cabana",
+    buildingName: "The Cabana",
+    campus: "elysian",
+    campusTitle: "GAR Elysian",
+    tier: "Executive",
+    tierColor: "#F59E0B",
+    basePriceNgn: 180000,
+    maxGuests: 4,
+    image: "/assets/suite.jpg",
+    images: ["/assets/suite.jpg", "/assets/suite2.jpg"],
+    isUnderConstruction: false,
+    shortDesc: "Grand twin suite ideal for families or retreat leaders. Accommodates up to 4 guests with luxury amenities.",
+    keyAmenities: [
+      "Sleeps 4 Guests",
+      "Twin Bedrooms",
+      "Prayer Hut Access",
+      "Spacious Lounge",
+      "Kitchenette",
+    ],
+    amenities: {
+      inRoom: [
+        "Twin double bedrooms with en-suite baths",
+        "Expansive communal lounge",
+        "Dining table for four",
+        "Full kitchenette & microwave",
+        "Air conditioning throughout",
+        "Complimentary breakfast for guests",
+      ],
+      resort: [
+        "Prayer Hut access",
+        "Love Garden access",
+        "Spa priority bookings",
+        "Pool deck",
+      ],
+    },
+  },
+  {
+    id: "village-executive-hut",
+    slug: "village-executive-hut",
+    name: "Executive Thatched Hut",
+    buildingId: "building-executive-huts",
+    buildingName: "Executive Huts",
+    campus: "village",
+    campusTitle: "GAR Village",
+    tier: "Executive",
+    tierColor: "#F59E0B",
+    basePriceNgn: 100000,
+    maxGuests: 2,
+    image: "/assets/hut.jpg",
+    images: ["/assets/hut.jpg", "/assets/gar-village.jpg"],
+    isUnderConstruction: false,
+    shortDesc: "Handcrafted traditional thatched hut equipped with ultra-modern interior luxuries and serene privacy.",
+    keyAmenities: [
+      "Authentic Thatched Roof",
+      "King Bed",
+      "Prayer Hut Access",
+      "Private Veranda",
+      "Modern AC",
+    ],
+    amenities: {
+      inRoom: [
+        "Naturally insulated thatched architecture",
+        "King bed with artisanal wooden frame",
+        "Split AC and ceiling fan",
+        "Modern luxury bathroom & rain shower",
+        "Mini refrigerator & electric kettle",
+        "Complimentary breakfast",
+        "Flat-screen satellite TV",
+        "Private outdoor veranda",
+      ],
+      resort: [
+        "Direct Prayer Hut path",
+        "Village Mall cuisine",
+        "Recreation Park",
+        "Fire pit evening gatherings",
+      ],
+    },
+  },
+  {
+    id: "village-presidential-hut",
+    slug: "village-presidential-hut",
+    name: "Presidential Thatched Hut",
+    buildingId: "building-presidential-huts",
+    buildingName: "Presidential Huts",
+    campus: "village",
+    campusTitle: "GAR Village",
+    tier: "Presidential",
+    tierColor: "#DC2626",
+    basePriceNgn: null,
+    maxGuests: null,
+    image: "/assets/gar-village.jpg",
+    images: ["/assets/gar-village.jpg", "/assets/hut.jpg"],
+    isUnderConstruction: true,
+    shortDesc: "Grand presidential pavilion featuring dual master bedrooms, private dipping pool, and butler pantry.",
+    keyAmenities: [
+      "Private Dipping Pool",
+      "Dual Master Suites",
+      "Dedicated Prayer Space",
+      "Under Construction",
+    ],
+    amenities: {
+      inRoom: [
+        "Multi-room luxury thatched pavilion",
+        "Private plunge pool and sun lounge",
+        "Chef preparation pantry",
+        "Walk-in dressing rooms and marble tubs",
+      ],
+      resort: [
+        "Priority access to all GAR facilities",
+        "Dedicated Prayer Hut reservation",
+      ],
+    },
+  },
+  {
+    id: "village-royal-hut",
+    slug: "village-royal-hut",
+    name: "Royal Thatched Hut",
+    buildingId: "building-royal-huts",
+    buildingName: "Royal Huts",
+    campus: "village",
+    campusTitle: "GAR Village",
+    tier: "Royal",
+    tierColor: "#9333EA",
+    basePriceNgn: null,
+    maxGuests: null,
+    image: "/assets/hut.jpg",
+    images: ["/assets/hut.jpg", "/assets/gar-village.jpg"],
+    isUnderConstruction: true,
+    shortDesc: "The pinnacle of African royal heritage. Designed for dignitaries, executive retreats, and family royalty.",
+    keyAmenities: [
+      "Royal Courtyard",
+      "Grand Throne Lounge",
+      "VIP Security Perimeter",
+      "Under Construction",
+    ],
+    amenities: {
+      inRoom: [
+        "Sprawling imperial thatched lodge",
+        "Private meeting salon and dining hall",
+        "Full security quarter connectivity",
+      ],
+      resort: [
+        "All-inclusive resort access",
+        "Private Prayer Hut sanctuary",
+      ],
+    },
+  },
+];

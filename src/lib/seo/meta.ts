@@ -203,3 +203,40 @@ export function generateWebPageJsonLd({
   };
 }
 
+export function generateRoomsPageJsonLd(
+  rooms: Array<{
+    id: string;
+    name: string;
+    shortDesc?: string;
+    basePriceNgn?: number | null;
+    priceNgn?: number | null;
+    isUnderConstruction?: boolean;
+  }>
+) {
+  // Exclude under-construction room types from makesOffer structured data
+  const availableOffers = rooms
+    .filter((r) => !r.isUnderConstruction && (r.basePriceNgn || r.priceNgn))
+    .map((r) => ({
+      "@type": "Offer",
+      name: r.name,
+      description: r.shortDesc || r.name,
+      price: (r.basePriceNgn ?? r.priceNgn) || 0,
+      priceCurrency: "NGN",
+      availability: "https://schema.org/InStock",
+      url: `${RESORT_URL}/rooms#${r.id}`,
+    }));
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Hotel",
+    name: "Grace Arena Resorts",
+    url: `${RESORT_URL}/rooms`,
+    description:
+      "Browse available luxury suites and authentic thatched huts across GAR Elysian and GAR Village.",
+    address: RESORT_ADDRESS,
+    geo: RESORT_GEO,
+    makesOffer: availableOffers,
+  };
+}
+
+

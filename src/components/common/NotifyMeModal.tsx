@@ -8,6 +8,7 @@ interface NotifyMeModalProps {
   onClose: () => void;
   roomTitle: string;
   campusName: string;
+  roomTypeId?: string;
 }
 
 export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
@@ -15,22 +16,47 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
   onClose,
   roomTitle,
   campusName,
+  roomTypeId,
 }) => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [responseMsg, setResponseMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
     setIsLoading(true);
-    // Simulate API registration call (e.g. POST /api/v1/notify-me)
-    setTimeout(() => {
-      setIsLoading(false);
+    setErrorMessage("");
+
+    try {
+      const res = await fetch("/api/v1/notify-me", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          phone: phone || undefined,
+          roomTypeId,
+          roomTitle,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || data.error?.message || "Failed to register for notifications");
+      }
+
+      setResponseMsg(data.data?.message || data.message || "You are on the priority list!");
       setSubmitted(true);
-    }, 700);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Failed to register. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleResetAndClose = () => {
@@ -39,6 +65,8 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
       setSubmitted(false);
       setEmail("");
       setPhone("");
+      setErrorMessage("");
+      setResponseMsg("");
     }, 300);
   };
 
@@ -95,8 +123,9 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
                 You’re on the Priority List!
               </Text>
               <Text fontSize="13px" color="gray.300" maxW="360px">
-                We will email you at <strong style={{ color: "#FCCA46" }}>{email}</strong> the
-                moment bookings open for the <strong>{roomTitle}</strong> at {campusName}.
+                {responseMsg} We will email you at{" "}
+                <strong style={{ color: "#FCCA46" }}>{email}</strong> the moment bookings open for
+                the <strong>{roomTitle}</strong> at {campusName}.
               </Text>
               <Button
                 variant="primary"
@@ -110,6 +139,19 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
           ) : (
             <form onSubmit={handleSubmit}>
               <Stack gap={4}>
+                {errorMessage && (
+                  <Box
+                    bg="red.900/40"
+                    border="1px solid"
+                    borderColor="red.500"
+                    p={2.5}
+                    borderRadius="8px"
+                  >
+                    <Text fontSize="12px" color="red.300">
+                      {errorMessage}
+                    </Text>
+                  </Box>
+                )}
                 <Text fontSize="13px" color="gray.300" lineHeight="tall">
                   The {roomTitle} is currently undergoing exquisite architectural finishing.
                   Register below to receive exclusive early-bird access and special opening rates.
