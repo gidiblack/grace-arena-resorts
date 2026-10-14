@@ -4,11 +4,11 @@ import {
   Box,
   HStack,
   Icon,
-  Link,
   SimpleGrid,
   Stack,
   Text,
 } from "@chakra-ui/react";
+import NextLink from "next/link";
 import PageWrapper from "@/components/layout/PageWrapper";
 import Button from "@/components/ui/button";
 import NotifyMeModal from "@/components/common/NotifyMeModal";
@@ -42,12 +42,14 @@ export default function RoomsPage() {
   useEffect(() => {
     if (!router.isReady) return;
     const type = router.query.type;
-    if (type === "elysian" || type === "village") {
-      const timer = setTimeout(() => {
+    const timer = setTimeout(() => {
+      if (type === "elysian" || type === "village") {
         setSelectedCampus(type);
-      }, 0);
-      return () => clearTimeout(timer);
-    }
+      } else if (!type || type === "all") {
+        setSelectedCampus("all");
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [router.isReady, router.query.type]);
 
   const handleCampusChange = (campus: "all" | "elysian" | "village") => {
@@ -113,11 +115,20 @@ export default function RoomsPage() {
           </Text>
 
           <HStack gap={4} pt={4} flexWrap="wrap" justify="center">
-            <Link href={ROUTES.booking}>
-              <Button size="md" style={{ padding: "10px 28px" }}>
+            <NextLink href={ROUTES.booking} style={{ textDecoration: "none" }}>
+              <Button
+                as="span"
+                size="md"
+                style={{
+                  padding: "10px 28px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 Book Your Stay
               </Button>
-            </Link>
+            </NextLink>
             <a
               href="https://wa.me/2348123456789?text=Hello%20Grace%20Arena%20Resorts,%20I%20want%20to%20inquire%20about%20room%20availability."
               target="_blank"

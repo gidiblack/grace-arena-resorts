@@ -14,6 +14,7 @@ import Button from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { ROUTES } from "@/constants/ROUTES";
 import { RoomType } from "../types";
+import { resolveRoomImage, FALLBACK_ROOM_IMAGE } from "../utils/image-resolver";
 import { FaCheck, FaHardHat, FaPray, FaUsers } from "react-icons/fa";
 
 interface RoomCardProps {
@@ -28,6 +29,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
   onOpenNotify,
 }) => {
   const isUnderConstruction = room.isUnderConstruction;
+  const imageSrc = resolveRoomImage(room.image);
 
   return (
     <Flex
@@ -49,7 +51,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
       {/* Image Area */}
       <Box h="230px" position="relative" bg="#1E293B" overflow="hidden">
         <Image
-          src={room.image}
+          src={imageSrc}
           alt={room.name}
           w="full"
           h="full"
@@ -57,6 +59,9 @@ export const RoomCard: React.FC<RoomCardProps> = ({
           filter={isUnderConstruction ? "grayscale(40%)" : "none"}
           transition="transform 0.4s ease"
           _hover={{ transform: "scale(1.05)" }}
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src = FALLBACK_ROOM_IMAGE;
+          }}
         />
 
         {/* Badges Overlay */}
@@ -245,11 +250,23 @@ export const RoomCard: React.FC<RoomCardProps> = ({
                 Notify Me
               </Button>
             ) : (
-              <Link href={`${ROUTES.booking}?room=${room.id}`} style={{ flex: 1.2 }}>
+              <Link
+                href={`${ROUTES.booking}?room=${room.id}`}
+                style={{ flex: 1.2, textDecoration: "none" }}
+              >
                 <Button
+                  as="span"
                   size="sm"
                   data-testid="book-room-button"
-                  style={{ width: "100%", fontSize: "12px", padding: "8px" }}
+                  style={{
+                    width: "100%",
+                    fontSize: "12px",
+                    padding: "8px",
+                    textAlign: "center",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
                   Book This Room
                 </Button>

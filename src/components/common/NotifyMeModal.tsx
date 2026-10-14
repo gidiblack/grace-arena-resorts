@@ -152,10 +152,10 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
                     </Text>
                   </Box>
                 )}
-                <Text fontSize="13px" color="gray.300" lineHeight="tall">
+                <Dialog.Description fontSize="13px" color="gray.300" lineHeight="tall">
                   The {roomTitle} is currently undergoing exquisite architectural finishing.
                   Register below to receive exclusive early-bird access and special opening rates.
-                </Text>
+                </Dialog.Description>
 
                 <Box>
                   <Text fontSize="12px" fontWeight="medium" mb={1.5} color="gray.300">

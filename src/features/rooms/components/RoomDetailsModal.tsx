@@ -4,6 +4,7 @@ import {
   Flex,
   HStack,
   Icon,
+  Image,
   SimpleGrid,
   Stack,
   Text,
@@ -14,6 +15,7 @@ import Button from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { ROUTES } from "@/constants/ROUTES";
 import { RoomType, parseRoomAmenities } from "../types";
+import { resolveRoomImage, FALLBACK_ROOM_IMAGE } from "../utils/image-resolver";
 import { FaCheck, FaPray, FaTimes } from "react-icons/fa";
 
 interface RoomDetailsModalProps {
@@ -33,6 +35,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
 
   const parsedAmenities = parseRoomAmenities(room.amenities);
   const isUnderConstruction = room.isUnderConstruction;
+  const imageSrc = resolveRoomImage(room.image);
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={(details) => !details.open && onClose()}>
@@ -49,7 +52,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
           boxShadow="2xl"
           data-testid="room-details-modal"
         >
-          <Flex justify="space-between" align="flex-start" mb={4}>
+          <Flex justify="space-between" align="flex-start" mb={3}>
             <Box>
               <Text
                 fontSize="12px"
@@ -75,6 +78,25 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
               <Icon as={FaTimes} boxSize={5} color="gray.400" />
             </Box>
           </Flex>
+
+          {/* Room Image Preview with fallback */}
+          <Box h={{ base: "140px", sm: "180px" }} borderRadius="12px" overflow="hidden" mb={3} position="relative" bg="#1E293B">
+            <Image
+              src={imageSrc}
+              alt={room.name}
+              w="full"
+              h="full"
+              objectFit="cover"
+              filter={isUnderConstruction ? "grayscale(40%)" : "none"}
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = FALLBACK_ROOM_IMAGE;
+              }}
+            />
+          </Box>
+
+          <Dialog.Description fontSize="13px" color="gray.300" mb={3} lineHeight="tall">
+            {room.shortDesc}
+          </Dialog.Description>
 
           <Stack gap={5} my={2}>
             {/* In-Room Amenities (Categorized from JSON) */}
@@ -215,8 +237,21 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
                 Notify Me
               </Button>
             ) : (
-              <Link href={`${ROUTES.booking}?room=${room.id}`}>
-                <Button size="sm">Book This Room</Button>
+              <Link
+                href={`${ROUTES.booking}?room=${room.id}`}
+                style={{ textDecoration: "none" }}
+              >
+                <Button
+                  as="span"
+                  size="sm"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  Book This Room
+                </Button>
               </Link>
             )}
           </Flex>
