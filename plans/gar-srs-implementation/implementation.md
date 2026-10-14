@@ -148,33 +148,33 @@ npx supabase --version
 **Milestone:** M1 · **Estimated Effort:** 2–3 days · **Branch:** `feature/gar-m1-marketing-site` · **PR:** Step 1 PR merged to `main`
 
 ### Step Checklist
-- [ ] Install all runtime/test/build dependencies required by the corrected plan
-- [ ] Create typed environment parser with strict startup validation
-- [ ] Create shared logger with redaction for sensitive fields
-- [ ] Create API error model and response envelope helpers
-- [ ] Add i18n infrastructure (`src/lib/i18n/index.ts`, `src/lib/i18n/en.json`)
-- [ ] Add NGN currency formatter (`src/lib/formatters/currency.ts`) per SRS 5.6
-- [ ] Add SendGrid service + template renderer + failed-email queue adapter (`src/services/email/sendgrid.ts`, `src/services/email/templates.ts`)
-- [ ] Add Prettier config and format check script
-- [ ] Update README with environment contract and commands
+- [x] Install all runtime/test/build dependencies required by the corrected plan
+- [x] Create typed environment parser with strict startup validation
+- [x] Create shared logger with redaction for sensitive fields
+- [x] Create API error model and response envelope helpers
+- [x] Add i18n infrastructure (`src/lib/i18n/index.ts`, `src/lib/i18n/en.json`)
+- [x] Add NGN currency formatter (`src/lib/formatters/currency.ts`) per SRS 5.6
+- [x] Add SendGrid service + template renderer + failed-email queue adapter (`src/services/email/sendgrid.ts`, `src/services/email/templates.ts`)
+- [x] Add Prettier config and format check script
+- [x] Update README with environment contract and commands
 
 ### Explicit File Paths
-- [ ] package.json
-- [ ] .env.example
-- [ ] .prettierrc
-- [ ] .prettierignore
-- [ ] src/config/env.ts
-- [ ] src/lib/logger.ts
-- [ ] src/lib/errors.ts
-- [ ] src/lib/http/response.ts
-- [ ] src/lib/http/validation.ts
-- [ ] src/types/api.ts
-- [ ] src/lib/i18n/index.ts
-- [ ] src/lib/i18n/en.json
-- [ ] src/lib/formatters/currency.ts
-- [ ] src/services/email/sendgrid.ts
-- [ ] src/services/email/templates.ts
-- [ ] README.md
+- [x] package.json
+- [x] .env.example
+- [x] .prettierrc
+- [x] .prettierignore
+- [x] src/config/env.ts
+- [x] src/lib/logger.ts
+- [x] src/lib/errors.ts
+- [x] src/lib/http/response.ts
+- [x] src/lib/http/validation.ts
+- [x] src/types/api.ts
+- [x] src/lib/i18n/index.ts
+- [x] src/lib/i18n/en.json
+- [x] src/lib/formatters/currency.ts
+- [x] src/services/email/sendgrid.ts
+- [x] src/services/email/templates.ts
+- [x] README.md
 
 ### Commands
 ```powershell
@@ -262,13 +262,13 @@ export function fail(
 ```
 
 ### Verification Checklist
-- [ ] `npm run lint` passes
-- [ ] `npm run typecheck` passes
-- [ ] `npm run format:check` passes
-- [ ] Unit tests exist for env parser and response envelope
-- [ ] Boot fails fast when required env variables are missing
-- [ ] Logger redacts keys containing token, secret, password, key
-- [ ] Currency formatter produces correct `₦` formatting for edge cases (zero, decimals, large numbers)
+- [x] `npm run lint` passes
+- [x] `npm run typecheck` passes
+- [x] `npm run format:check` passes
+- [x] Unit tests exist for env parser and response envelope
+- [x] Boot fails fast when required env variables are missing
+- [x] Logger redacts keys containing token, secret, password, key
+- [x] Currency formatter produces correct `₦` formatting for edge cases (zero, decimals, large numbers)
 
 ### STOP & COMMIT
 ```powershell
@@ -523,35 +523,35 @@ git commit -m "feat: auth pages, auth endpoints, change-password endpoint"
 **Milestone:** M1 · **Estimated Effort:** 3–4 days · **Branch:** `feature/gar-m1-marketing-site` · **PR:** Step 5 PR merged to `main`
 
 ### Step Checklist
-- [ ] Build global shell (sticky nav, footer, WhatsApp FAB, page transition indicator)
-- [ ] Implement cookie consent banner per SRS Section 3:
+- [x] Build global shell (sticky nav, footer, WhatsApp FAB, page transition indicator)
+- [x] Implement cookie consent banner per SRS Section 3:
   - Fixed bottom bar, 3 categories: Essential (always-on), Analytics (opt-in), Marketing (opt-in)
   - First-party cookie `gar_cookie_consent` with 12-month expiry
   - "Manage Preferences" modal with category toggles
   - "Cookie Settings" link in footer to re-open preferences
-- [ ] Implement conditional analytics loading (GA4/GTM only if analytics consent granted)
-- [ ] Add skip link, keyboard focus styles, and semantic landmark structure (`<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`)
-- [ ] Implement page transition loading indicator during Next.js route changes
-- [ ] Implement WhatsApp FAB with context-aware pre-filled messages
-- [ ] Implement network offline detection banner
-- [ ] Add reusable loading/error/empty state components with WhatsApp fallback link
+- [x] Implement conditional analytics loading (GA4/GTM only if analytics consent granted)
+- [x] Add skip link, keyboard focus styles, and semantic landmark structure (`<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`)
+- [x] Implement page transition loading indicator during Next.js route changes
+- [x] Implement WhatsApp FAB with context-aware pre-filled messages
+- [x] Implement network offline detection banner
+- [x] Add reusable loading/error/empty state components with WhatsApp fallback link
 
 ### Explicit File Paths
-- [ ] src/components/layout/Navbar.tsx
-- [ ] src/components/layout/Footer.tsx
-- [ ] src/components/layout/PageWrapper.tsx
-- [ ] src/components/layout/HeadComponent.tsx
-- [ ] src/components/common/SkipToContent.tsx
-- [ ] src/components/common/WhatsAppFab.tsx
-- [ ] src/components/common/CookieConsentBanner.tsx
-- [ ] src/components/common/CookiePreferencesModal.tsx
-- [ ] src/components/common/GlobalNetworkStatus.tsx
-- [ ] src/components/common/PageTransitionIndicator.tsx
-- [ ] src/components/states/LoadingState.tsx
-- [ ] src/components/states/ErrorState.tsx
-- [ ] src/components/states/EmptyState.tsx
-- [ ] src/styles/globals.css
-- [ ] src/lib/seo/meta.ts
+- [x] src/components/layout/Navbar.tsx
+- [x] src/components/layout/Footer.tsx
+- [x] src/components/layout/PageWrapper.tsx
+- [x] src/components/layout/HeadComponent.tsx
+- [x] src/components/common/SkipToContent.tsx
+- [x] src/components/common/WhatsAppFab.tsx
+- [x] src/components/common/CookieConsentBanner.tsx
+- [x] src/components/common/CookiePreferencesModal.tsx
+- [x] src/components/common/GlobalNetworkStatus.tsx
+- [x] src/components/common/PageTransitionIndicator.tsx
+- [x] src/components/states/LoadingState.tsx
+- [x] src/components/states/ErrorState.tsx
+- [x] src/components/states/EmptyState.tsx
+- [x] src/styles/globals.css
+- [x] src/lib/seo/meta.ts
 
 ### Critical Code Block: cookie consent data shape
 ```ts
@@ -578,13 +578,13 @@ npm run test
 ```
 
 ### Verification Checklist
-- [ ] Consent cookie `gar_cookie_consent` persists for 12 months with per-category state
-- [ ] Essential cookies are always enabled and cannot be unchecked
-- [ ] Analytics scripts do not load when analytics consent is false
-- [ ] Footer link re-opens preferences modal
-- [ ] Offline banner appears when network drops
-- [ ] WhatsApp FAB generates context-aware messages based on current page
-- [ ] Page transition indicator animates during Next.js router events
+- [x] Consent cookie `gar_cookie_consent` persists for 12 months with per-category state
+- [x] Essential cookies are always enabled and cannot be unchecked
+- [x] Analytics scripts do not load when analytics consent is false
+- [x] Footer link re-opens preferences modal
+- [x] Offline banner appears when network drops
+- [x] WhatsApp FAB generates context-aware messages based on current page
+- [x] Page transition indicator animates during Next.js router events
 
 ### STOP & COMMIT
 ```powershell
