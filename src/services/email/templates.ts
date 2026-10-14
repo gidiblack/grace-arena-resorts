@@ -4,7 +4,9 @@ export type EmailTemplateId =
   | "booking_confirmation"
   | "newsletter_confirmation"
   | "inquiry_acknowledgment"
-  | "room_notify_alert";
+  | "room_notify_alert"
+  | "booking_refund_initiated"
+  | "booking_refund_completed";
 
 export interface EmailRenderedContent {
   subject: string;
@@ -121,6 +123,38 @@ export function renderEmailTemplate(
           </div>
         `,
         text: `Your reservation ${ref} at Grace Arena Resorts has been confirmed.`,
+      };
+    }
+
+    case "booking_refund_initiated": {
+      const ref = data.reference || "N/A";
+      const amount = data.amount || 0;
+      return {
+        subject: `Booking Refund Initiated: ${ref} — Grace Arena Resorts`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1a202c;">
+            <h2 style="color: #2b6cb0;">Refund Initiated</h2>
+            <p>A refund of <strong>₦${Number(amount).toLocaleString()}</strong> for reservation <strong>${ref}</strong> has been initiated.</p>
+            <p>${data.message || "We will notify you once processing is complete."}</p>
+          </div>
+        `,
+        text: `A refund of ₦${Number(amount).toLocaleString()} for reservation ${ref} has been initiated.`,
+      };
+    }
+
+    case "booking_refund_completed": {
+      const ref = data.reference || "N/A";
+      const amount = data.amount || 0;
+      return {
+        subject: `Refund Processed: ${ref} — Grace Arena Resorts`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1a202c;">
+            <h2 style="color: #2b6cb0;">Refund Successfully Processed</h2>
+            <p>Your refund of <strong>₦${Number(amount).toLocaleString()}</strong> for reservation <strong>${ref}</strong> has been processed by our gateway.</p>
+            <p>Depending on your issuing bank, the funds typically reflect within 3–5 business days.</p>
+          </div>
+        `,
+        text: `Your refund of ₦${Number(amount).toLocaleString()} for reservation ${ref} has been processed.`,
       };
     }
 

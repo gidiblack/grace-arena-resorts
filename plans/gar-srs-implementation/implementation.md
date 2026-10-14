@@ -41,28 +41,28 @@ Each step is developed with its own commit and verification gate, merging to `ma
 - [x] Cookie consent (NDPR), accessibility baseline, and SEO foundations in place
 - [x] Deployed to production domain via Vercel (Ready for deployment)
 
-### Milestone 2: Booking Engine (Target: 6–10 weeks after M1 · 31–42 dev-days)
+### Milestone 2: Booking Engine (Target: 6–10 weeks after M1 · 31–42 dev-days) — **COMPLETED**
 
 **Delivers:** Full guest booking flow with payment, accounts, and room management.
 
-| Step    | Scope                                                                           | Estimated Effort   |
-| ------- | ------------------------------------------------------------------------------- | ------------------ |
-| Step 2  | Supabase schema, migrations, seeds, RLS, storage, pg_cron                       | 3–5 days           |
-| Step 3  | API middleware stack, auth context, security                                    | 2–3 days           |
-| Step 4  | Auth pages and endpoints (register, login, verify, reset, change password)      | 4–5 days           |
-| Step 8  | Booking engine backend (availability, pricing, lifecycle, admin booking API)    | 8–10 days          |
-| Step 9  | Payment integration, Paystack webhook security, refunds, downtime fallback      | 4–6 days           |
-| Step 10 | Booking wizard frontend (4-step, responsive summary, confirmation)              | 6–8 days           |
-| Step 11 | Guest account and booking management (bookings list, cancel, receipts, profile) | 4–5 days           |
-|         | **M2 subtotal**                                                                 | **31–42 dev-days** |
+| Step    | Scope                                                                           | Estimated Effort   | Status        |
+| ------- | ------------------------------------------------------------------------------- | ------------------ | ------------- |
+| Step 2  | Supabase schema, migrations, seeds, RLS, storage, pg_cron                       | 3–5 days           | [x] Done      |
+| Step 3  | API middleware stack, auth context, security                                    | 2–3 days           | [x] Done      |
+| Step 4  | Auth pages and endpoints (register, login, verify, reset, change password)      | 4–5 days           | [x] Done      |
+| Step 8  | Booking engine backend (availability, pricing, lifecycle, admin booking API)    | 8–10 days          | [x] Done      |
+| Step 9  | Payment integration, Paystack webhook security, refunds, downtime fallback      | 4–6 days           | [x] Done      |
+| Step 10 | Booking wizard frontend (4-step, responsive summary, confirmation)              | 6–8 days           | [x] Done      |
+| Step 11 | Guest account and booking management (bookings list, cancel, receipts, profile) | 4–5 days           | [x] Done      |
+|         | **M2 subtotal**                                                                 | **31–42 dev-days** | **Completed** |
 
 **Exit Criteria:**
 
-- Guests can register, log in, browse rooms, and complete a booking with Paystack payment
-- Booking confirmation PDF generated and emailed
-- Guest account shows booking history with cancellation and refund flows
-- All auth flows working (register, verify, login, reset, change password)
-- Payment webhook security verified in Paystack sandbox
+- [x] Guests can register, log in, browse rooms, and complete a booking with Paystack payment
+- [x] Booking confirmation PDF generated and emailed
+- [x] Guest account shows booking history with cancellation and refund flows
+- [x] All auth flows working (register, verify, login, reset, change password)
+- [x] Payment webhook security verified in Paystack sandbox
 
 ### Milestone 3: Admin & Operations (Target: 3–5 weeks after M2 · 11–17 dev-days)
 
@@ -295,39 +295,39 @@ git commit -m "chore: foundation, env contract, shared libs, i18n, email service
 
 ---
 
-## 2. Supabase Schema, Migrations, Seed Data, and RLS Baseline
+## 2. Supabase Schema, Migrations, Seed Data, and RLS Baseline — [COMPLETED]
 
-**Milestone:** M2 · **Estimated Effort:** 3–5 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 2 PR merged to `main`
+**Milestone:** M2 (Completed) · **Estimated Effort:** 3–5 days · **Branch:** `feature/gar-m2-booking-engine` · **Status:** Merged to `develop`
 
 ### Step Checklist
 
-- [ ] Initialize Supabase project config
-- [ ] Implement schema migrations 0001–0006 exactly per SRS and corrected plan:
+- [x] Initialize Supabase project config
+- [x] Implement schema migrations 0001–0006 exactly per SRS and corrected plan:
   - `0001_init_schema.sql` (all core entities, enums, indexes, constraints, `FailedEmail` table)
   - `0002_rls_policies.sql` (RLS policies by role matrix)
   - `0003_functions_triggers.sql` (availability, pricing, booking reference generator)
   - `0004_seed_reference_data.sql` (campuses, rooms, menus, facilities, baseline settings)
   - `0005_storage_buckets.sql` (`media-public` and `confirmations` buckets + policies)
   - `0006_pg_cron_setup.sql` (pg_cron extension + schedules)
-- [ ] Implement dual amenity model:
+- [x] Implement dual amenity model:
   1. `RoomType.amenities` JSON array for in-room/conditional display
   2. `Amenity` entity + `RoomTypeAmenity` junction table for resort-level amenities on Home
-- [ ] Ensure resort campuses are data-driven records in `Resort` entity (not hard-coded)
-- [ ] Enable pg_cron and register foundational schedules (booking expiry, email retry, deal deactivation)
-- [ ] Generate `src/types/db.ts` from database schema
-- [ ] Create deterministic seed data for demo/QA
+- [x] Ensure resort campuses are data-driven records in `Resort` entity (not hard-coded)
+- [x] Enable pg_cron and register foundational schedules (booking expiry, email retry, deal deactivation)
+- [x] Generate `src/types/db.ts` from database schema
+- [x] Create deterministic seed data for demo/QA
 
 ### Explicit File Paths
 
-- [ ] supabase/config.toml
-- [ ] supabase/migrations/0001_init_schema.sql
-- [ ] supabase/migrations/0002_rls_policies.sql
-- [ ] supabase/migrations/0003_functions_triggers.sql
-- [ ] supabase/migrations/0004_seed_reference_data.sql
-- [ ] supabase/migrations/0005_storage_buckets.sql
-- [ ] supabase/migrations/0006_pg_cron_setup.sql
-- [ ] supabase/seed.sql
-- [ ] src/types/db.ts
+- [x] supabase/config.toml
+- [x] supabase/migrations/0001_init_schema.sql
+- [x] supabase/migrations/0002_rls_policies.sql
+- [x] supabase/migrations/0003_functions_triggers.sql
+- [x] supabase/migrations/0004_seed_reference_data.sql
+- [x] supabase/migrations/0005_storage_buckets.sql
+- [x] supabase/migrations/0006_pg_cron_setup.sql
+- [x] supabase/seed.sql
+- [x] src/types/db.ts
 
 ### Commands
 
@@ -346,12 +346,12 @@ npx supabase gen types typescript --local > src/types/db.ts
 
 ### Verification Checklist
 
-- [ ] `npx supabase db reset` completes cleanly
-- [ ] All required tables, enums, indexes, constraints exist
-- [ ] RLS denies guest read/write on admin-only datasets
-- [ ] Dual amenity model verified: RoomType.amenities JSON and Amenity junction both queryable
-- [ ] Buckets `media-public` and `confirmations` exist with correct policies
-- [ ] pg_cron extension enabled with required schedules
+- [x] `npx supabase db reset` completes cleanly
+- [x] All required tables, enums, indexes, constraints exist
+- [x] RLS denies guest read/write on admin-only datasets
+- [x] Dual amenity model verified: RoomType.amenities JSON and Amenity junction both queryable
+- [x] Buckets `media-public` and `confirmations` exist with correct policies
+- [x] pg_cron extension enabled with required schedules
 
 ### STOP & COMMIT
 
@@ -362,31 +362,31 @@ git commit -m "feat: schema, migrations, seeds, RLS, storage buckets, pg_cron se
 
 ---
 
-## 3. API Core, Auth Session Handling, Rate Limiting, and Middleware
+## 3. API Core, Auth Session Handling, Rate Limiting, and Middleware — [COMPLETED]
 
-**Milestone:** M2 · **Estimated Effort:** 2–3 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 3 PR merged to `main`
+**Milestone:** M2 (Completed) · **Estimated Effort:** 2–3 days · **Branch:** `feature/gar-m2-booking-engine` · **Status:** Merged to `develop`
 
 ### Step Checklist
 
-- [ ] Build composable API handler pipeline with method guards and schema validation
-- [ ] Add auth session extraction and role claim parsing for Supabase auth
-- [ ] Add Vercel KV rate limiting adapter with in-memory local development fallback
-- [ ] Add reCAPTCHA verifier with minimum score 0.5 threshold
-- [ ] Add CSRF and security header middleware (HSTS, CSP, SameSite cookies)
-- [ ] Add pagination helper with `?page=1&limit=20` and `X-Total-Count`, `X-Total-Pages` headers
+- [x] Build composable API handler pipeline with method guards and schema validation
+- [x] Add auth session extraction and role claim parsing for Supabase auth
+- [x] Add Vercel KV rate limiting adapter with in-memory local development fallback
+- [x] Add reCAPTCHA verifier with minimum score 0.5 threshold
+- [x] Add CSRF and security header middleware (HSTS, CSP, SameSite cookies)
+- [x] Add pagination helper with `?page=1&limit=20` and `X-Total-Count`, `X-Total-Pages` headers
 
 ### Explicit File Paths
 
-- [ ] src/pages/api/v1/_shared/handler.ts
-- [ ] src/pages/api/v1/_shared/auth.ts
-- [ ] src/pages/api/v1/_shared/rate-limit.ts
-- [ ] src/pages/api/v1/_shared/recaptcha.ts
-- [ ] src/pages/api/v1/_shared/pagination.ts
-- [ ] src/pages/api/v1/_shared/audit-log.ts
-- [ ] src/lib/supabase/server.ts
-- [ ] src/lib/supabase/client.ts
-- [ ] src/lib/security/csrf.ts
-- [ ] src/lib/security/headers.ts
+- [x] src/pages/api/v1/_shared/handler.ts
+- [x] src/pages/api/v1/_shared/auth.ts
+- [x] src/pages/api/v1/_shared/rate-limit.ts
+- [x] src/pages/api/v1/_shared/recaptcha.ts
+- [x] src/pages/api/v1/_shared/pagination.ts
+- [x] src/pages/api/v1/_shared/audit-log.ts
+- [x] src/lib/supabase/server.ts
+- [x] src/lib/supabase/client.ts
+- [x] src/lib/security/csrf.ts
+- [x] src/lib/security/headers.ts
 
 ### Critical Code Block: middleware wrappers
 
@@ -430,12 +430,12 @@ npm run test
 
 ### Verification Checklist
 
-- [ ] Wrapper enforces method guards and schema validation
-- [ ] Role guard blocks unauthorized roles
-- [ ] Rate limiter throttles auth/contact/events/newsletter/notify endpoints
-- [ ] CSRF middleware rejects invalid mutating requests
-- [ ] Security headers include HSTS and CSP
-- [ ] Pagination headers present on paginated list endpoints
+- [x] Wrapper enforces method guards and schema validation
+- [x] Role guard blocks unauthorized roles
+- [x] Rate limiter throttles auth/contact/events/newsletter/notify endpoints
+- [x] CSRF middleware rejects invalid mutating requests
+- [x] Security headers include HSTS and CSP
+- [x] Pagination headers present on paginated list endpoints
 
 ### STOP & COMMIT
 
@@ -446,41 +446,41 @@ git commit -m "feat: API middleware stack, auth context, security primitives"
 
 ---
 
-## 4. Authentication and User Profile Vertical Slice
+## 4. Authentication and User Profile Vertical Slice — [COMPLETED]
 
-**Milestone:** M2 · **Estimated Effort:** 4–5 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 4 PR merged to `main`
+**Milestone:** M2 (Completed) · **Estimated Effort:** 4–5 days · **Branch:** `feature/gar-m2-booking-engine` · **Status:** Merged to `develop`
 
 ### Step Checklist
 
-- [ ] Build auth pages (`/register`, `/login`, `/forgot-password`, `/reset-password`, `/verify-email`)
-- [ ] Implement email verification interstitial page (`/verify-email`) with resend link
-- [ ] Implement login `?redirect={url}` query parameter support
-- [ ] Implement all auth API endpoints including authenticated password change (`PUT /api/v1/auth/me/password`)
-- [ ] Enforce password policy: minimum 8 chars, 1 uppercase, 1 lowercase, 1 digit
-- [ ] Implement login lockout: reCAPTCHA after 3 failures, account lock for 15 minutes after 5 failures
-- [ ] Add resend verification rate limit (max 1 per 60 seconds per email)
-- [ ] Enforce NDPR consent checkbox on registration linking to `/privacy`
-- [ ] Configure Supabase Auth bcrypt cost factor ≥ 12
-- [ ] Exclude social login from v1.0 (email/password only)
+- [x] Build auth pages (`/register`, `/login`, `/forgot-password`, `/reset-password`, `/verify-email`)
+- [x] Implement email verification interstitial page (`/verify-email`) with resend link
+- [x] Implement login `?redirect={url}` query parameter support
+- [x] Implement all auth API endpoints including authenticated password change (`PUT /api/v1/auth/me/password`)
+- [x] Enforce password policy: minimum 8 chars, 1 uppercase, 1 lowercase, 1 digit
+- [x] Implement login lockout: reCAPTCHA after 3 failures, account lock for 15 minutes after 5 failures
+- [x] Add resend verification rate limit (max 1 per 60 seconds per email)
+- [x] Enforce NDPR consent checkbox on registration linking to `/privacy`
+- [x] Configure Supabase Auth bcrypt cost factor ≥ 12
+- [x] Exclude social login from v1.0 (email/password only)
 
 ### Explicit File Paths
 
-- [ ] src/pages/register.tsx
-- [ ] src/pages/login.tsx
-- [ ] src/pages/forgot-password.tsx
-- [ ] src/pages/reset-password.tsx
-- [ ] src/pages/verify-email.tsx
-- [ ] src/pages/api/v1/auth/register.ts
-- [ ] src/pages/api/v1/auth/login.ts
-- [ ] src/pages/api/v1/auth/refresh.ts
-- [ ] src/pages/api/v1/auth/logout.ts
-- [ ] src/pages/api/v1/auth/forgot-password.ts
-- [ ] src/pages/api/v1/auth/reset-password.ts
-- [ ] src/pages/api/v1/auth/me.ts
-- [ ] src/pages/api/v1/auth/me/password.ts
-- [ ] src/pages/api/v1/auth/resend-verification.ts
-- [ ] src/features/auth/schemas.ts
-- [ ] src/features/auth/components/*
+- [x] src/pages/register.tsx
+- [x] src/pages/login.tsx
+- [x] src/pages/forgot-password.tsx
+- [x] src/pages/reset-password.tsx
+- [x] src/pages/verify-email.tsx
+- [x] src/pages/api/v1/auth/register.ts
+- [x] src/pages/api/v1/auth/login.ts
+- [x] src/pages/api/v1/auth/refresh.ts
+- [x] src/pages/api/v1/auth/logout.ts
+- [x] src/pages/api/v1/auth/forgot-password.ts
+- [x] src/pages/api/v1/auth/reset-password.ts
+- [x] src/pages/api/v1/auth/me.ts
+- [x] src/pages/api/v1/auth/me/password.ts
+- [x] src/pages/api/v1/auth/resend-verification.ts
+- [x] src/features/auth/schemas.ts
+- [x] src/features/auth/components/*
 
 ### Critical Code Block: auth schema
 
@@ -533,12 +533,12 @@ npm run typecheck
 
 ### Verification Checklist
 
-- [ ] Register flow creates account and sends verification email via SendGrid
-- [ ] `/verify-email` page displays expected interstitial and resend action
-- [ ] Login supports `?redirect=` and returns user to target route
-- [ ] Account locks after 5 failed attempts for 15 minutes; reCAPTCHA enforced after 3
-- [ ] `PUT /api/v1/auth/me/password` validates current password and updates hash
-- [ ] Resend verification rate limit enforced (1 per 60s)
+- [x] Register flow creates account and sends verification email via SendGrid
+- [x] `/verify-email` page displays expected interstitial and resend action
+- [x] Login supports `?redirect=` and returns user to target route
+- [x] Account locks after 5 failed attempts for 15 minutes; reCAPTCHA enforced after 3
+- [x] `PUT /api/v1/auth/me/password` validates current password and updates hash
+- [x] Resend verification rate limit enforced (1 per 60s)
 
 ### STOP & COMMIT
 
@@ -764,42 +764,42 @@ git commit -m "feat: rooms catalog, buildings endpoint, notify-me"
 
 ---
 
-## 8. Booking Engine Backend (Availability, Pricing, Lifecycle)
+## 8. Booking Engine Backend (Availability, Pricing, Lifecycle) — [COMPLETED]
 
-**Milestone:** M2 · **Estimated Effort:** 8–10 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 8 PR merged to `main`
+**Milestone:** M2 (Completed) · **Estimated Effort:** 8–10 days · **Branch:** `feature/gar-m2-booking-engine` · **Status:** Merged to `develop`
 
 ### Step Checklist
 
-- [ ] Implement availability checks and calendar availability endpoint (`/api/v1/availability/calendar`)
-- [ ] Implement full pricing engine per SRS 4.3:
+- [x] Implement availability checks and calendar availability endpoint (`/api/v1/availability/calendar`)
+- [x] Implement full pricing engine per SRS 4.3:
   - Check SeasonalPrice records per night (latest takes precedence if overlapping), fallback to basePrice
   - Formula: `SUM(applicable_nightly_rate × quantity)` = subtotal
   - Tax = `subtotal × tax_rate` (default 7.5% VAT)
   - Percentage deal discount: applied ONLY to subtotal of applicable room types
   - Fixed deal discount: subtracted from full subtotal
   - Total = `subtotal − deal_discount + tax`
-- [ ] Implement booking reference generator: alphanumeric, 8 characters, prefixed with `GAR-`
-- [ ] Implement transactional concurrency controls (`SELECT ... FOR UPDATE` on room units)
-- [ ] Implement booking lifecycle state machine (Pending -> Confirmed -> Checked-In -> Checked-Out; Pending -> Cancelled; Confirmed -> Cancelled; Confirmed -> No-Show)
-- [ ] Implement no-show policy guard: admin can mark No-Show only starting 24h after scheduled check-in time (14:00 on check-in date); no refund for no-shows
-- [ ] Implement admin-initiated booking API path: creates Confirmed bookings with null `userId` and cash/POS payment metadata
-- [ ] Implement cancellation refund rules: >=72h full refund, 24–72h 50%, <24h no refund
-- [ ] Automatically trigger booking confirmation email with attached PDF on status change to Confirmed
+- [x] Implement booking reference generator: alphanumeric, 8 characters, prefixed with `GAR-`
+- [x] Implement transactional concurrency controls (`SELECT ... FOR UPDATE` on room units)
+- [x] Implement booking lifecycle state machine (Pending -> Confirmed -> Checked-In -> Checked-Out; Pending -> Cancelled; Confirmed -> Cancelled; Confirmed -> No-Show)
+- [x] Implement no-show policy guard: admin can mark No-Show only starting 24h after scheduled check-in time (14:00 on check-in date); no refund for no-shows
+- [x] Implement admin-initiated booking API path: creates Confirmed bookings with null `userId` and cash/POS payment metadata
+- [x] Implement cancellation refund rules: >=72h full refund, 24–72h 50%, <24h no refund
+- [x] Automatically trigger booking confirmation email with attached PDF on status change to Confirmed
 
 ### Explicit File Paths
 
-- [ ] src/pages/api/v1/availability/index.ts
-- [ ] src/pages/api/v1/availability/calendar.ts
-- [ ] src/pages/api/v1/bookings/index.ts
-- [ ] src/pages/api/v1/bookings/[ref].ts
-- [ ] src/pages/api/v1/bookings/[ref]/cancel.ts
-- [ ] src/pages/api/v1/bookings/[ref]/status.ts
-- [ ] src/pages/api/v1/bookings/[ref]/confirmation.ts
-- [ ] src/pages/api/v1/bookings/[ref]/pdf.ts
-- [ ] src/pages/api/v1/deals/validate/[code].ts
-- [ ] src/domain/booking/*
-- [ ] src/domain/booking/state-machine.ts
-- [ ] src/services/pricing/*
+- [x] src/pages/api/v1/availability/index.ts
+- [x] src/pages/api/v1/availability/calendar.ts
+- [x] src/pages/api/v1/bookings/index.ts
+- [x] src/pages/api/v1/bookings/[ref].ts
+- [x] src/pages/api/v1/bookings/[ref]/cancel.ts
+- [x] src/pages/api/v1/bookings/[ref]/status.ts
+- [x] src/pages/api/v1/bookings/[ref]/confirmation.ts
+- [x] src/pages/api/v1/bookings/[ref]/pdf.ts
+- [x] src/pages/api/v1/deals/validate/[code].ts
+- [x] src/domain/booking/*
+- [x] src/domain/booking/state-machine.ts
+- [x] src/services/pricing/*
 
 ### Critical Code Block: booking state machine
 
@@ -843,13 +843,13 @@ npm run typecheck
 
 ### Verification Checklist
 
-- [ ] Pricing formula produces correct deterministic totals for seasonal and multi-room bookings
-- [ ] Deal percentage discount applies only to applicable room subset
-- [ ] Deal fixed discount subtracts from full subtotal
-- [ ] Concurrent bookings for the last available unit do not double-book
-- [ ] No-show transition rejected before 24h post check-in time
-- [ ] Admin booking endpoint accepts cash/POS and sets status=confirmed directly
-- [ ] Confirmation email sent with generated PDF attachment
+- [x] Pricing formula produces correct deterministic totals for seasonal and multi-room bookings
+- [x] Deal percentage discount applies only to applicable room subset
+- [x] Deal fixed discount subtracts from full subtotal
+- [x] Concurrent bookings for the last available unit do not double-book
+- [x] No-show transition rejected before 24h post check-in time
+- [x] Admin booking endpoint accepts cash/POS and sets status=confirmed directly
+- [x] Confirmation email sent with generated PDF attachment
 
 ### STOP & COMMIT
 
@@ -860,30 +860,30 @@ git commit -m "feat: booking APIs, pricing engine, state machine, no-show, admin
 
 ---
 
-## 9. Payment Integration and Webhook Security
+## 9. Payment Integration and Webhook Security — [COMPLETED]
 
-**Milestone:** M2 · **Estimated Effort:** 4–6 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 9 PR merged to `main`
+**Milestone:** M2 (Completed) · **Estimated Effort:** 4–6 days · **Branch:** `feature/gar-m2-booking-engine` · **Status:** Merged to `develop`
 
 ### Step Checklist
 
-- [ ] Implement Paystack payment initiation and verification
-- [ ] Implement Paystack webhook endpoint with raw-body HMAC-SHA512 verification (`bodyParser: false`)
-- [ ] Add idempotency and replay protection for webhook processing
-- [ ] Implement Paystack Refunds API integration (`src/services/payments/refund.ts`) supporting full and partial refunds
-- [ ] Handle refund webhook completion events and send refund notification emails (initiation + completion)
-- [ ] Handle expired pending booking race condition: if payment succeeds for an expired booking, auto-trigger full refund and notify guest
-- [ ] Implement gateway downtime graceful degradation: display WhatsApp fallback message and extend booking hold window to 2 hours (instead of 30 mins)
+- [x] Implement Paystack payment initiation and verification
+- [x] Implement Paystack webhook endpoint with raw-body HMAC-SHA512 verification (`bodyParser: false`)
+- [x] Add idempotency and replay protection for webhook processing
+- [x] Implement Paystack Refunds API integration (`src/services/payments/refund.ts`) supporting full and partial refunds
+- [x] Handle refund webhook completion events and send refund notification emails (initiation + completion)
+- [x] Handle expired pending booking race condition: if payment succeeds for an expired booking, auto-trigger full refund and notify guest
+- [x] Implement gateway downtime graceful degradation: display WhatsApp fallback message and extend booking hold window to 2 hours (instead of 30 mins)
 
 ### Explicit File Paths
 
-- [ ] src/pages/api/v1/payments/initiate.ts
-- [ ] src/pages/api/v1/payments/verify.ts
-- [ ] src/pages/api/v1/payments/webhook.ts
-- [ ] src/pages/api/v1/payments/[id].ts
-- [ ] src/services/payments/paystack.ts
-- [ ] src/services/payments/signature.ts
-- [ ] src/services/payments/refund.ts
-- [ ] src/domain/payment/*
+- [x] src/pages/api/v1/payments/initiate.ts
+- [x] src/pages/api/v1/payments/verify.ts
+- [x] src/pages/api/v1/payments/webhook.ts
+- [x] src/pages/api/v1/payments/[id].ts
+- [x] src/services/payments/paystack.ts
+- [x] src/services/payments/signature.ts
+- [x] src/services/payments/refund.ts
+- [x] src/domain/payment/*
 
 ### Critical Code Block: webhook raw-body config
 
@@ -936,11 +936,11 @@ npm run typecheck
 
 ### Verification Checklist
 
-- [ ] Webhook rejects tampered signatures with 401 Unauthorized
-- [ ] `bodyParser: false` set on webhook route
-- [ ] Expired pending booking with late payment triggers automatic refund via Paystack Refunds API
-- [ ] Refund webhook updates Payment status to `refunded` or `partially_refunded`
-- [ ] Gateway downtime activates WhatsApp booking CTA and extends inventory hold to 2 hours
+- [x] Webhook rejects tampered signatures with 401 Unauthorized
+- [x] `bodyParser: false` set on webhook route
+- [x] Expired pending booking with late payment triggers automatic refund via Paystack Refunds API
+- [x] Refund webhook updates Payment status to `refunded` or `partially_refunded`
+- [x] Gateway downtime activates WhatsApp booking CTA and extends inventory hold to 2 hours
 
 ### STOP & COMMIT
 
@@ -951,29 +951,29 @@ git commit -m "feat: payment integration, secure webhook, refunds, race handling
 
 ---
 
-## 10. Booking Wizard Frontend and Confirmation Experience
+## 10. Booking Wizard Frontend and Confirmation Experience — [COMPLETED]
 
-**Milestone:** M2 · **Estimated Effort:** 6–8 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 10 PR merged to `main`
+**Milestone:** M2 (Completed) · **Estimated Effort:** 6–8 days · **Branch:** `feature/gar-m2-booking-engine` · **Status:** Merged to `develop`
 
 ### Step Checklist
 
-- [ ] Implement 4-step booking wizard (`src/pages/booking.tsx`):
+- [x] Implement 4-step booking wizard (`src/pages/booking.tsx`):
   - Step 1: Dates (past blocked, 1–30 nights) and guests (adults 1–10, children 0–10)
   - Step 2: Room selection with campus/tier filter, per-night seasonal rates, multi-room support (under-construction rooms excluded)
   - Step 3: Guest details form with +234 phone validation, special requests (max 500 chars)
   - Step 4: Summary with per-section Edit links and Paystack inline checkout
-- [ ] Implement query preselection: `?room={id}` preselects room in Step 2; `?deal={code}` auto-applies discount, filters rooms, displays banner
-- [ ] Implement responsive booking summary: sticky sidebar on desktop, bottom sheet on mobile
-- [ ] Implement confirmation screen with booking reference, PDF download, resend email, WhatsApp CTA, and account link
-- [ ] Implement payment gateway downtime fallback UI ("Online payment temporarily unavailable. Please contact us on WhatsApp")
+- [x] Implement query preselection: `?room={id}` preselects room in Step 2; `?deal={code}` auto-applies discount, filters rooms, displays banner
+- [x] Implement responsive booking summary: sticky sidebar on desktop, bottom sheet on mobile
+- [x] Implement confirmation screen with booking reference, PDF download, resend email, WhatsApp CTA, and account link
+- [x] Implement payment gateway downtime fallback UI ("Online payment temporarily unavailable. Please contact us on WhatsApp")
 
 ### Explicit File Paths
 
-- [ ] src/pages/booking.tsx
-- [ ] src/features/booking/context/BookingWizardContext.tsx
-- [ ] src/features/booking/components/*
-- [ ] src/features/booking/schemas.ts
-- [ ] src/features/booking/hooks/*
+- [x] src/pages/booking.tsx
+- [x] src/features/booking/context/BookingWizardContext.tsx
+- [x] src/features/booking/components/*
+- [x] src/features/booking/schemas.ts
+- [x] src/features/booking/hooks/*
 
 ### Commands
 
@@ -985,12 +985,12 @@ npm run test
 
 ### Verification Checklist
 
-- [ ] Step indicator shows "Step X of 4" across mobile and desktop
-- [ ] Query preselection works for `?room=` and `?deal=`
-- [ ] Nigerian phone number validation (+234 format) strictly enforced
-- [ ] Under-construction rooms are never selectable in wizard
-- [ ] Confirmation screen renders reference number, PDF download, and WhatsApp CTA
-- [ ] Gateway outage correctly displays fallback messaging
+- [x] Step indicator shows "Step X of 4" across mobile and desktop
+- [x] Query preselection works for `?room=` and `?deal=`
+- [x] Nigerian phone number validation (+234 format) strictly enforced
+- [x] Under-construction rooms are never selectable in wizard
+- [x] Confirmation screen renders reference number, PDF download, and WhatsApp CTA
+- [x] Gateway outage correctly displays fallback messaging
 
 ### STOP & COMMIT
 
@@ -1001,31 +1001,31 @@ git commit -m "feat: booking wizard UI, confirmation UX, payment fallback handli
 
 ---
 
-## 11. Guest Account and Booking Management
+## 11. Guest Account and Booking Management — [COMPLETED]
 
-**Milestone:** M2 · **Estimated Effort:** 4–5 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 11 PR merged to `main` — **Completes Milestone 2**
+**Milestone:** M2 (Completed) · **Estimated Effort:** 4–5 days · **Branch:** `feature/gar-m2-booking-engine` · **Status:** Merged to `develop` — **Completes Milestone 2**
 
 ### Step Checklist
 
-- [ ] Build authenticated guest account pages (`/account`, `/account/bookings`, `/account/profile`) with unauthenticated redirect to `/login?redirect=/account`
-- [ ] Implement booking list with color-coded status badges: Confirmed (green), Pending (yellow), Cancelled (red), Checked-In (blue), Checked-Out (grey)
-- [ ] Implement actions per booking state:
+- [x] Build authenticated guest account pages (`/account`, `/account/bookings`, `/account/profile`) with unauthenticated redirect to `/login?redirect=/account`
+- [x] Implement booking list with color-coded status badges: Confirmed (green), Pending (yellow), Cancelled (red), Checked-In (blue), Checked-Out (grey)
+- [x] Implement actions per booking state:
   - Pending: "Complete Payment", "Cancel Booking"
   - Confirmed: "Cancel Booking", "Download Confirmation (PDF)", "Resend Confirmation Email", "Contact Us on WhatsApp"
   - Cancelled: "Refund Status" (shows amount and 5–10 day timeline)
   - Checked-Out: "Download Receipt (PDF)" (shows payment method & settlement details)
-- [ ] Implement cancellation modal with server-side refund calculation preview
-- [ ] Implement Profile Settings: edit name and phone, read-only email with change notice, and Change Password section calling `PUT /api/v1/auth/me/password`
+- [x] Implement cancellation modal with server-side refund calculation preview
+- [x] Implement Profile Settings: edit name and phone, read-only email with change notice, and Change Password section calling `PUT /api/v1/auth/me/password`
 
 ### Explicit File Paths
 
-- [ ] src/pages/account/index.tsx
-- [ ] src/pages/account/bookings.tsx
-- [ ] src/pages/account/profile.tsx
-- [ ] src/features/account/*
-- [ ] src/pages/api/v1/bookings/index.ts
-- [ ] src/pages/api/v1/auth/me.ts
-- [ ] src/pages/api/v1/auth/me/password.ts
+- [x] src/pages/account/index.tsx
+- [x] src/pages/account/bookings.tsx
+- [x] src/pages/account/profile.tsx
+- [x] src/features/account/*
+- [x] src/pages/api/v1/bookings/index.ts
+- [x] src/pages/api/v1/auth/me.ts
+- [x] src/pages/api/v1/auth/me/password.ts
 
 ### Commands
 
@@ -1037,12 +1037,12 @@ npm run typecheck
 
 ### Verification Checklist
 
-- [ ] Unauthenticated requests redirect to `/login?redirect=/account`
-- [ ] Status badges match required color specifications
-- [ ] Cancellation modal shows preview of refund amount (100% / 50% / 0%) before confirmation
-- [ ] Profile change password validates current password and updates via API
-- [ ] RLS prevents users from viewing other guests' bookings
-- [ ] M2 Exit Criteria verified: full booking lifecycle, Paystack sandbox payment, PDF confirmation, guest account management working
+- [x] Unauthenticated requests redirect to `/login?redirect=/account`
+- [x] Status badges match required color specifications
+- [x] Cancellation modal shows preview of refund amount (100% / 50% / 0%) before confirmation
+- [x] Profile change password validates current password and updates via API
+- [x] RLS prevents users from viewing other guests' bookings
+- [x] M2 Exit Criteria verified: full booking lifecycle, Paystack sandbox payment, PDF confirmation, guest account management working
 
 ### STOP & COMMIT
 

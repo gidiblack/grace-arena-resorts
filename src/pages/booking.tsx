@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/router";
 import {
   Box,
@@ -15,7 +15,8 @@ import {
 } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
 import Button from "@/components/ui/button";
-import { ROUTES } from "@/constants/ROUTES";
+import BookingConfirmationView from "@/features/booking/components/BookingConfirmationView";
+import { step1DatesGuestsSchema, step3GuestSchema } from "@/features/booking/schemas";
 
 // Assets
 import suite from "@/assets/suite.jpg";
@@ -29,14 +30,14 @@ import {
   FaUserFriends,
   FaBed,
   FaCreditCard,
-  FaCheckCircle,
   FaTrash,
   FaWhatsapp,
   FaPray,
   FaPlus,
   FaMinus,
   FaShieldAlt,
-  FaPrint,
+  FaTag,
+  FaExclamationTriangle,
 } from "react-icons/fa";
 
 interface AvailableRoom {
@@ -47,9 +48,11 @@ interface AvailableRoom {
   pricePerNight: number;
   maxGuests: number;
   image: string;
+  totalUnits?: number;
+  status?: string;
 }
 
-const AVAILABLE_ROOMS: AvailableRoom[] = [
+const DEFAULT_ROOMS: AvailableRoom[] = [
   {
     id: "elysian-fountain-standard",
     name: "Standard Room",
@@ -58,6 +61,7 @@ const AVAILABLE_ROOMS: AvailableRoom[] = [
     pricePerNight: 60000,
     maxGuests: 2,
     image: suite2.src,
+    status: "available",
   },
   {
     id: "elysian-fountain-deluxe",
@@ -67,6 +71,7 @@ const AVAILABLE_ROOMS: AvailableRoom[] = [
     pricePerNight: 70000,
     maxGuests: 2,
     image: suite.src,
+    status: "available",
   },
   {
     id: "elysian-oasis-deluxe-suite",
@@ -76,6 +81,7 @@ const AVAILABLE_ROOMS: AvailableRoom[] = [
     pricePerNight: 80000,
     maxGuests: 2,
     image: suite2.src,
+    status: "available",
   },
   {
     id: "elysian-oasis-premium-suite",
@@ -85,6 +91,7 @@ const AVAILABLE_ROOMS: AvailableRoom[] = [
     pricePerNight: 90000,
     maxGuests: 2,
     image: suite.src,
+    status: "available",
   },
   {
     id: "elysian-cabana-premium",
@@ -94,6 +101,7 @@ const AVAILABLE_ROOMS: AvailableRoom[] = [
     pricePerNight: 120000,
     maxGuests: 2,
     image: elysian.src,
+    status: "available",
   },
   {
     id: "village-executive-hut",
@@ -103,8 +111,17 @@ const AVAILABLE_ROOMS: AvailableRoom[] = [
     pricePerNight: 100000,
     maxGuests: 2,
     image: hut.src,
+    status: "available",
   },
 ];
+
+interface AppliedDeal {
+  code: string;
+  title: string;
+  discountType: "percentage" | "fixed";
+  discountValue: number;
+  applicableRoomTypeIds?: string[];
+}
 
 export default function BookingPage() {
   const router = useRouter();
@@ -123,7 +140,9 @@ export default function BookingPage() {
   const [childrenCount, setChildrenCount] = useState<number>(0);
 
   // Step 2: Selected Rooms
+  const [availableRooms, setAvailableRooms] = useState<AvailableRoom[]>(DEFAULT_ROOMS);
   const [selectedRooms, setSelectedRooms] = useState<{ room: AvailableRoom; count: number }[]>([]);
+  const [campusFilter, setCampusFilter] = useState<string>("all");
 
   // Step 3: Guest Information
   const [guestName, setGuestName] = useState("");
@@ -131,287 +150,532 @@ export default function BookingPage() {
   const [guestPhone, setGuestPhone] = useState("+234");
   const [prayerHutInterest, setPrayerHutInterest] = useState(true);
   const [specialRequests, setSpecialRequests] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
-  // Step 4: Payment simulation state
+  // Deals / Discounts
+  const [dealInputCode, setDealInputCode] = useState("");
+  const [appliedDeal, setAppliedDeal] = useState<AppliedDeal | null>(null);
+  const [dealMessage, setDealMessage] = useState<string | null>(null);
+  const [dealError, setDealError] = useState<string | null>(null);
+
+  // Step 4: Payment & Fallback State
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [bookingRef, setBookingRef] = useState("");
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [isGatewayDowntimeActive, setIsGatewayDowntimeActive] = useState(false);
 
-  // Auto-calculate check-out date
-  const checkOutDate = (() => {
+  // Confirmation state
+  const [confirmedBookingData, setConfirmedBookingData] = useState<{
+    reference: string;
+    guestName: string;
+    guestEmail: string;
+    checkInDate: string;
+    checkOutDate: string;
+    nights: number;
+    total: number;
+  } | null>(null);
+
+  // Check-out date calculation
+  const checkOutDate = useMemo(() => {
     if (!checkInDate) return "";
     const date = new Date(checkInDate);
     date.setDate(date.getDate() + nights);
     return date.toISOString().split("T")[0];
-  })();
+  }, [checkInDate, nights]);
 
-  // Pre-select room if query parameter exists
+  // Load authenticated user profile if logged in
+  useEffect(() => {
+    async function loadCurrentUser() {
+      try {
+        const res = await fetch("/api/v1/auth/me");
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            setGuestName((prev) => prev || json.data.fullName || "");
+            setGuestEmail((prev) => prev || json.data.email || "");
+            if (json.data.phone) {
+              setGuestPhone(json.data.phone);
+            }
+          }
+        }
+      } catch {
+        // Guest browsing anonymously
+      }
+    }
+    loadCurrentUser();
+  }, []);
+
+  // Fetch live availability from API
+  useEffect(() => {
+    let isMounted = true;
+    async function load() {
+      try {
+        const res = await fetch(`/api/v1/availability?checkIn=${checkInDate}&nights=${nights}`);
+        if (!isMounted) return;
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+            // Filter out under-construction rooms
+            const activeOnly = json.data
+              .filter((r: { status?: string }) => r.status !== "under_construction")
+              .map(
+                (r: {
+                  id: string;
+                  name: string;
+                  tier: string;
+                  effective_nightly_price?: number;
+                  base_price?: number;
+                  max_guests?: number;
+                  total_units?: number;
+                  status?: string;
+                }) => {
+                  const matchedFallback = DEFAULT_ROOMS.find((dr) => dr.id === r.id);
+                  return {
+                    id: r.id,
+                    name: r.name,
+                    campusTitle: r.id.startsWith("village") ? "GAR Village" : "GAR Elysian",
+                    tier: r.tier.charAt(0).toUpperCase() + r.tier.slice(1),
+                    pricePerNight: r.effective_nightly_price || r.base_price || 60000,
+                    maxGuests: r.max_guests || 2,
+                    image: matchedFallback?.image || suite.src,
+                    totalUnits: r.total_units || 5,
+                    status: r.status || "available",
+                  };
+                }
+              );
+
+            if (activeOnly.length > 0 && isMounted) {
+              setAvailableRooms(activeOnly);
+            }
+          }
+        }
+      } catch {
+        // Fallback to initial catalogue if backend unavailable
+      }
+    }
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, [checkInDate, nights]);
+
+  // Query pre-selection: ?room={id}
   useEffect(() => {
     if (!router.isReady || !router.query.room) return;
-    const match = AVAILABLE_ROOMS.find((r) => r.id === router.query.room);
-    if (match && selectedRooms.length === 0) {
-      const timer = setTimeout(() => {
-        setSelectedRooms([{ room: match, count: 1 }]);
-        setCurrentStep(2);
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-  }, [router.isReady, router.query.room, selectedRooms.length]);
+    const roomId = router.query.room as string;
+    const timer = setTimeout(() => {
+      setSelectedRooms((prev) => {
+        if (prev.length > 0) return prev;
+        const match = availableRooms.find((r) => r.id === roomId);
+        return match ? [{ room: match, count: 1 }] : prev;
+      });
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [router.isReady, router.query.room, availableRooms]);
 
-  // Toggle or add room
-  const handleAddRoom = (room: AvailableRoom) => {
-    const existing = selectedRooms.find((r) => r.room.id === room.id);
-    if (existing) {
-      setSelectedRooms(
-        selectedRooms.map((r) => (r.room.id === room.id ? { ...r, count: r.count + 1 } : r))
-      );
-    } else {
-      setSelectedRooms([...selectedRooms, { room, count: 1 }]);
+  // Query pre-selection: ?deal={code}
+  const validateDeal = useCallback(async (code: string) => {
+    if (!code) return;
+    setDealError(null);
+    setDealMessage(null);
+    try {
+      const res = await fetch(`/api/v1/deals/validate/${encodeURIComponent(code)}`);
+      const json = await res.json();
+      if (res.ok && json.success) {
+        const d = json.data;
+        setAppliedDeal({
+          code: d.code,
+          title: d.title,
+          discountType: d.discountType,
+          discountValue: d.discountValue,
+          applicableRoomTypeIds: d.applicableRoomTypeIds,
+        });
+        setDealMessage(
+          `Promo "${d.code}" applied: ${d.discountType === "percentage" ? `${d.discountValue}% off` : `₦${d.discountValue.toLocaleString()} off`}`
+        );
+      } else {
+        setDealError(json.error?.message || "Invalid promo code");
+      }
+    } catch {
+      setDealError("Unable to validate promo code at this time.");
     }
+  }, []);
+
+  useEffect(() => {
+    if (!router.isReady || !router.query.deal) return;
+    const code = router.query.deal as string;
+    let isCancelled = false;
+    async function loadDeal() {
+      await validateDeal(code);
+      if (!isCancelled) {
+        setDealInputCode(code);
+      }
+    }
+    loadDeal();
+    return () => {
+      isCancelled = true;
+    };
+  }, [router.isReady, router.query.deal, validateDeal]);
+
+  // Check if returning from Paystack callback: ?confirmed=true&reference=...
+  useEffect(() => {
+    if (!router.isReady) return;
+    const { confirmed, reference } = router.query;
+    if (confirmed === "true" && typeof reference === "string" && reference.length > 0) {
+      const refStr: string = reference;
+      async function loadConfirmation() {
+        try {
+          const res = await fetch(
+            `/api/v1/payments/verify?reference=${encodeURIComponent(refStr)}`
+          );
+          const json = await res.json();
+          if (res.ok && json.success) {
+            setConfirmedBookingData({
+              reference: refStr,
+              guestName: guestName || "Valued Guest",
+              guestEmail: guestEmail || "guest@example.com",
+              checkInDate,
+              checkOutDate,
+              nights,
+              total: json.data?.total || 0,
+            });
+            setCurrentStep(5);
+          }
+        } catch {
+          // If verify network fails, load basic reference
+          setConfirmedBookingData({
+            reference: refStr,
+            guestName: guestName || "Valued Guest",
+            guestEmail: guestEmail || "guest@example.com",
+            checkInDate,
+            checkOutDate,
+            nights,
+            total: 0,
+          });
+          setCurrentStep(5);
+        }
+      }
+      loadConfirmation();
+    }
+  }, [router.isReady, router.query, guestName, guestEmail, checkInDate, checkOutDate, nights]);
+
+  // Pricing calculation aligned with GAR-SRS Section 4.3
+  const pricing = useMemo(() => {
+    const rawSubtotal = selectedRooms.reduce(
+      (sum, { room, count }) => sum + room.pricePerNight * count * nights,
+      0
+    );
+
+    let dealDiscount = 0;
+    if (appliedDeal) {
+      if (appliedDeal.discountType === "percentage") {
+        let applicableSubtotal = 0;
+        selectedRooms.forEach(({ room, count }) => {
+          if (
+            !appliedDeal.applicableRoomTypeIds ||
+            appliedDeal.applicableRoomTypeIds.length === 0 ||
+            appliedDeal.applicableRoomTypeIds.includes(room.id)
+          ) {
+            applicableSubtotal += room.pricePerNight * count * nights;
+          }
+        });
+        dealDiscount = Math.round(applicableSubtotal * (appliedDeal.discountValue / 100));
+      } else {
+        dealDiscount = Math.min(rawSubtotal, appliedDeal.discountValue);
+      }
+    }
+
+    const discountedSubtotal = Math.max(0, rawSubtotal - dealDiscount);
+    const tax = Math.round(discountedSubtotal * 0.075); // 7.5% Nigerian VAT
+    const total = discountedSubtotal + tax;
+
+    return {
+      subtotal: rawSubtotal,
+      dealDiscount,
+      tax,
+      total,
+    };
+  }, [selectedRooms, nights, appliedDeal]);
+
+  // Room quantity controls
+  const handleAddRoom = (room: AvailableRoom) => {
+    setSelectedRooms((prev) => {
+      const existing = prev.find((item) => item.room.id === room.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.room.id === room.id ? { ...item, count: item.count + 1 } : item
+        );
+      }
+      return [...prev, { room, count: 1 }];
+    });
   };
 
   const handleRemoveRoom = (roomId: string) => {
-    setSelectedRooms(selectedRooms.filter((r) => r.room.id !== roomId));
+    setSelectedRooms((prev) => {
+      const existing = prev.find((item) => item.room.id === roomId);
+      if (existing && existing.count > 1) {
+        return prev.map((item) =>
+          item.room.id === roomId ? { ...item, count: item.count - 1 } : item
+        );
+      }
+      return prev.filter((item) => item.room.id !== roomId);
+    });
   };
 
-  // Pricing calculations (Formula in SRS 3.3)
-  const subtotal = selectedRooms.reduce(
-    (acc, item) => acc + item.room.pricePerNight * item.count * nights,
-    0
-  );
-  const vatRate = 0.075; // 7.5% Nigerian VAT
-  const vatAmount = subtotal * vatRate;
-  const totalAmount = subtotal + vatAmount;
+  const handleClearRoom = (roomId: string) => {
+    setSelectedRooms((prev) => prev.filter((item) => item.room.id !== roomId));
+  };
 
-  // Handle Complete Booking
-  const handleSimulatePayment = () => {
+  // Step 3 validation
+  const validateGuestDetails = () => {
+    setPhoneError(null);
+    const result = step3GuestSchema.safeParse({
+      fullName: guestName,
+      email: guestEmail,
+      phone: guestPhone,
+      specialRequests,
+      prayerHutSession: prayerHutInterest,
+    });
+
+    if (!result.success) {
+      const issue = result.error.issues[0];
+      if (issue.path.includes("phone")) {
+        setPhoneError(
+          "Phone number must be in +234XXXXXXXXXX Nigerian format (10 digits after +234)"
+        );
+      } else {
+        setPaymentError(issue.message);
+      }
+      return false;
+    }
+    return true;
+  };
+
+  // Step 4 Payment Submission
+  const handleProceedToPayment = async () => {
     setIsProcessingPayment(true);
-    setTimeout(() => {
-      const randomRef = `GAR-${Math.floor(100000 + Math.random() * 900000)}`;
-      setBookingRef(randomRef);
+    setPaymentError(null);
+
+    // 1. Create booking reservation via API
+    try {
+      const bookingPayload = {
+        checkInDate,
+        nights,
+        rooms: selectedRooms.map(({ room, count }) => ({
+          roomTypeId: room.id,
+          quantity: count,
+        })),
+        adults,
+        children: childrenCount,
+        guest: {
+          fullName: guestName,
+          email: guestEmail,
+          phone: guestPhone,
+          specialRequests: `${specialRequests}${prayerHutInterest ? " [Requested complimentary Prayer Hut Quiet Session]" : ""}`,
+        },
+        dealCode: appliedDeal?.code,
+        paymentMethod: "paystack",
+      };
+
+      const bookingRes = await fetch("/api/v1/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookingPayload),
+      });
+
+      const bookingData = await bookingRes.json();
+
+      if (!bookingRes.ok || !bookingData.success) {
+        // If unauthenticated or email not verified per SRS 4.1
+        if (
+          bookingData.error?.code === "UNAUTHORIZED" ||
+          bookingData.error?.code === "EMAIL_NOT_VERIFIED"
+        ) {
+          router.push(`/login?redirect=${encodeURIComponent(router.asPath)}`);
+          return;
+        }
+
+        setPaymentError(bookingData.error?.message || "Failed to reserve rooms.");
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      const ref = bookingData.data.booking.reference;
+
+      // 2. Initiate Paystack payment
+      const callbackUrl = `${window.location.origin}/booking?confirmed=true&reference=${encodeURIComponent(ref)}`;
+      const paymentRes = await fetch("/api/v1/payments/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingReference: ref,
+          callbackUrl,
+        }),
+      });
+
+      const paymentData = await paymentRes.json();
+
+      if (!paymentRes.ok || !paymentData.success) {
+        if (paymentData.error?.details?.downtimeFallbackRecommended) {
+          setIsGatewayDowntimeActive(true);
+        }
+        setPaymentError(
+          paymentData.error?.message ||
+            "Payment initiation error. Please retry or contact on WhatsApp."
+        );
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      // 3. Redirect to Paystack Checkout URL
+      if (paymentData.data?.authorizationUrl) {
+        window.location.href = paymentData.data.authorizationUrl;
+      } else {
+        // Direct confirmation fallback
+        setConfirmedBookingData({
+          reference: ref,
+          guestName,
+          guestEmail,
+          checkInDate,
+          checkOutDate,
+          nights,
+          total: pricing.total,
+        });
+        setCurrentStep(5);
+      }
+    } catch {
+      setPaymentError("A network exception occurred while processing your reservation.");
       setIsProcessingPayment(false);
-      setCurrentStep(5); // Confirmation
-    }, 1200);
+    }
   };
+
+  // Filter rooms by campus
+  const filteredRooms = useMemo(() => {
+    if (campusFilter === "elysian") {
+      return availableRooms.filter((r) => r.campusTitle.includes("Elysian"));
+    }
+    if (campusFilter === "village") {
+      return availableRooms.filter((r) => r.campusTitle.includes("Village"));
+    }
+    return availableRooms;
+  }, [availableRooms, campusFilter]);
 
   return (
     <PageWrapper
-      title="Book Your Stay — Grace Arena Resorts"
-      description="Reserve your peaceful Christian retreat, luxury suite or thatched hut at Grace Arena Resorts."
+      title="Reserve Your Stay — Grace Arena Resorts"
+      description="Select your campus, dates, and accommodation at Grace Arena Resorts. Faith, hospitality, and serene retreat."
     >
-      {/* Page Header */}
-      <Box
-        bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"
-        pt={{ base: "90px", md: "120px" }}
-        pb={{ base: 6, md: 8 }}
-        px={{ base: 4, md: 8 }}
-        color="white"
-        textAlign="center"
-      >
-        <Stack maxW="40rem" mx="auto" gap={2} align="center">
-          <Text
-            fontSize="12px"
-            fontWeight="bold"
-            color="accent.500"
-            letterSpacing="3px"
-            textTransform="uppercase"
-          >
-            Secure Booking Engine
-          </Text>
-          <Text as="h1" fontSize={{ base: "26px", md: "38px" }} fontWeight="bold">
-            Reserve Your Sanctuary
-          </Text>
-        </Stack>
-
-        {/* Stepper Bar (SRS 3.3 Item 1) */}
-        {currentStep <= 4 && (
-          <Flex
-            maxW="52rem"
-            mx="auto"
-            mt={8}
-            justify="space-between"
-            align="center"
-            position="relative"
-            px={4}
-          >
-            {[
-              { num: 1, label: "Dates & Guests" },
-              { num: 2, label: "Select Rooms" },
-              { num: 3, label: "Guest Details" },
-              { num: 4, label: "Review & Pay" },
-            ].map(({ num, label }) => {
-              const isActive = currentStep === num;
-              const isDone = currentStep > num;
-
-              return (
-                <Flex
-                  key={num}
-                  direction="column"
-                  align="center"
-                  gap={1.5}
-                  cursor={isDone ? "pointer" : "default"}
-                  onClick={() => isDone && setCurrentStep(num)}
-                  zIndex={2}
-                >
-                  <Flex
-                    boxSize={{ base: 8, md: 9 }}
-                    borderRadius="full"
-                    align="center"
-                    justify="center"
-                    bg={isActive ? "accent.500" : isDone ? "#22C55E" : "#1E293B"}
-                    color={isActive ? "dark.500" : "white"}
-                    fontWeight="bold"
-                    fontSize="13px"
-                    border="2px solid"
-                    borderColor={isActive ? "accent.500" : isDone ? "#22C55E" : "#334155"}
-                  >
-                    {isDone ? <Icon as={FaCheckCircle} /> : num}
-                  </Flex>
-                  <Text
-                    fontSize="11px"
-                    fontWeight={isActive ? "bold" : "medium"}
-                    color={isActive ? "accent.500" : isDone ? "white" : "gray.400"}
-                    display={{ base: isActive ? "block" : "none", sm: "block" }}
-                  >
-                    {label}
-                  </Text>
-                </Flex>
-              );
-            })}
-          </Flex>
-        )}
-      </Box>
-
-      {/* Main Wizard Area */}
-      <Box
-        py={{ base: 8, md: 12 }}
-        px={{ base: 4, md: 8, xl: 12 }}
-        bg="#070707"
-        color="white"
-        minH="75vh"
-      >
-        <Box maxW="84rem" mx="auto">
-          {currentStep === 5 ? (
-            /* Confirmation Screen (SRS 3.3 Item 8) */
-            <Box
-              maxW="46rem"
-              mx="auto"
-              bg="#0F172A"
-              p={{ base: 6, md: 10 }}
-              borderRadius="24px"
-              border="1px solid #1E293B"
+      <Box bg="#0B132B" color="white" minH="90vh" py={{ base: 8, md: 14 }}>
+        <Box maxW="1200px" mx="auto" px={{ base: 4, sm: 6, lg: 8 }}>
+          {/* Header */}
+          <Box textAlign="center" mb={{ base: 8, md: 12 }}>
+            <Badge bg="accent.500" color="black" px={3} py={1} borderRadius="full" mb={3}>
+              Online Reservation Engine
+            </Badge>
+            <Text
+              as="h1"
+              fontSize={{ base: "28px", sm: "36px", md: "44px" }}
+              fontWeight="extrabold"
+              letterSpacing="-0.5px"
             >
-              <Stack align="center" textAlign="center" gap={4}>
-                <Box bg="green.500/20" color="#22C55E" p={4} borderRadius="full">
-                  <Icon as={FaCheckCircle} boxSize={12} />
-                </Box>
-                <Text
-                  fontSize="12px"
-                  fontWeight="bold"
-                  color="accent.500"
-                  letterSpacing="widest"
-                  textTransform="uppercase"
-                >
-                  Booking Confirmed
-                </Text>
-                <Text fontSize={{ base: "26px", md: "34px" }} fontWeight="bold">
-                  We look forward to welcoming you!
-                </Text>
+              Reserve Your Sacred Getaway
+            </Text>
+            <Text fontSize={{ base: "14px", md: "16px" }} color="gray.400" mt={2}>
+              Experience holy hospitality across our Elysian Sanctuary &amp; Village Retreat.
+            </Text>
+          </Box>
 
-                <Box bg="#1E293B" py={3} px={6} borderRadius="12px" border="1px dashed #FCCA46">
-                  <Text fontSize="12px" color="gray.400">
-                    Your Booking Reference:
-                  </Text>
-                  <Text fontSize="24px" fontWeight="bold" color="accent.500" letterSpacing="wider">
-                    {bookingRef}
-                  </Text>
-                </Box>
-
-                <Text fontSize="14px" color="gray.300" maxW="34rem">
-                  A confirmation email has been dispatched to <strong>{guestEmail}</strong>. Your
-                  reservation is confirmed at Grace Arena Resorts, Igbo-Ora.
-                </Text>
-
-                {/* Summary Box */}
-                <Box w="full" bg="#0A0F1D" p={5} borderRadius="14px" textAlign="left" my={2}>
-                  <Text
-                    fontSize="13px"
-                    fontWeight="bold"
-                    color="accent.500"
-                    mb={3}
-                    textTransform="uppercase"
-                  >
-                    Reservation Details
-                  </Text>
-                  <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3} fontSize="13px">
-                    <Box>
-                      <Text color="gray.400">Guest Name:</Text>
-                      <Text fontWeight="semibold">{guestName}</Text>
-                    </Box>
-                    <Box>
-                      <Text color="gray.400">Dates:</Text>
-                      <Text fontWeight="semibold">
-                        {checkInDate} to {checkOutDate} ({nights} nights)
-                      </Text>
-                    </Box>
-                    <Box>
-                      <Text color="gray.400">Guests:</Text>
-                      <Text fontWeight="semibold">
-                        {adults} Adults {childrenCount > 0 && `, ${childrenCount} Children`}
-                      </Text>
-                    </Box>
-                    <Box>
-                      <Text color="gray.400">Total Paid:</Text>
-                      <Text fontWeight="bold" color="accent.500">
-                        ₦{totalAmount.toLocaleString()} (Incl. VAT)
-                      </Text>
-                    </Box>
-                  </SimpleGrid>
-                </Box>
-
-                <HStack gap={3} flexWrap="wrap" justify="center" pt={4}>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => window.print()}
-                    style={{ fontSize: "13px", padding: "10px 20px" }}
-                  >
-                    <Icon as={FaPrint} mr={2} /> Print / Save PDF
-                  </Button>
-                  <a
-                    href={`https://wa.me/2348123456789?text=Hello%20Grace%20Arena,%20I%20just%20completed%20booking%20ref:%20${bookingRef}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ textDecoration: "none" }}
-                  >
-                    <HStack
-                      px={4}
-                      py={2.5}
-                      borderRadius="8px"
-                      bg="#25D366"
-                      color="white"
-                      fontWeight="bold"
-                      fontSize="13px"
-                      cursor="pointer"
-                    >
-                      <Icon as={FaWhatsapp} boxSize={4} />
-                      <Text>Message Concierge on WhatsApp</Text>
-                    </HStack>
-                  </a>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => router.push(ROUTES.home)}
-                    style={{ fontSize: "13px", padding: "10px 20px" }}
-                  >
-                    Return to Homepage
-                  </Button>
-                </HStack>
-              </Stack>
-            </Box>
+          {/* STEP 5: Confirmation View */}
+          {currentStep === 5 && confirmedBookingData ? (
+            <BookingConfirmationView
+              reference={confirmedBookingData.reference}
+              guestName={confirmedBookingData.guestName}
+              guestEmail={confirmedBookingData.guestEmail}
+              checkInDate={confirmedBookingData.checkInDate}
+              checkOutDate={confirmedBookingData.checkOutDate}
+              nights={confirmedBookingData.nights}
+              total={confirmedBookingData.total || pricing.total}
+            />
           ) : (
+            /* Wizard Steps 1 to 4 */
             <SimpleGrid columns={{ base: 1, lg: 12 }} gap={8}>
-              {/* Wizard Form Stage (8 Columns) */}
+              {/* Main Steps Content (8 Columns) */}
               <Box gridColumn={{ base: "span 1", lg: "span 8" }}>
+                {/* Responsive Step Indicator Banner */}
+                <Box bg="#0F172A" p={4} borderRadius="16px" border="1px solid #1E293B" mb={6}>
+                  <Flex justify="space-between" align="center" mb={2}>
+                    <Text
+                      fontSize="13px"
+                      fontWeight="bold"
+                      color="accent.500"
+                      textTransform="uppercase"
+                    >
+                      Step {currentStep} of 4
+                    </Text>
+                    <Text fontSize="12px" color="gray.400">
+                      {currentStep === 1 && "Dates & Guests"}
+                      {currentStep === 2 && "Room Selection"}
+                      {currentStep === 3 && "Guest Information"}
+                      {currentStep === 4 && "Review & Payment"}
+                    </Text>
+                  </Flex>
+
+                  {/* Progress bar line */}
+                  <Box w="100%" h="6px" bg="#1E293B" borderRadius="full" overflow="hidden">
+                    <Box
+                      h="100%"
+                      bg="accent.500"
+                      w={`${(currentStep / 4) * 100}%`}
+                      transition="width 0.3s ease"
+                    />
+                  </Box>
+                </Box>
+
+                {/* Gateway Downtime Fallback Warning Banner */}
+                {isGatewayDowntimeActive && (
+                  <Box
+                    bg="rgba(237, 137, 54, 0.15)"
+                    p={4}
+                    borderRadius="14px"
+                    border="1px solid #ED8936"
+                    mb={6}
+                  >
+                    <HStack gap={3} align="flex-start">
+                      <Icon as={FaExclamationTriangle} color="#ED8936" boxSize={5} mt={0.5} />
+                      <Box>
+                        <Text fontSize="14px" fontWeight="bold" color="#ED8936">
+                          Online Payment Temporarily Unavailable
+                        </Text>
+                        <Text fontSize="13px" color="gray.300" mt={1}>
+                          Our gateway is currently undergoing maintenance. Your room hold is
+                          extended to 2 hours! Please message our concierge directly on WhatsApp to
+                          confirm with manual transfer.
+                        </Text>
+                        <a
+                          href={`https://wa.me/2348123456789?text=${encodeURIComponent(`Hello Grace Arena, I want to confirm my booking hold (${guestName}, ${pricing.total} NGN)`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            textDecoration: "none",
+                            display: "inline-block",
+                            marginTop: "8px",
+                          }}
+                        >
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            style={{ borderColor: "#25D366", color: "#25D366" }}
+                          >
+                            <HStack gap={2}>
+                              <Icon as={FaWhatsapp} />
+                              <Text>Book Instantly via WhatsApp</Text>
+                            </HStack>
+                          </Button>
+                        </a>
+                      </Box>
+                    </HStack>
+                  </Box>
+                )}
+
                 {/* STEP 1: Dates & Guests */}
                 {currentStep === 1 && (
                   <Box
@@ -423,170 +687,132 @@ export default function BookingPage() {
                     <HStack gap={3} mb={6}>
                       <Icon as={FaCalendarAlt} color="accent.500" boxSize={5} />
                       <Text fontSize="20px" fontWeight="bold">
-                        Step 1: Select Dates &amp; Guests
+                        Step 1: Dates &amp; Guests
                       </Text>
                     </HStack>
 
-                    <SimpleGrid columns={{ base: 1, sm: 2 }} gap={6}>
-                      <Box>
-                        <Text fontSize="13px" fontWeight="medium" mb={2} color="gray.300">
-                          Check-in Date
-                        </Text>
-                        <Input
-                          type="date"
-                          value={checkInDate}
-                          min={new Date().toISOString().split("T")[0]}
-                          onChange={(e) => setCheckInDate(e.target.value)}
-                          bg="#1E293B"
-                          border="1px solid #334155"
-                          color="white"
-                          p={3}
-                          borderRadius="10px"
-                          _focus={{ borderColor: "accent.500" }}
-                        />
-                      </Box>
-
-                      <Box>
-                        <Text fontSize="13px" fontWeight="medium" mb={2} color="gray.300">
-                          Number of Nights
-                        </Text>
-                        <Flex align="center" gap={3}>
-                          <Box
-                            as="button"
-                            boxSize={10}
-                            borderRadius="8px"
-                            bg="#1E293B"
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="center"
-                            cursor="pointer"
-                            onClick={() => setNights(Math.max(1, nights - 1))}
-                          >
-                            <Icon as={FaMinus} boxSize={3} />
-                          </Box>
-                          <Text fontSize="18px" fontWeight="bold" minW="40px" textAlign="center">
-                            {nights}
+                    <Stack gap={6}>
+                      <SimpleGrid columns={{ base: 1, sm: 2 }} gap={4}>
+                        <Box>
+                          <Text fontSize="13px" fontWeight="medium" mb={1.5} color="gray.300">
+                            Check-in Date (14:00 Check-in)
                           </Text>
-                          <Box
-                            as="button"
-                            boxSize={10}
-                            borderRadius="8px"
+                          <Input
+                            type="date"
+                            min={new Date().toISOString().split("T")[0]}
+                            value={checkInDate}
+                            onChange={(e) => setCheckInDate(e.target.value)}
                             bg="#1E293B"
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="center"
-                            cursor="pointer"
-                            onClick={() => setNights(Math.min(30, nights + 1))}
-                          >
-                            <Icon as={FaPlus} boxSize={3} />
-                          </Box>
-                          <Text fontSize="12px" color="gray.400">
-                            (Departs: {checkOutDate})
-                          </Text>
-                        </Flex>
-                      </Box>
-                    </SimpleGrid>
-
-                    <Box mt={6} pt={6} borderTop="1px solid #1E293B">
-                      <HStack gap={3} mb={4}>
-                        <Icon as={FaUserFriends} color="accent.500" boxSize={4} />
-                        <Text fontSize="16px" fontWeight="bold">
-                          Guests Breakdown
-                        </Text>
-                      </HStack>
-
-                      <SimpleGrid columns={{ base: 1, sm: 2 }} gap={6}>
-                        <Box bg="#1E293B" p={4} borderRadius="12px">
-                          <Flex justify="space-between" align="center">
-                            <Box>
-                              <Text fontSize="14px" fontWeight="bold">
-                                Adults
-                              </Text>
-                              <Text fontSize="11px" color="gray.400">
-                                Age 13 and above
-                              </Text>
-                            </Box>
-                            <HStack gap={3}>
-                              <Box
-                                as="button"
-                                boxSize={8}
-                                borderRadius="6px"
-                                bg="#334155"
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="center"
-                                onClick={() => setAdults(Math.max(1, adults - 1))}
-                              >
-                                <Icon as={FaMinus} boxSize={2.5} />
-                              </Box>
-                              <Text fontWeight="bold">{adults}</Text>
-                              <Box
-                                as="button"
-                                boxSize={8}
-                                borderRadius="6px"
-                                bg="#334155"
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="center"
-                                onClick={() => setAdults(Math.min(10, adults + 1))}
-                              >
-                                <Icon as={FaPlus} boxSize={2.5} />
-                              </Box>
-                            </HStack>
-                          </Flex>
+                            border="1px solid #334155"
+                            color="white"
+                            p={3}
+                            borderRadius="8px"
+                          />
                         </Box>
-
-                        <Box bg="#1E293B" p={4} borderRadius="12px">
-                          <Flex justify="space-between" align="center">
-                            <Box>
-                              <Text fontSize="14px" fontWeight="bold">
-                                Children
-                              </Text>
-                              <Text fontSize="11px" color="gray.400">
-                                Age 0–12
-                              </Text>
-                            </Box>
-                            <HStack gap={3}>
-                              <Box
-                                as="button"
-                                boxSize={8}
-                                borderRadius="6px"
-                                bg="#334155"
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="center"
-                                onClick={() => setChildrenCount(Math.max(0, childrenCount - 1))}
-                              >
-                                <Icon as={FaMinus} boxSize={2.5} />
-                              </Box>
-                              <Text fontWeight="bold">{childrenCount}</Text>
-                              <Box
-                                as="button"
-                                boxSize={8}
-                                borderRadius="6px"
-                                bg="#334155"
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="center"
-                                onClick={() => setChildrenCount(Math.min(8, childrenCount + 1))}
-                              >
-                                <Icon as={FaPlus} boxSize={2.5} />
-                              </Box>
-                            </HStack>
+                        <Box>
+                          <Text fontSize="13px" fontWeight="medium" mb={1.5} color="gray.300">
+                            Length of Stay (Nights)
+                          </Text>
+                          <Flex align="center" gap={3}>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setNights((n) => Math.max(1, n - 1))}
+                            >
+                              <Icon as={FaMinus} />
+                            </Button>
+                            <Text fontWeight="bold" fontSize="16px" w="40px" textAlign="center">
+                              {nights}
+                            </Text>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setNights((n) => Math.min(30, n + 1))}
+                            >
+                              <Icon as={FaPlus} />
+                            </Button>
+                            <Text fontSize="12px" color="gray.400">
+                              Check-out: {checkOutDate} (11:00 AM)
+                            </Text>
                           </Flex>
                         </Box>
                       </SimpleGrid>
-                    </Box>
+
+                      <SimpleGrid columns={{ base: 1, sm: 2 }} gap={4}>
+                        <Box>
+                          <Text fontSize="13px" fontWeight="medium" mb={1.5} color="gray.300">
+                            Adults (18+)
+                          </Text>
+                          <Flex align="center" gap={3}>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setAdults((a) => Math.max(1, a - 1))}
+                            >
+                              <Icon as={FaMinus} />
+                            </Button>
+                            <Text fontWeight="bold" fontSize="16px" w="40px" textAlign="center">
+                              {adults}
+                            </Text>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setAdults((a) => Math.min(10, a + 1))}
+                            >
+                              <Icon as={FaPlus} />
+                            </Button>
+                          </Flex>
+                        </Box>
+                        <Box>
+                          <Text fontSize="13px" fontWeight="medium" mb={1.5} color="gray.300">
+                            Children (0–17)
+                          </Text>
+                          <Flex align="center" gap={3}>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setChildrenCount((c) => Math.max(0, c - 1))}
+                            >
+                              <Icon as={FaMinus} />
+                            </Button>
+                            <Text fontWeight="bold" fontSize="16px" w="40px" textAlign="center">
+                              {childrenCount}
+                            </Text>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setChildrenCount((c) => Math.min(10, c + 1))}
+                            >
+                              <Icon as={FaPlus} />
+                            </Button>
+                          </Flex>
+                        </Box>
+                      </SimpleGrid>
+                    </Stack>
 
                     <Flex justify="flex-end" mt={8}>
-                      <Button variant="primary" size="md" onClick={() => setCurrentStep(2)}>
-                        Proceed to Select Rooms &rarr;
+                      <Button
+                        variant="primary"
+                        size="md"
+                        onClick={() => {
+                          const parsed = step1DatesGuestsSchema.safeParse({
+                            checkInDate,
+                            nights,
+                            adults,
+                            children: childrenCount,
+                          });
+                          if (parsed.success) {
+                            setCurrentStep(2);
+                          }
+                        }}
+                      >
+                        Select Rooms &rarr;
                       </Button>
                     </Flex>
                   </Box>
                 )}
 
-                {/* STEP 2: Select Rooms */}
+                {/* STEP 2: Room Selection */}
                 {currentStep === 2 && (
                   <Box
                     bg="#0F172A"
@@ -594,133 +820,183 @@ export default function BookingPage() {
                     borderRadius="20px"
                     border="1px solid #1E293B"
                   >
-                    <HStack justify="space-between" align="center" mb={6}>
+                    <Flex justify="space-between" align="center" mb={6} flexWrap="wrap" gap={3}>
                       <HStack gap={3}>
                         <Icon as={FaBed} color="accent.500" boxSize={5} />
                         <Text fontSize="20px" fontWeight="bold">
-                          Step 2: Choose Available Rooms
+                          Step 2: Choose Accommodation
                         </Text>
                       </HStack>
                       <Button variant="secondary" size="sm" onClick={() => setCurrentStep(1)}>
-                        &larr; Back to Dates
+                        &larr; Change Dates
+                      </Button>
+                    </Flex>
+
+                    {/* Campus Filter */}
+                    <HStack gap={2} mb={6} overflowX="auto" pb={2}>
+                      <Button
+                        variant={campusFilter === "all" ? "primary" : "secondary"}
+                        size="sm"
+                        onClick={() => setCampusFilter("all")}
+                      >
+                        All Accommodations ({availableRooms.length})
+                      </Button>
+                      <Button
+                        variant={campusFilter === "elysian" ? "primary" : "secondary"}
+                        size="sm"
+                        onClick={() => setCampusFilter("elysian")}
+                      >
+                        Elysian Sanctuary
+                      </Button>
+                      <Button
+                        variant={campusFilter === "village" ? "primary" : "secondary"}
+                        size="sm"
+                        onClick={() => setCampusFilter("village")}
+                      >
+                        Village Thatched Retreat
                       </Button>
                     </HStack>
 
+                    {/* Deal preselection banner if active */}
+                    {appliedDeal && (
+                      <Box
+                        p={3}
+                        mb={4}
+                        borderRadius="10px"
+                        bg="rgba(252, 202, 70, 0.15)"
+                        border="1px solid rgba(252, 202, 70, 0.4)"
+                      >
+                        <HStack gap={2}>
+                          <Icon as={FaTag} color="accent.500" />
+                          <Text fontSize="13px" fontWeight="bold" color="white">
+                            {dealMessage || `Deal Active: ${appliedDeal.title}`}
+                          </Text>
+                        </HStack>
+                      </Box>
+                    )}
+
+                    {/* Rooms List */}
                     <Stack gap={4}>
-                      {AVAILABLE_ROOMS.map((room) => {
-                        const isSelected = selectedRooms.some((r) => r.room.id === room.id);
-                        const selectedCount =
-                          selectedRooms.find((r) => r.room.id === room.id)?.count || 0;
+                      {filteredRooms.map((room) => {
+                        const selected = selectedRooms.find((item) => item.room.id === room.id);
+                        const isUnderConstruction = room.status === "under_construction";
+
+                        if (isUnderConstruction) return null; // Never selectable in wizard per SRS
 
                         return (
-                          <Flex
+                          <Box
                             key={room.id}
-                            direction={{ base: "column", sm: "row" }}
                             bg="#1E293B"
-                            borderRadius="14px"
-                            overflow="hidden"
+                            p={4}
+                            borderRadius="16px"
                             border="1px solid"
-                            borderColor={isSelected ? "accent.500" : "#334155"}
-                            align={{ sm: "center" }}
-                            justify="space-between"
-                            p={{ base: 4, sm: 4 }}
-                            gap={4}
+                            borderColor={selected ? "accent.500" : "#334155"}
                           >
-                            <HStack gap={4}>
-                              <Image
-                                src={room.image}
-                                alt={room.name}
-                                boxSize={{ base: "70px", sm: "80px" }}
-                                borderRadius="10px"
-                                objectFit="cover"
-                              />
-                              <Box>
-                                <HStack gap={2} mb={1}>
-                                  <Badge bg="accent.500" color="black" fontSize="10px">
-                                    {room.campusTitle}
-                                  </Badge>
-                                  <Badge variant="outline" color="gray.300" fontSize="10px">
-                                    {room.tier}
-                                  </Badge>
-                                </HStack>
-                                <Text fontSize="16px" fontWeight="bold">
-                                  {room.name}
-                                </Text>
-                                <Text fontSize="12px" color="gray.300">
-                                  Up to {room.maxGuests} guests • Complimentary breakfast
-                                </Text>
+                            <SimpleGrid columns={{ base: 1, sm: 12 }} gap={4} alignContent="center">
+                              <Box gridColumn={{ base: "span 1", sm: "span 4" }}>
+                                <Image
+                                  src={room.image}
+                                  alt={room.name}
+                                  borderRadius="10px"
+                                  w="100%"
+                                  h={{ base: "140px", sm: "100%" }}
+                                  objectFit="cover"
+                                />
                               </Box>
-                            </HStack>
-
-                            <Flex align="center" justify="space-between" gap={4}>
-                              <Box textAlign={{ sm: "right" }}>
-                                <Text fontSize="11px" color="gray.400">
-                                  Per night:
-                                </Text>
-                                <Text fontSize="17px" fontWeight="bold" color="accent.500">
-                                  ₦{room.pricePerNight.toLocaleString()}
-                                </Text>
-                              </Box>
-
-                              {isSelected ? (
-                                <HStack gap={2}>
-                                  <Box
-                                    as="button"
-                                    onClick={() => handleAddRoom(room)}
-                                    px={3}
-                                    py={1.5}
-                                    borderRadius="8px"
-                                    bg="#22C55E"
-                                    color="white"
-                                    fontSize="12px"
-                                    fontWeight="bold"
-                                  >
-                                    Added ({selectedCount})
+                              <Box gridColumn={{ base: "span 1", sm: "span 8" }}>
+                                <Flex justify="space-between" align="flex-start" flexWrap="wrap">
+                                  <Box>
+                                    <Badge bg="#334155" color="gray.300" fontSize="10px" mb={1}>
+                                      {room.campusTitle} • {room.tier}
+                                    </Badge>
+                                    <Text fontSize="16px" fontWeight="bold" color="white">
+                                      {room.name}
+                                    </Text>
+                                    <HStack gap={3} mt={1} color="gray.400" fontSize="12px">
+                                      <HStack gap={1}>
+                                        <Icon as={FaUserFriends} />
+                                        <Text>Up to {room.maxGuests} guests</Text>
+                                      </HStack>
+                                    </HStack>
                                   </Box>
                                   <Box
-                                    as="button"
-                                    onClick={() => handleRemoveRoom(room.id)}
-                                    p={2}
-                                    color="red.400"
-                                    _hover={{ color: "red.300" }}
-                                    cursor="pointer"
+                                    textAlign={{ base: "left", sm: "right" }}
+                                    mt={{ base: 2, sm: 0 }}
                                   >
-                                    <Icon as={FaTrash} boxSize={3.5} />
+                                    <Text fontSize="18px" fontWeight="extrabold" color="accent.500">
+                                      ₦{room.pricePerNight.toLocaleString()}
+                                    </Text>
+                                    <Text fontSize="11px" color="gray.400">
+                                      per night
+                                    </Text>
                                   </Box>
-                                </HStack>
-                              ) : (
-                                <Button
-                                  variant="primary"
-                                  size="sm"
-                                  onClick={() => handleAddRoom(room)}
-                                  style={{ fontSize: "12px", padding: "8px 16px" }}
-                                >
-                                  Add Room
-                                </Button>
-                              )}
-                            </Flex>
-                          </Flex>
+                                </Flex>
+
+                                <Flex justify="flex-end" align="center" mt={4} gap={3}>
+                                  {selected ? (
+                                    <HStack gap={2}>
+                                      <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => handleRemoveRoom(room.id)}
+                                      >
+                                        <Icon as={FaMinus} />
+                                      </Button>
+                                      <Text
+                                        fontWeight="bold"
+                                        fontSize="15px"
+                                        w="30px"
+                                        textAlign="center"
+                                      >
+                                        {selected.count}
+                                      </Text>
+                                      <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => handleAddRoom(room)}
+                                      >
+                                        <Icon as={FaPlus} />
+                                      </Button>
+                                      <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => handleClearRoom(room.id)}
+                                        style={{ marginLeft: "8px" }}
+                                      >
+                                        <Icon as={FaTrash} color="#E53E3E" />
+                                      </Button>
+                                    </HStack>
+                                  ) : (
+                                    <Button
+                                      variant="primary"
+                                      size="sm"
+                                      onClick={() => handleAddRoom(room)}
+                                    >
+                                      Select Room
+                                    </Button>
+                                  )}
+                                </Flex>
+                              </Box>
+                            </SimpleGrid>
+                          </Box>
                         );
                       })}
                     </Stack>
 
-                    <Flex justify="space-between" align="center" mt={8}>
-                      <Text fontSize="13px" color="gray.400">
-                        {selectedRooms.length} room type(s) selected
-                      </Text>
+                    <Flex justify="flex-end" mt={8}>
                       <Button
                         variant="primary"
                         size="md"
                         disabled={selectedRooms.length === 0}
                         onClick={() => setCurrentStep(3)}
                       >
-                        Proceed to Guest Info &rarr;
+                        Guest Information &rarr;
                       </Button>
                     </Flex>
                   </Box>
                 )}
 
-                {/* STEP 3: Guest Information */}
+                {/* STEP 3: Guest Details Form */}
                 {currentStep === 3 && (
                   <Box
                     bg="#0F172A"
@@ -732,7 +1008,7 @@ export default function BookingPage() {
                       <HStack gap={3}>
                         <Icon as={FaUserFriends} color="accent.500" boxSize={5} />
                         <Text fontSize="20px" fontWeight="bold">
-                          Step 3: Primary Guest Information
+                          Step 3: Guest Information
                         </Text>
                       </HStack>
                       <Button variant="secondary" size="sm" onClick={() => setCurrentStep(2)}>
@@ -740,66 +1016,67 @@ export default function BookingPage() {
                       </Button>
                     </HStack>
 
-                    <Stack gap={4}>
-                      <Box>
-                        <Text fontSize="13px" fontWeight="medium" mb={1.5} color="gray.300">
-                          Full Name *
-                        </Text>
-                        <Input
-                          required
-                          value={guestName}
-                          onChange={(e) => setGuestName(e.target.value)}
-                          placeholder="e.g. Pastor David Adeleke"
-                          bg="#1E293B"
-                          border="1px solid #334155"
-                          color="white"
-                          p={3}
-                          borderRadius="8px"
-                          fontSize="14px"
-                        />
-                      </Box>
-
+                    <Stack gap={5}>
                       <SimpleGrid columns={{ base: 1, sm: 2 }} gap={4}>
                         <Box>
                           <Text fontSize="13px" fontWeight="medium" mb={1.5} color="gray.300">
-                            Email Address *
+                            Full Legal Name *
                           </Text>
                           <Input
-                            required
+                            value={guestName}
+                            onChange={(e) => setGuestName(e.target.value)}
+                            placeholder="e.g. Samuel Adeyemi"
+                            bg="#1E293B"
+                            border="1px solid #334155"
+                            color="white"
+                            p={3}
+                            borderRadius="8px"
+                          />
+                        </Box>
+                        <Box>
+                          <Text fontSize="13px" fontWeight="medium" mb={1.5} color="gray.300">
+                            Email Address (for PDF confirmation) *
+                          </Text>
+                          <Input
                             type="email"
                             value={guestEmail}
                             onChange={(e) => setGuestEmail(e.target.value)}
-                            placeholder="e.g. david@example.com"
+                            placeholder="samuel@example.com"
                             bg="#1E293B"
                             border="1px solid #334155"
                             color="white"
                             p={3}
                             borderRadius="8px"
-                            fontSize="14px"
-                          />
-                        </Box>
-
-                        <Box>
-                          <Text fontSize="13px" fontWeight="medium" mb={1.5} color="gray.300">
-                            Phone Number (Nigerian +234 format) *
-                          </Text>
-                          <Input
-                            required
-                            type="tel"
-                            value={guestPhone}
-                            onChange={(e) => setGuestPhone(e.target.value)}
-                            placeholder="+234 812 345 6789"
-                            bg="#1E293B"
-                            border="1px solid #334155"
-                            color="white"
-                            p={3}
-                            borderRadius="8px"
-                            fontSize="14px"
                           />
                         </Box>
                       </SimpleGrid>
 
-                      {/* Prayer Hut Request (SRS Distinction) */}
+                      <Box>
+                        <Text fontSize="13px" fontWeight="medium" mb={1.5} color="gray.300">
+                          Nigerian Phone Number (+234XXXXXXXXXX) *
+                        </Text>
+                        <Input
+                          value={guestPhone}
+                          onChange={(e) => {
+                            setGuestPhone(e.target.value);
+                            setPhoneError(null);
+                          }}
+                          placeholder="+2348012345678"
+                          bg="#1E293B"
+                          border="1px solid"
+                          borderColor={phoneError ? "#E53E3E" : "#334155"}
+                          color="white"
+                          p={3}
+                          borderRadius="8px"
+                        />
+                        {phoneError && (
+                          <Text fontSize="12px" color="#FC8181" mt={1}>
+                            {phoneError}
+                          </Text>
+                        )}
+                      </Box>
+
+                      {/* Prayer Hut Request */}
                       <Box
                         bg="#1E293B"
                         p={4}
@@ -827,27 +1104,35 @@ export default function BookingPage() {
                               </Text>
                             </HStack>
                             <Text fontSize="12px" color="gray.300" mt={1}>
-                              Complimentary for guests. Our team will schedule private quiet hours
-                              for you at the sanctuary during your stay.
+                              Complimentary for registered guests. Our staff schedules quiet hours
+                              for you during your stay.
                             </Text>
                           </Box>
                         </Flex>
                       </Box>
 
+                      {/* Special Requests */}
                       <Box>
-                        <Text fontSize="13px" fontWeight="medium" mb={1.5} color="gray.300">
-                          Special Dietary or Arrival Requests
-                        </Text>
+                        <Flex justify="space-between" mb={1.5}>
+                          <Text fontSize="13px" fontWeight="medium" color="gray.300">
+                            Special Requests / Dietary Requirements
+                          </Text>
+                          <Text
+                            fontSize="12px"
+                            color={specialRequests.length > 500 ? "#FC8181" : "gray.400"}
+                          >
+                            {specialRequests.length} / 500 chars
+                          </Text>
+                        </Flex>
                         <Textarea
                           value={specialRequests}
-                          onChange={(e) => setSpecialRequests(e.target.value)}
-                          placeholder="Let us know if you require early check-in, twin bed configuration, or airport transfer from Ibadan/Lagos."
+                          onChange={(e) => setSpecialRequests(e.target.value.slice(0, 500))}
+                          placeholder="e.g. ground floor preference, early check-in, or airport transfer coordination."
                           bg="#1E293B"
                           border="1px solid #334155"
                           color="white"
                           p={3}
                           borderRadius="8px"
-                          fontSize="13px"
                           rows={3}
                         />
                       </Box>
@@ -857,8 +1142,11 @@ export default function BookingPage() {
                       <Button
                         variant="primary"
                         size="md"
-                        disabled={!guestName || !guestEmail || !guestPhone}
-                        onClick={() => setCurrentStep(4)}
+                        onClick={() => {
+                          if (validateGuestDetails()) {
+                            setCurrentStep(4);
+                          }
+                        }}
                       >
                         Review &amp; Payment &rarr;
                       </Button>
@@ -866,7 +1154,7 @@ export default function BookingPage() {
                   </Box>
                 )}
 
-                {/* STEP 4: Review & Payment */}
+                {/* STEP 4: Summary & Paystack Checkout */}
                 {currentStep === 4 && (
                   <Box
                     bg="#0F172A"
@@ -886,94 +1174,191 @@ export default function BookingPage() {
                       </Button>
                     </HStack>
 
-                    {/* Summary Card */}
-                    <Box bg="#1E293B" p={5} borderRadius="14px" mb={6}>
-                      <Text
-                        fontSize="13px"
-                        fontWeight="bold"
-                        color="accent.500"
-                        mb={3}
-                        textTransform="uppercase"
-                      >
-                        Stay Overview
-                      </Text>
-                      <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3} fontSize="13px">
-                        <Box>
-                          <Text color="gray.400">Guest:</Text>
-                          <Text fontWeight="bold">{guestName}</Text>
-                          <Text color="gray.300" fontSize="12px">
-                            {guestEmail} • {guestPhone}
-                          </Text>
-                        </Box>
-                        <Box>
-                          <Text color="gray.400">Dates &amp; Duration:</Text>
-                          <Text fontWeight="bold">
-                            {checkInDate} to {checkOutDate} ({nights} nights)
-                          </Text>
-                          <Text color="gray.300" fontSize="12px">
-                            {adults} Adults {childrenCount > 0 && `, ${childrenCount} Children`}
-                          </Text>
-                        </Box>
-                      </SimpleGrid>
-                    </Box>
-
-                    {/* Payment Mode */}
-                    <Box mb={6}>
-                      <Text fontSize="14px" fontWeight="bold" mb={3}>
-                        Select Payment Method
-                      </Text>
-                      <Stack gap={3}>
-                        <Box
-                          p={4}
-                          borderRadius="12px"
-                          border="2px solid"
-                          borderColor="accent.500"
-                          bg="rgba(252, 202, 70, 0.08)"
-                        >
-                          <Flex justify="space-between" align="center">
-                            <HStack gap={3}>
-                              <Icon as={FaShieldAlt} color="accent.500" boxSize={5} />
-                              <Box>
-                                <Text fontSize="14px" fontWeight="bold">
-                                  Paystack Secure Online Payment
-                                </Text>
-                                <Text fontSize="12px" color="gray.400">
-                                  Instant confirmation via Debit Card, Bank Transfer, or USSD
-                                </Text>
-                              </Box>
-                            </HStack>
-                            <Badge bg="accent.500" color="black">
-                              Recommended
-                            </Badge>
-                          </Flex>
-                        </Box>
-
-                        <Box p={4} borderRadius="12px" border="1px solid #334155" bg="#1E293B">
-                          <a
-                            href={`https://wa.me/2348123456789?text=Hello%20Grace%20Arena,%20I%20would%20like%20to%20pay%20manually%20for%20my%20booking%20(${guestName},%20${totalAmount}NGN)`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ textDecoration: "none", color: "inherit", display: "block" }}
+                    {/* Breakdown with Per-section Edit Links */}
+                    <Stack gap={4} mb={6}>
+                      {/* Section 1: Dates & Duration */}
+                      <Box bg="#1E293B" p={4} borderRadius="12px" border="1px solid #334155">
+                        <Flex justify="space-between" align="center" mb={1}>
+                          <Text
+                            fontSize="12px"
+                            fontWeight="bold"
+                            color="gray.400"
+                            textTransform="uppercase"
                           >
-                            <Flex justify="space-between" align="center">
-                              <HStack gap={3}>
-                                <Icon as={FaWhatsapp} color="#25D366" boxSize={5} />
-                                <Box>
-                                  <Text fontSize="14px" fontWeight="bold">
-                                    Direct Bank Transfer / WhatsApp Assistance
-                                  </Text>
-                                  <Text fontSize="12px" color="gray.400">
-                                    Speak directly with our front desk cashier on WhatsApp
-                                  </Text>
-                                </Box>
-                              </HStack>
-                              <Text fontSize="12px" color="#25D366" fontWeight="bold">
-                                Chat &rarr;
+                            Dates &amp; Stay Duration
+                          </Text>
+                          <Text
+                            as="button"
+                            fontSize="12px"
+                            color="accent.500"
+                            fontWeight="bold"
+                            onClick={() => setCurrentStep(1)}
+                            cursor="pointer"
+                          >
+                            Edit Dates
+                          </Text>
+                        </Flex>
+                        <Text fontSize="14px" fontWeight="bold">
+                          {checkInDate} to {checkOutDate} ({nights} nights)
+                        </Text>
+                        <Text fontSize="12px" color="gray.400">
+                          {adults} Adults {childrenCount > 0 ? `, ${childrenCount} Children` : ""}
+                        </Text>
+                      </Box>
+
+                      {/* Section 2: Selected Rooms */}
+                      <Box bg="#1E293B" p={4} borderRadius="12px" border="1px solid #334155">
+                        <Flex justify="space-between" align="center" mb={2}>
+                          <Text
+                            fontSize="12px"
+                            fontWeight="bold"
+                            color="gray.400"
+                            textTransform="uppercase"
+                          >
+                            Selected Rooms
+                          </Text>
+                          <Text
+                            as="button"
+                            fontSize="12px"
+                            color="accent.500"
+                            fontWeight="bold"
+                            onClick={() => setCurrentStep(2)}
+                            cursor="pointer"
+                          >
+                            Edit Rooms
+                          </Text>
+                        </Flex>
+                        <Stack gap={2}>
+                          {selectedRooms.map(({ room, count }) => (
+                            <Flex key={room.id} justify="space-between" fontSize="13px">
+                              <Text>
+                                {count}x {room.name} ({room.campusTitle})
+                              </Text>
+                              <Text fontWeight="bold">
+                                ₦{(room.pricePerNight * count * nights).toLocaleString()}
                               </Text>
                             </Flex>
-                          </a>
-                        </Box>
-                      </Stack>
+                          ))}
+                        </Stack>
+                      </Box>
+
+                      {/* Section 3: Guest Details */}
+                      <Box bg="#1E293B" p={4} borderRadius="12px" border="1px solid #334155">
+                        <Flex justify="space-between" align="center" mb={1}>
+                          <Text
+                            fontSize="12px"
+                            fontWeight="bold"
+                            color="gray.400"
+                            textTransform="uppercase"
+                          >
+                            Guest Details
+                          </Text>
+                          <Text
+                            as="button"
+                            fontSize="12px"
+                            color="accent.500"
+                            fontWeight="bold"
+                            onClick={() => setCurrentStep(3)}
+                            cursor="pointer"
+                          >
+                            Edit Info
+                          </Text>
+                        </Flex>
+                        <Text fontSize="14px" fontWeight="bold">
+                          {guestName}
+                        </Text>
+                        <Text fontSize="12px" color="gray.400">
+                          {guestEmail} • {guestPhone}
+                        </Text>
+                      </Box>
+
+                      {/* Promo Code Input */}
+                      <Box bg="#1E293B" p={4} borderRadius="12px" border="1px solid #334155">
+                        <Text
+                          fontSize="12px"
+                          fontWeight="bold"
+                          color="gray.400"
+                          textTransform="uppercase"
+                          mb={2}
+                        >
+                          Have a Promo or Retreat Code?
+                        </Text>
+                        <Flex gap={2}>
+                          <Input
+                            value={dealInputCode}
+                            onChange={(e) => setDealInputCode(e.target.value.toUpperCase())}
+                            placeholder="e.g. SUMMER2026"
+                            bg="#0F172A"
+                            border="1px solid #334155"
+                            color="white"
+                            p={2.5}
+                            borderRadius="8px"
+                            fontSize="13px"
+                          />
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => validateDeal(dealInputCode)}
+                          >
+                            Apply Code
+                          </Button>
+                        </Flex>
+                        {dealMessage && (
+                          <Text fontSize="12px" color="#68D391" mt={2}>
+                            {dealMessage}
+                          </Text>
+                        )}
+                        {dealError && (
+                          <Text fontSize="12px" color="#FC8181" mt={2}>
+                            {dealError}
+                          </Text>
+                        )}
+                      </Box>
+                    </Stack>
+
+                    {/* Payment Error Alert */}
+                    {paymentError && (
+                      <Box
+                        p={3}
+                        mb={6}
+                        borderRadius="8px"
+                        bg="rgba(229, 62, 62, 0.15)"
+                        color="#FC8181"
+                        fontSize="13px"
+                      >
+                        {paymentError}
+                      </Box>
+                    )}
+
+                    {/* Paystack Checkout CTA */}
+                    <Box mb={6}>
+                      <Text fontSize="14px" fontWeight="bold" mb={3}>
+                        Payment Gateway
+                      </Text>
+                      <Box
+                        p={4}
+                        borderRadius="12px"
+                        border="2px solid"
+                        borderColor="accent.500"
+                        bg="rgba(252, 202, 70, 0.08)"
+                      >
+                        <Flex justify="space-between" align="center">
+                          <HStack gap={3}>
+                            <Icon as={FaShieldAlt} color="accent.500" boxSize={5} />
+                            <Box>
+                              <Text fontSize="14px" fontWeight="bold">
+                                Paystack Secure Payment
+                              </Text>
+                              <Text fontSize="12px" color="gray.400">
+                                Debit Card, Bank Transfer, USSD, or Apple Pay
+                              </Text>
+                            </Box>
+                          </HStack>
+                          <Badge bg="accent.500" color="black">
+                            Instant Confirmation
+                          </Badge>
+                        </Flex>
+                      </Box>
                     </Box>
 
                     <Flex justify="flex-end">
@@ -981,19 +1366,19 @@ export default function BookingPage() {
                         variant="primary"
                         size="lg"
                         disabled={isProcessingPayment}
-                        onClick={handleSimulatePayment}
+                        onClick={handleProceedToPayment}
                         style={{ padding: "14px 36px" }}
                       >
                         {isProcessingPayment
                           ? "Securing Reservation..."
-                          : `Pay ₦${totalAmount.toLocaleString()} with Paystack`}
+                          : `Pay ₦${pricing.total.toLocaleString()} with Paystack`}
                       </Button>
                     </Flex>
                   </Box>
                 )}
               </Box>
 
-              {/* Sticky Summary Sidebar (4 Columns) (SRS 3.3 Item 5) */}
+              {/* Sticky Summary Sidebar (4 Columns) */}
               <Box gridColumn={{ base: "span 1", lg: "span 4" }}>
                 <Box
                   bg="#0F172A"
@@ -1053,15 +1438,21 @@ export default function BookingPage() {
                     )}
                   </Box>
 
-                  {/* Taxes & Total */}
+                  {/* Taxes, Discounts & Total */}
                   <Stack gap={2} fontSize="13px" pb={4} mb={4} borderBottom="1px solid #1E293B">
                     <Flex justify="space-between" color="gray.300">
                       <Text>Room Subtotal:</Text>
-                      <Text>₦{subtotal.toLocaleString()}</Text>
+                      <Text>₦{pricing.subtotal.toLocaleString()}</Text>
                     </Flex>
+                    {pricing.dealDiscount > 0 && (
+                      <Flex justify="space-between" color="#68D391">
+                        <Text>Promo Discount:</Text>
+                        <Text>-₦{pricing.dealDiscount.toLocaleString()}</Text>
+                      </Flex>
+                    )}
                     <Flex justify="space-between" color="gray.300">
                       <Text>VAT (7.5%):</Text>
-                      <Text>₦{vatAmount.toLocaleString()}</Text>
+                      <Text>₦{pricing.tax.toLocaleString()}</Text>
                     </Flex>
                   </Stack>
 
@@ -1070,7 +1461,7 @@ export default function BookingPage() {
                       Total (NGN):
                     </Text>
                     <Text fontSize="22px" fontWeight="bold" color="accent.500">
-                      ₦{totalAmount.toLocaleString()}
+                      ₦{pricing.total.toLocaleString()}
                     </Text>
                   </Flex>
 
@@ -1083,7 +1474,7 @@ export default function BookingPage() {
                       </Text>
                     </HStack>
                     <Text fontSize="11px" color="gray.400">
-                      Our desk is available 24/7 on WhatsApp: +234 812 345 6789.
+                      Our concierge is active on WhatsApp: +234 812 345 6789.
                     </Text>
                   </Box>
                 </Box>
