@@ -23,7 +23,12 @@ export default withApi(
 
     const parseResult = initiateSchema.safeParse(req.body);
     if (!parseResult.success) {
-      return fail(res, "VALIDATION_ERROR", parseResult.error.issues[0]?.message || "Invalid payload", 400);
+      return fail(
+        res,
+        "VALIDATION_ERROR",
+        parseResult.error.issues[0]?.message || "Invalid payload",
+        400
+      );
     }
 
     const { bookingReference, callbackUrl } = parseResult.data;
@@ -47,7 +52,11 @@ export default withApi(
     }
 
     // 3. Status checks
-    if (booking.status === "confirmed" || booking.status === "checked_in" || booking.status === "checked_out") {
+    if (
+      booking.status === "confirmed" ||
+      booking.status === "checked_in" ||
+      booking.status === "checked_out"
+    ) {
       return fail(res, "ALREADY_CONFIRMED", "This booking is already confirmed.", 400);
     }
 

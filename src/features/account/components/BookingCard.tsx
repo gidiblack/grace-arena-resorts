@@ -1,14 +1,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
-import {
-  Box,
-  Flex,
-  HStack,
-  Icon,
-  Text,
-  Badge,
-  SimpleGrid,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, Text, Badge, SimpleGrid } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
 import {
   FaFilePdf,
@@ -72,17 +64,53 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
   const getStatusBadge = (status: BookingRecord["status"]) => {
     switch (status) {
       case "confirmed":
-        return <Badge bg="rgba(72, 187, 120, 0.2)" color="#48BB78" px={2.5} py={0.5} borderRadius="full">Confirmed</Badge>;
+        return (
+          <Badge bg="rgba(72, 187, 120, 0.2)" color="#48BB78" px={2.5} py={0.5} borderRadius="full">
+            Confirmed
+          </Badge>
+        );
       case "pending":
-        return <Badge bg="rgba(252, 202, 70, 0.2)" color="accent.500" px={2.5} py={0.5} borderRadius="full">Pending Payment</Badge>;
+        return (
+          <Badge
+            bg="rgba(252, 202, 70, 0.2)"
+            color="accent.500"
+            px={2.5}
+            py={0.5}
+            borderRadius="full"
+          >
+            Pending Payment
+          </Badge>
+        );
       case "checked_in":
-        return <Badge bg="rgba(99, 179, 237, 0.2)" color="#63B3ED" px={2.5} py={0.5} borderRadius="full">Checked In</Badge>;
+        return (
+          <Badge bg="rgba(99, 179, 237, 0.2)" color="#63B3ED" px={2.5} py={0.5} borderRadius="full">
+            Checked In
+          </Badge>
+        );
       case "checked_out":
-        return <Badge bg="rgba(160, 174, 192, 0.2)" color="#A0AEC0" px={2.5} py={0.5} borderRadius="full">Checked Out</Badge>;
+        return (
+          <Badge
+            bg="rgba(160, 174, 192, 0.2)"
+            color="#A0AEC0"
+            px={2.5}
+            py={0.5}
+            borderRadius="full"
+          >
+            Checked Out
+          </Badge>
+        );
       case "cancelled":
-        return <Badge bg="rgba(229, 62, 62, 0.2)" color="#FC8181" px={2.5} py={0.5} borderRadius="full">Cancelled</Badge>;
+        return (
+          <Badge bg="rgba(229, 62, 62, 0.2)" color="#FC8181" px={2.5} py={0.5} borderRadius="full">
+            Cancelled
+          </Badge>
+        );
       case "no_show":
-        return <Badge bg="rgba(237, 137, 54, 0.2)" color="#ED8936" px={2.5} py={0.5} borderRadius="full">No Show</Badge>;
+        return (
+          <Badge bg="rgba(237, 137, 54, 0.2)" color="#ED8936" px={2.5} py={0.5} borderRadius="full">
+            No Show
+          </Badge>
+        );
       default:
         return <Badge>{status}</Badge>;
     }
@@ -109,7 +137,8 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
     }
   };
 
-  const paymentRecord = booking.payments && booking.payments.length > 0 ? booking.payments[0] : null;
+  const paymentRecord =
+    booking.payments && booking.payments.length > 0 ? booking.payments[0] : null;
 
   return (
     <>
@@ -175,7 +204,11 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
               ₦{booking.total.toLocaleString()}
             </Text>
             <Text fontSize="11px" color="gray.400">
-              {booking.status === "confirmed" ? "Fully Settled" : booking.status === "pending" ? "Payment Due" : "Settlement Closed"}
+              {booking.status === "confirmed"
+                ? "Fully Settled"
+                : booking.status === "pending"
+                  ? "Payment Due"
+                  : "Settlement Closed"}
             </Text>
           </Box>
         </SimpleGrid>
@@ -186,7 +219,9 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
             p={2}
             mb={3}
             borderRadius="6px"
-            bg={resendNotice.includes("sent") ? "rgba(72, 187, 120, 0.15)" : "rgba(229, 62, 62, 0.15)"}
+            bg={
+              resendNotice.includes("sent") ? "rgba(72, 187, 120, 0.15)" : "rgba(229, 62, 62, 0.15)"
+            }
             color={resendNotice.includes("sent") ? "#68D391" : "#FC8181"}
             fontSize="12px"
             textAlign="center"
@@ -213,7 +248,9 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
           {booking.status === "no_show" && (
             <HStack gap={2} color="gray.400" fontSize="12px">
               <Icon as={FaInfoCircle} boxSize={4} />
-              <Text>Marked No-Show after 24h post-check-in window. Reservation expired without refund.</Text>
+              <Text>
+                Marked No-Show after 24h post-check-in window. Reservation expired without refund.
+              </Text>
             </HStack>
           )}
 

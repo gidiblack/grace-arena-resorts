@@ -217,20 +217,31 @@ export default function BookingPage() {
             // Filter out under-construction rooms
             const activeOnly = json.data
               .filter((r: { status?: string }) => r.status !== "under_construction")
-              .map((r: { id: string; name: string; tier: string; effective_nightly_price?: number; base_price?: number; max_guests?: number; total_units?: number; status?: string }) => {
-                const matchedFallback = DEFAULT_ROOMS.find((dr) => dr.id === r.id);
-                return {
-                  id: r.id,
-                  name: r.name,
-                  campusTitle: r.id.startsWith("village") ? "GAR Village" : "GAR Elysian",
-                  tier: r.tier.charAt(0).toUpperCase() + r.tier.slice(1),
-                  pricePerNight: r.effective_nightly_price || r.base_price || 60000,
-                  maxGuests: r.max_guests || 2,
-                  image: matchedFallback?.image || suite.src,
-                  totalUnits: r.total_units || 5,
-                  status: r.status || "available",
-                };
-              });
+              .map(
+                (r: {
+                  id: string;
+                  name: string;
+                  tier: string;
+                  effective_nightly_price?: number;
+                  base_price?: number;
+                  max_guests?: number;
+                  total_units?: number;
+                  status?: string;
+                }) => {
+                  const matchedFallback = DEFAULT_ROOMS.find((dr) => dr.id === r.id);
+                  return {
+                    id: r.id,
+                    name: r.name,
+                    campusTitle: r.id.startsWith("village") ? "GAR Village" : "GAR Elysian",
+                    tier: r.tier.charAt(0).toUpperCase() + r.tier.slice(1),
+                    pricePerNight: r.effective_nightly_price || r.base_price || 60000,
+                    maxGuests: r.max_guests || 2,
+                    image: matchedFallback?.image || suite.src,
+                    totalUnits: r.total_units || 5,
+                    status: r.status || "available",
+                  };
+                }
+              );
 
             if (activeOnly.length > 0 && isMounted) {
               setAvailableRooms(activeOnly);
@@ -278,7 +289,9 @@ export default function BookingPage() {
           discountValue: d.discountValue,
           applicableRoomTypeIds: d.applicableRoomTypeIds,
         });
-        setDealMessage(`Promo "${d.code}" applied: ${d.discountType === "percentage" ? `${d.discountValue}% off` : `₦${d.discountValue.toLocaleString()} off`}`);
+        setDealMessage(
+          `Promo "${d.code}" applied: ${d.discountType === "percentage" ? `${d.discountValue}% off` : `₦${d.discountValue.toLocaleString()} off`}`
+        );
       } else {
         setDealError(json.error?.message || "Invalid promo code");
       }
@@ -311,7 +324,9 @@ export default function BookingPage() {
       const refStr: string = reference;
       async function loadConfirmation() {
         try {
-          const res = await fetch(`/api/v1/payments/verify?reference=${encodeURIComponent(refStr)}`);
+          const res = await fetch(
+            `/api/v1/payments/verify?reference=${encodeURIComponent(refStr)}`
+          );
           const json = await res.json();
           if (res.ok && json.success) {
             setConfirmedBookingData({
@@ -424,7 +439,9 @@ export default function BookingPage() {
     if (!result.success) {
       const issue = result.error.issues[0];
       if (issue.path.includes("phone")) {
-        setPhoneError("Phone number must be in +234XXXXXXXXXX Nigerian format (10 digits after +234)");
+        setPhoneError(
+          "Phone number must be in +234XXXXXXXXXX Nigerian format (10 digits after +234)"
+        );
       } else {
         setPaymentError(issue.message);
       }
@@ -469,7 +486,10 @@ export default function BookingPage() {
 
       if (!bookingRes.ok || !bookingData.success) {
         // If unauthenticated or email not verified per SRS 4.1
-        if (bookingData.error?.code === "UNAUTHORIZED" || bookingData.error?.code === "EMAIL_NOT_VERIFIED") {
+        if (
+          bookingData.error?.code === "UNAUTHORIZED" ||
+          bookingData.error?.code === "EMAIL_NOT_VERIFIED"
+        ) {
           router.push(`/login?redirect=${encodeURIComponent(router.asPath)}`);
           return;
         }
@@ -498,7 +518,10 @@ export default function BookingPage() {
         if (paymentData.error?.details?.downtimeFallbackRecommended) {
           setIsGatewayDowntimeActive(true);
         }
-        setPaymentError(paymentData.error?.message || "Payment initiation error. Please retry or contact on WhatsApp.");
+        setPaymentError(
+          paymentData.error?.message ||
+            "Payment initiation error. Please retry or contact on WhatsApp."
+        );
         setIsProcessingPayment(false);
         return;
       }
@@ -580,7 +603,12 @@ export default function BookingPage() {
                 {/* Responsive Step Indicator Banner */}
                 <Box bg="#0F172A" p={4} borderRadius="16px" border="1px solid #1E293B" mb={6}>
                   <Flex justify="space-between" align="center" mb={2}>
-                    <Text fontSize="13px" fontWeight="bold" color="accent.500" textTransform="uppercase">
+                    <Text
+                      fontSize="13px"
+                      fontWeight="bold"
+                      color="accent.500"
+                      textTransform="uppercase"
+                    >
                       Step {currentStep} of 4
                     </Text>
                     <Text fontSize="12px" color="gray.400">
@@ -618,14 +646,19 @@ export default function BookingPage() {
                           Online Payment Temporarily Unavailable
                         </Text>
                         <Text fontSize="13px" color="gray.300" mt={1}>
-                          Our gateway is currently undergoing maintenance. Your room hold is extended to 2 hours!
-                          Please message our concierge directly on WhatsApp to confirm with manual transfer.
+                          Our gateway is currently undergoing maintenance. Your room hold is
+                          extended to 2 hours! Please message our concierge directly on WhatsApp to
+                          confirm with manual transfer.
                         </Text>
                         <a
                           href={`https://wa.me/2348123456789?text=${encodeURIComponent(`Hello Grace Arena, I want to confirm my booking hold (${guestName}, ${pricing.total} NGN)`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{ textDecoration: "none", display: "inline-block", marginTop: "8px" }}
+                          style={{
+                            textDecoration: "none",
+                            display: "inline-block",
+                            marginTop: "8px",
+                          }}
                         >
                           <Button
                             variant="secondary"
@@ -886,7 +919,10 @@ export default function BookingPage() {
                                       </HStack>
                                     </HStack>
                                   </Box>
-                                  <Box textAlign={{ base: "left", sm: "right" }} mt={{ base: 2, sm: 0 }}>
+                                  <Box
+                                    textAlign={{ base: "left", sm: "right" }}
+                                    mt={{ base: 2, sm: 0 }}
+                                  >
                                     <Text fontSize="18px" fontWeight="extrabold" color="accent.500">
                                       ₦{room.pricePerNight.toLocaleString()}
                                     </Text>
@@ -906,7 +942,12 @@ export default function BookingPage() {
                                       >
                                         <Icon as={FaMinus} />
                                       </Button>
-                                      <Text fontWeight="bold" fontSize="15px" w="30px" textAlign="center">
+                                      <Text
+                                        fontWeight="bold"
+                                        fontSize="15px"
+                                        w="30px"
+                                        textAlign="center"
+                                      >
                                         {selected.count}
                                       </Text>
                                       <Button
@@ -1063,7 +1104,8 @@ export default function BookingPage() {
                               </Text>
                             </HStack>
                             <Text fontSize="12px" color="gray.300" mt={1}>
-                              Complimentary for registered guests. Our staff schedules quiet hours for you during your stay.
+                              Complimentary for registered guests. Our staff schedules quiet hours
+                              for you during your stay.
                             </Text>
                           </Box>
                         </Flex>
@@ -1075,7 +1117,10 @@ export default function BookingPage() {
                           <Text fontSize="13px" fontWeight="medium" color="gray.300">
                             Special Requests / Dietary Requirements
                           </Text>
-                          <Text fontSize="12px" color={specialRequests.length > 500 ? "#FC8181" : "gray.400"}>
+                          <Text
+                            fontSize="12px"
+                            color={specialRequests.length > 500 ? "#FC8181" : "gray.400"}
+                          >
                             {specialRequests.length} / 500 chars
                           </Text>
                         </Flex>
@@ -1134,7 +1179,12 @@ export default function BookingPage() {
                       {/* Section 1: Dates & Duration */}
                       <Box bg="#1E293B" p={4} borderRadius="12px" border="1px solid #334155">
                         <Flex justify="space-between" align="center" mb={1}>
-                          <Text fontSize="12px" fontWeight="bold" color="gray.400" textTransform="uppercase">
+                          <Text
+                            fontSize="12px"
+                            fontWeight="bold"
+                            color="gray.400"
+                            textTransform="uppercase"
+                          >
                             Dates &amp; Stay Duration
                           </Text>
                           <Text
@@ -1159,7 +1209,12 @@ export default function BookingPage() {
                       {/* Section 2: Selected Rooms */}
                       <Box bg="#1E293B" p={4} borderRadius="12px" border="1px solid #334155">
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontSize="12px" fontWeight="bold" color="gray.400" textTransform="uppercase">
+                          <Text
+                            fontSize="12px"
+                            fontWeight="bold"
+                            color="gray.400"
+                            textTransform="uppercase"
+                          >
                             Selected Rooms
                           </Text>
                           <Text
@@ -1190,7 +1245,12 @@ export default function BookingPage() {
                       {/* Section 3: Guest Details */}
                       <Box bg="#1E293B" p={4} borderRadius="12px" border="1px solid #334155">
                         <Flex justify="space-between" align="center" mb={1}>
-                          <Text fontSize="12px" fontWeight="bold" color="gray.400" textTransform="uppercase">
+                          <Text
+                            fontSize="12px"
+                            fontWeight="bold"
+                            color="gray.400"
+                            textTransform="uppercase"
+                          >
                             Guest Details
                           </Text>
                           <Text
@@ -1214,7 +1274,13 @@ export default function BookingPage() {
 
                       {/* Promo Code Input */}
                       <Box bg="#1E293B" p={4} borderRadius="12px" border="1px solid #334155">
-                        <Text fontSize="12px" fontWeight="bold" color="gray.400" textTransform="uppercase" mb={2}>
+                        <Text
+                          fontSize="12px"
+                          fontWeight="bold"
+                          color="gray.400"
+                          textTransform="uppercase"
+                          mb={2}
+                        >
                           Have a Promo or Retreat Code?
                         </Text>
                         <Flex gap={2}>
@@ -1252,7 +1318,14 @@ export default function BookingPage() {
 
                     {/* Payment Error Alert */}
                     {paymentError && (
-                      <Box p={3} mb={6} borderRadius="8px" bg="rgba(229, 62, 62, 0.15)" color="#FC8181" fontSize="13px">
+                      <Box
+                        p={3}
+                        mb={6}
+                        borderRadius="8px"
+                        bg="rgba(229, 62, 62, 0.15)"
+                        color="#FC8181"
+                        fontSize="13px"
+                      >
                         {paymentError}
                       </Box>
                     )}

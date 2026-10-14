@@ -41,7 +41,10 @@ export async function getAuthUser(req: NextApiRequest): Promise<AuthUser | null>
 
   try {
     const supabase = getSupabaseAdminClient();
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
 
     if (error || !user) {
       return null;
@@ -58,7 +61,8 @@ export async function getAuthUser(req: NextApiRequest): Promise<AuthUser | null>
       return null;
     }
 
-    const role: UserRole = (profile?.role as UserRole) || (user.user_metadata?.role as UserRole) || "guest";
+    const role: UserRole =
+      (profile?.role as UserRole) || (user.user_metadata?.role as UserRole) || "guest";
 
     return {
       id: user.id,
@@ -101,13 +105,10 @@ export async function requireRole(
   if (!user) return null;
 
   if (!allowedRoles.includes(user.role)) {
-    fail(
-      res,
-      "FORBIDDEN",
-      "You do not possess the required permissions for this action",
-      403,
-      { requiredRoles: allowedRoles, currentRole: user.role }
-    );
+    fail(res, "FORBIDDEN", "You do not possess the required permissions for this action", 403, {
+      requiredRoles: allowedRoles,
+      currentRole: user.role,
+    });
     return null;
   }
 

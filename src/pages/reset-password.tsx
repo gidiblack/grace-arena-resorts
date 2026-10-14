@@ -60,7 +60,9 @@ export default function ResetPasswordPage() {
   return (
     <AuthLayout
       title="Create New Password"
-      subtitle={email ? `Enter a new secure password for ${email}` : "Enter your new password below"}
+      subtitle={
+        email ? `Enter a new secure password for ${email}` : "Enter your new password below"
+      }
     >
       {isSuccess ? (
         <Stack gap={4} textAlign="center">
@@ -85,7 +87,14 @@ export default function ResetPasswordPage() {
             )}
 
             <Box>
-              <Text as="span" fontSize="sm" fontWeight="medium" color="gray.700" mb={1} display="block">
+              <Text
+                as="span"
+                fontSize="sm"
+                fontWeight="medium"
+                color="gray.700"
+                mb={1}
+                display="block"
+              >
                 New Password
               </Text>
               <Input
@@ -104,7 +113,14 @@ export default function ResetPasswordPage() {
             </Box>
 
             <Box>
-              <Text as="span" fontSize="sm" fontWeight="medium" color="gray.700" mb={1} display="block">
+              <Text
+                as="span"
+                fontSize="sm"
+                fontWeight="medium"
+                color="gray.700"
+                mb={1}
+                display="block"
+              >
                 Confirm New Password
               </Text>
               <Input

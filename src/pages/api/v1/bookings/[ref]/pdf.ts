@@ -26,10 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const isAdmin = ["resort_admin", "super_admin", "content_manager"].includes(user.role);
 
   // 2. Fetch booking
-  let query = supabase
-    .from("bookings")
-    .select("*")
-    .eq("reference", ref.toUpperCase().trim());
+  let query = supabase.from("bookings").select("*").eq("reference", ref.toUpperCase().trim());
 
   if (!isAdmin) {
     query = query.eq("user_id", user.id);

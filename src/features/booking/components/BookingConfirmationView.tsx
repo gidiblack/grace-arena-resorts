@@ -1,15 +1,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
-import {
-  Box,
-  Flex,
-  HStack,
-  Icon,
-  Stack,
-  Text,
-  Badge,
-  SimpleGrid,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, Stack, Text, Badge, SimpleGrid } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
 import {
   FaCheckCircle,
@@ -172,7 +163,9 @@ export default function BookingConfirmationView({
           </Text>
           <HStack gap={1} mt={1} color="gray.400" fontSize="12px">
             <Icon as={FaClock} boxSize={3} />
-            <Text>By 11:00 (11:00 AM) • {nights} {nights === 1 ? "Night" : "Nights"}</Text>
+            <Text>
+              By 11:00 (11:00 AM) • {nights} {nights === 1 ? "Night" : "Nights"}
+            </Text>
           </HStack>
         </Box>
       </SimpleGrid>
@@ -201,7 +194,11 @@ export default function BookingConfirmationView({
           p={3}
           mb={6}
           borderRadius="8px"
-          bg={resendStatus.includes("success") ? "rgba(72, 187, 120, 0.15)" : "rgba(229, 62, 62, 0.15)"}
+          bg={
+            resendStatus.includes("success")
+              ? "rgba(72, 187, 120, 0.15)"
+              : "rgba(229, 62, 62, 0.15)"
+          }
           color={resendStatus.includes("success") ? "#68D391" : "#FC8181"}
           fontSize="13px"
           textAlign="center"

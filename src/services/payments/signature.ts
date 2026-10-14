@@ -18,10 +18,7 @@ export function isValidPaystackSignature(
     return false;
   }
 
-  const computedHash = crypto
-    .createHmac("sha512", secretKey)
-    .update(rawBody)
-    .digest("hex");
+  const computedHash = crypto.createHmac("sha512", secretKey).update(rawBody).digest("hex");
 
   const computedBuffer = Buffer.from(computedHash, "utf8");
   const signatureBuffer = Buffer.from(signatureHeader, "utf8");

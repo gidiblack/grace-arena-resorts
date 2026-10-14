@@ -48,9 +48,7 @@ export default withApi(
 
       const isAdmin = ["resort_admin", "super_admin", "content_manager"].includes(user.role);
 
-      let query = supabase
-        .from("bookings")
-        .select("*", { count: "exact" });
+      let query = supabase.from("bookings").select("*", { count: "exact" });
 
       if (!isAdmin) {
         // Guests can ONLY view their own bookings per SRS Section 4.1
@@ -107,11 +105,17 @@ export default withApi(
     if (req.method === "POST") {
       const parseResult = createBookingSchema.safeParse(req.body);
       if (!parseResult.success) {
-        return fail(res, "VALIDATION_ERROR", parseResult.error.issues[0]?.message || "Invalid payload", 400);
+        return fail(
+          res,
+          "VALIDATION_ERROR",
+          parseResult.error.issues[0]?.message || "Invalid payload",
+          400
+        );
       }
       const payload = parseResult.data;
       const isAdmin = ["resort_admin", "super_admin"].includes(user.role);
-      const isWalkInAdminBooking = isAdmin && (payload.paymentMethod === "cash" || payload.paymentMethod === "pos");
+      const isWalkInAdminBooking =
+        isAdmin && (payload.paymentMethod === "cash" || payload.paymentMethod === "pos");
 
       // Enforce email verification for online booking guests per GAR-SRS Section 4.1
       if (!isAdmin && !user.isEmailVerified) {
@@ -307,7 +311,9 @@ export default withApi(
         };
       });
 
-      const { error: lineItemError } = await supabase.from("booking_line_items").insert(lineItemInserts);
+      const { error: lineItemError } = await supabase
+        .from("booking_line_items")
+        .insert(lineItemInserts);
       if (lineItemError) {
         logger.error("Failed to insert booking line items", { error: lineItemError });
       }
@@ -366,7 +372,9 @@ export default withApi(
             ],
           });
         } catch (emailErr) {
-          logger.error("Error generating PDF or sending walk-in confirmation email", { error: emailErr });
+          logger.error("Error generating PDF or sending walk-in confirmation email", {
+            error: emailErr,
+          });
         }
       }
 

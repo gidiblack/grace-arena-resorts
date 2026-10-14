@@ -62,7 +62,12 @@ export function withApi<TBody = unknown, TQuery = unknown>(
       const method = (req.method || "").toUpperCase() as HttpMethod;
       if (!options.allowedMethods.includes(method)) {
         res.setHeader("Allow", options.allowedMethods.join(", "));
-        return fail(res, "METHOD_NOT_ALLOWED", `Method ${method} is not allowed on this endpoint`, 405);
+        return fail(
+          res,
+          "METHOD_NOT_ALLOWED",
+          `Method ${method} is not allowed on this endpoint`,
+          405
+        );
       }
     }
 
@@ -106,7 +111,13 @@ export function withApi<TBody = unknown, TQuery = unknown>(
           field: i.path.join("."),
           message: i.message,
         }));
-        return fail(res, "INVALID_QUERY_PARAMS", "Invalid request query parameters", 400, validationIssues);
+        return fail(
+          res,
+          "INVALID_QUERY_PARAMS",
+          "Invalid request query parameters",
+          400,
+          validationIssues
+        );
       }
       req.query = queryParse.data as typeof req.query;
     }
@@ -119,7 +130,13 @@ export function withApi<TBody = unknown, TQuery = unknown>(
           field: i.path.join("."),
           message: i.message,
         }));
-        return fail(res, "INVALID_REQUEST_BODY", "Invalid request body payload", 400, validationIssues);
+        return fail(
+          res,
+          "INVALID_REQUEST_BODY",
+          "Invalid request body payload",
+          400,
+          validationIssues
+        );
       }
       req.body = bodyParse.data;
     }
@@ -140,9 +157,15 @@ export function withApi<TBody = unknown, TQuery = unknown>(
       });
 
       if (!res.writableEnded) {
-        return fail(res, "INTERNAL_ERROR", "An unexpected error occurred while processing your request", 500, {
-          requestId,
-        });
+        return fail(
+          res,
+          "INTERNAL_ERROR",
+          "An unexpected error occurred while processing your request",
+          500,
+          {
+            requestId,
+          }
+        );
       }
     }
   };

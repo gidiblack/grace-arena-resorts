@@ -43,7 +43,11 @@ export async function initiatePaystackRefund(
         status: response.status,
         message: data.message,
       });
-      throw new PaystackError(data.message || "Failed to initiate Paystack refund", response.status, data);
+      throw new PaystackError(
+        data.message || "Failed to initiate Paystack refund",
+        response.status,
+        data
+      );
     }
 
     const refund = data.data;

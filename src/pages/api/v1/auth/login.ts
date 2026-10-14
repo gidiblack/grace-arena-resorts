@@ -16,7 +16,9 @@ export default withApi(
     // 1. Fetch user by email
     const { data: user, error } = await supabase
       .from("users")
-      .select("id, email, password_hash, full_name, phone, role, is_email_verified, is_locked, failed_login_attempts, locked_until")
+      .select(
+        "id, email, password_hash, full_name, phone, role, is_email_verified, is_locked, failed_login_attempts, locked_until"
+      )
       .eq("email", normalizedEmail)
       .maybeSingle();
 
@@ -138,8 +140,18 @@ export default withApi(
     };
 
     res.setHeader("Set-Cookie", [
-      stringifySetCookie({ name: "gar_access_token", value: accessToken, ...cookieOptions, maxAge: accessMaxAge }),
-      stringifySetCookie({ name: "gar_refresh_token", value: refreshToken, ...cookieOptions, maxAge: refreshMaxAge }),
+      stringifySetCookie({
+        name: "gar_access_token",
+        value: accessToken,
+        ...cookieOptions,
+        maxAge: accessMaxAge,
+      }),
+      stringifySetCookie({
+        name: "gar_refresh_token",
+        value: refreshToken,
+        ...cookieOptions,
+        maxAge: refreshMaxAge,
+      }),
     ]);
 
     return ok(res, {

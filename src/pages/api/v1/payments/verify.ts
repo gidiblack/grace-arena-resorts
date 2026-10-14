@@ -24,7 +24,12 @@ export default withApi(
       (req.body && typeof req.body === "object" ? req.body.reference : undefined);
 
     if (!reference || typeof reference !== "string") {
-      return fail(res, "VALIDATION_ERROR", "Payment reference query parameter or body is required", 400);
+      return fail(
+        res,
+        "VALIDATION_ERROR",
+        "Payment reference query parameter or body is required",
+        400
+      );
     }
 
     const supabase = getSupabaseAdminClient();
@@ -111,7 +116,8 @@ export default withApi(
           refundResult = await initiatePaystackRefund({
             transactionReferenceOrId: reference,
             amountKobo: verified.amountKobo,
-            customerNote: "Automated refund: Booking hold window expired prior to payment completion.",
+            customerNote:
+              "Automated refund: Booking hold window expired prior to payment completion.",
             merchantNote: "Hold expired late payment auto-refund",
           });
         } catch (rfErr) {
@@ -128,7 +134,9 @@ export default withApi(
               refunded_at: new Date().toISOString(),
               paid_at: verified.paidAt || new Date().toISOString(),
               metadata: {
-                ...(typeof payment.metadata === "object" && payment.metadata !== null ? payment.metadata : {}),
+                ...(typeof payment.metadata === "object" && payment.metadata !== null
+                  ? payment.metadata
+                  : {}),
                 reason: "EXPIRED_HOLD_AUTO_REFUND",
                 refundResult: refundResult ? (refundResult as unknown as Json) : null,
               },
@@ -141,7 +149,9 @@ export default withApi(
           .from("bookings")
           .update({
             status: "cancelled",
-            special_requests: (booking.special_requests || "") + " [Cancelled: Payment succeeded after 30-min hold expired; auto-refund triggered]",
+            special_requests:
+              (booking.special_requests || "") +
+              " [Cancelled: Payment succeeded after 30-min hold expired; auto-refund triggered]",
           })
           .eq("id", booking.id);
 
@@ -152,7 +162,8 @@ export default withApi(
           templateData: {
             reference: booking.reference,
             amount: booking.total,
-            message: "Your payment was received after the booking hold expired. A full refund has been automatically initiated.",
+            message:
+              "Your payment was received after the booking hold expired. A full refund has been automatically initiated.",
           },
         });
 
@@ -162,7 +173,8 @@ export default withApi(
           bookingStatus: "cancelled",
           bookingReference: booking.reference,
           isHoldExpired: true,
-          message: "Payment received after hold expired. A full refund has been automatically initiated.",
+          message:
+            "Payment received after hold expired. A full refund has been automatically initiated.",
         });
       }
 

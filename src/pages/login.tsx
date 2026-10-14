@@ -1,14 +1,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import NextLink from "next/link";
-import {
-  Box,
-  Button,
-  Flex,
-  Input,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import { Box, Button, Flex, Input, Stack, Text } from "@chakra-ui/react";
 import AuthLayout from "@/features/auth/components/AuthLayout";
 import { ROUTES } from "@/constants/ROUTES";
 
@@ -72,7 +65,14 @@ export default function LoginPage() {
           )}
 
           <Box>
-            <Text as="span" fontSize="sm" fontWeight="medium" color="gray.700" mb={1} display="block">
+            <Text
+              as="span"
+              fontSize="sm"
+              fontWeight="medium"
+              color="gray.700"
+              mb={1}
+              display="block"
+            >
               Email Address
             </Text>
             <Input
@@ -111,7 +111,15 @@ export default function LoginPage() {
           </Box>
 
           <Flex align="center" justify="space-between" mt={1}>
-            <label style={{ display: "flex", alignItems: "center", cursor: "pointer", fontSize: "0.875rem", color: "#4A5568" }}>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                cursor: "pointer",
+                fontSize: "0.875rem",
+                color: "#4A5568",
+              }}
+            >
               <input
                 type="checkbox"
                 checked={rememberMe}
@@ -138,7 +146,12 @@ export default function LoginPage() {
           <Text fontSize="sm" color="gray.600" textAlign="center" mt={4}>
             Don&apos;t have an account yet?{" "}
             <NextLink href={ROUTES.register || "/register"}>
-              <Text as="span" color="blue.600" fontWeight="semibold" _hover={{ textDecoration: "underline" }}>
+              <Text
+                as="span"
+                color="blue.600"
+                fontWeight="semibold"
+                _hover={{ textDecoration: "underline" }}
+              >
                 Create an account
               </Text>
             </NextLink>

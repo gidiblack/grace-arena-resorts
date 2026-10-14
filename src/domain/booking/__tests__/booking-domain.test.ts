@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  canTransition,
-  assertTransition,
-  canMarkNoShow,
-} from "../state-machine";
+import { canTransition, assertTransition, canMarkNoShow } from "../state-machine";
 import { calculateCancellationRefund } from "../cancellation";
 import { generateBookingReference } from "../reference";
 import { calculateBookingPricing } from "@/services/pricing/pricing-engine";

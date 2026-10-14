@@ -1,25 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import {
-  Box,
-  Flex,
-  HStack,
-  Icon,
-  SimpleGrid,
-  Stack,
-  Text,
-  Spinner,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, SimpleGrid, Stack, Text, Spinner } from "@chakra-ui/react";
 import AccountLayout from "@/features/account/components/AccountLayout";
 import BookingCard, { BookingRecord } from "@/features/account/components/BookingCard";
 import Button from "@/components/ui/button";
-import {
-  FaCalendarCheck,
-  FaClock,
-  FaBed,
-  FaPlus,
-  FaShieldAlt,
-} from "react-icons/fa";
+import { FaCalendarCheck, FaClock, FaBed, FaPlus, FaShieldAlt } from "react-icons/fa";
 
 export default function AccountOverviewPage() {
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
@@ -53,7 +38,14 @@ export default function AccountOverviewPage() {
       <SimpleGrid columns={{ base: 1, sm: 3 }} gap={4} mb={8}>
         <Box bg="#0F172A" p={5} borderRadius="16px" border="1px solid #1E293B">
           <HStack gap={3} mb={2}>
-            <Flex w="40px" h="40px" borderRadius="10px" bg="rgba(72, 187, 120, 0.15)" align="center" justify="center">
+            <Flex
+              w="40px"
+              h="40px"
+              borderRadius="10px"
+              bg="rgba(72, 187, 120, 0.15)"
+              align="center"
+              justify="center"
+            >
               <Icon as={FaCalendarCheck} color="#48BB78" boxSize={5} />
             </Flex>
             <Box>
@@ -72,7 +64,14 @@ export default function AccountOverviewPage() {
 
         <Box bg="#0F172A" p={5} borderRadius="16px" border="1px solid #1E293B">
           <HStack gap={3} mb={2}>
-            <Flex w="40px" h="40px" borderRadius="10px" bg="rgba(252, 202, 70, 0.15)" align="center" justify="center">
+            <Flex
+              w="40px"
+              h="40px"
+              borderRadius="10px"
+              bg="rgba(252, 202, 70, 0.15)"
+              align="center"
+              justify="center"
+            >
               <Icon as={FaBed} color="accent.500" boxSize={5} />
             </Flex>
             <Box>
@@ -91,7 +90,14 @@ export default function AccountOverviewPage() {
 
         <Box bg="#0F172A" p={5} borderRadius="16px" border="1px solid #1E293B">
           <HStack gap={3} mb={2}>
-            <Flex w="40px" h="40px" borderRadius="10px" bg="rgba(99, 179, 237, 0.15)" align="center" justify="center">
+            <Flex
+              w="40px"
+              h="40px"
+              borderRadius="10px"
+              bg="rgba(99, 179, 237, 0.15)"
+              align="center"
+              justify="center"
+            >
               <Icon as={FaClock} color="#63B3ED" boxSize={5} />
             </Flex>
             <Box>
@@ -119,7 +125,8 @@ export default function AccountOverviewPage() {
             </Text>
           </HStack>
           <Text fontSize="13px" color="gray.400" mb={4}>
-            Choose between our Elysian Sanctuary suites or the Village Thatched retreat with complimentary prayer huts.
+            Choose between our Elysian Sanctuary suites or the Village Thatched retreat with
+            complimentary prayer huts.
           </Text>
           <Link href="/booking" style={{ textDecoration: "none" }}>
             <Button variant="primary" size="sm">
@@ -169,13 +176,7 @@ export default function AccountOverviewPage() {
             <Spinner color="accent.500" size="lg" />
           </Flex>
         ) : bookings.length === 0 ? (
-          <Box
-            bg="#0F172A"
-            p={8}
-            borderRadius="18px"
-            border="1px solid #1E293B"
-            textAlign="center"
-          >
+          <Box bg="#0F172A" p={8} borderRadius="18px" border="1px solid #1E293B" textAlign="center">
             <Text fontSize="16px" fontWeight="bold" mb={2}>
               No Bookings Found Yet
             </Text>

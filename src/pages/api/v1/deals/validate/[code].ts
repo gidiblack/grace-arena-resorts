@@ -16,7 +16,9 @@ export default withApi(
 
     const { data: deal, error } = await supabase
       .from("deals")
-      .select("id, title, slug, description, discount_type, discount_value, promo_code, start_date, end_date, is_active, applicable_room_type_ids, terms")
+      .select(
+        "id, title, slug, description, discount_type, discount_value, promo_code, start_date, end_date, is_active, applicable_room_type_ids, terms"
+      )
       .ilike("promo_code", normalizedCode)
       .eq("is_active", true)
       .lte("start_date", today)
@@ -24,7 +26,12 @@ export default withApi(
       .maybeSingle();
 
     if (error || !deal) {
-      return fail(res, "INVALID_PROMO_CODE", "The promo code entered is invalid or has expired", 404);
+      return fail(
+        res,
+        "INVALID_PROMO_CODE",
+        "The promo code entered is invalid or has expired",
+        404
+      );
     }
 
     return ok(res, {

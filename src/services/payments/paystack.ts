@@ -50,7 +50,11 @@ export async function initializePayment(
         status: response.status,
         message: data.message,
       });
-      throw new PaystackError(data.message || "Failed to initialize Paystack payment", response.status, data);
+      throw new PaystackError(
+        data.message || "Failed to initialize Paystack payment",
+        response.status,
+        data
+      );
     }
 
     return {
@@ -88,7 +92,11 @@ export async function verifyPayment(reference: string): Promise<PaystackVerifyRe
         status: response.status,
         message: data.message,
       });
-      throw new PaystackError(data.message || "Failed to verify Paystack payment", response.status, data);
+      throw new PaystackError(
+        data.message || "Failed to verify Paystack payment",
+        response.status,
+        data
+      );
     }
 
     const tx = data.data;

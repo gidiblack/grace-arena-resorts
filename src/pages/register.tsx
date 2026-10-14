@@ -1,13 +1,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import NextLink from "next/link";
-import {
-  Box,
-  Button,
-  Input,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import { Box, Button, Input, Stack, Text } from "@chakra-ui/react";
 import AuthLayout from "@/features/auth/components/AuthLayout";
 import { ROUTES } from "@/constants/ROUTES";
 
@@ -91,7 +85,14 @@ export default function RegisterPage() {
           )}
 
           <Box>
-            <Text as="span" fontSize="sm" fontWeight="medium" color="gray.700" mb={1} display="block">
+            <Text
+              as="span"
+              fontSize="sm"
+              fontWeight="medium"
+              color="gray.700"
+              mb={1}
+              display="block"
+            >
               Full Name
             </Text>
             <Input
@@ -107,7 +108,14 @@ export default function RegisterPage() {
           </Box>
 
           <Box>
-            <Text as="span" fontSize="sm" fontWeight="medium" color="gray.700" mb={1} display="block">
+            <Text
+              as="span"
+              fontSize="sm"
+              fontWeight="medium"
+              color="gray.700"
+              mb={1}
+              display="block"
+            >
               Email Address
             </Text>
             <Input
@@ -123,7 +131,14 @@ export default function RegisterPage() {
           </Box>
 
           <Box>
-            <Text as="span" fontSize="sm" fontWeight="medium" color="gray.700" mb={1} display="block">
+            <Text
+              as="span"
+              fontSize="sm"
+              fontWeight="medium"
+              color="gray.700"
+              mb={1}
+              display="block"
+            >
               Phone Number (+234 format)
             </Text>
             <Input
@@ -139,7 +154,14 @@ export default function RegisterPage() {
           </Box>
 
           <Box>
-            <Text as="span" fontSize="sm" fontWeight="medium" color="gray.700" mb={1} display="block">
+            <Text
+              as="span"
+              fontSize="sm"
+              fontWeight="medium"
+              color="gray.700"
+              mb={1}
+              display="block"
+            >
               Password
             </Text>
             <Input
@@ -158,7 +180,14 @@ export default function RegisterPage() {
           </Box>
 
           <Box>
-            <Text as="span" fontSize="sm" fontWeight="medium" color="gray.700" mb={1} display="block">
+            <Text
+              as="span"
+              fontSize="sm"
+              fontWeight="medium"
+              color="gray.700"
+              mb={1}
+              display="block"
+            >
               Confirm Password
             </Text>
             <Input
@@ -174,7 +203,15 @@ export default function RegisterPage() {
           </Box>
 
           <Box mt={1}>
-            <label style={{ display: "flex", alignItems: "flex-start", cursor: "pointer", fontSize: "0.875rem", color: "#4A5568" }}>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                cursor: "pointer",
+                fontSize: "0.875rem",
+                color: "#4A5568",
+              }}
+            >
               <input
                 type="checkbox"
                 checked={consentAccepted}
@@ -210,7 +247,12 @@ export default function RegisterPage() {
           <Text fontSize="sm" color="gray.600" textAlign="center" mt={4}>
             Already registered?{" "}
             <NextLink href={ROUTES.login || "/login"}>
-              <Text as="span" color="blue.600" fontWeight="semibold" _hover={{ textDecoration: "underline" }}>
+              <Text
+                as="span"
+                color="blue.600"
+                fontWeight="semibold"
+                _hover={{ textDecoration: "underline" }}
+              >
                 Sign in here
               </Text>
             </NextLink>

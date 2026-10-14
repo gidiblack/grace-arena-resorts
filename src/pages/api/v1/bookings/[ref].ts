@@ -14,10 +14,7 @@ export default withApi(
     const supabase = getSupabaseAdminClient();
     const isAdmin = ["resort_admin", "super_admin", "content_manager"].includes(user.role);
 
-    let query = supabase
-      .from("bookings")
-      .select("*")
-      .eq("reference", ref.toUpperCase().trim());
+    let query = supabase.from("bookings").select("*").eq("reference", ref.toUpperCase().trim());
 
     if (!isAdmin) {
       query = query.eq("user_id", user.id);

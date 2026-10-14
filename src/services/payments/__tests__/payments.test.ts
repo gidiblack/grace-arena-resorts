@@ -14,7 +14,9 @@ describe("Step 9: Payment Integration & Webhook Security", () => {
 
   describe("HMAC-SHA512 Signature Verification", () => {
     it("returns true for a valid signature matching payload and secret", () => {
-      const payload = Buffer.from(JSON.stringify({ event: "charge.success", data: { reference: "GAR-12345" } }));
+      const payload = Buffer.from(
+        JSON.stringify({ event: "charge.success", data: { reference: "GAR-12345" } })
+      );
       const validSignature = crypto.createHmac("sha512", secretKey).update(payload).digest("hex");
 
       const isValid = isValidPaystackSignature(payload, validSignature, secretKey);
@@ -22,9 +24,16 @@ describe("Step 9: Payment Integration & Webhook Security", () => {
     });
 
     it("rejects tampered webhook payload", () => {
-      const originalPayload = Buffer.from(JSON.stringify({ event: "charge.success", data: { amount: 50000 } }));
-      const tamperedPayload = Buffer.from(JSON.stringify({ event: "charge.success", data: { amount: 1000 } }));
-      const signature = crypto.createHmac("sha512", secretKey).update(originalPayload).digest("hex");
+      const originalPayload = Buffer.from(
+        JSON.stringify({ event: "charge.success", data: { amount: 50000 } })
+      );
+      const tamperedPayload = Buffer.from(
+        JSON.stringify({ event: "charge.success", data: { amount: 1000 } })
+      );
+      const signature = crypto
+        .createHmac("sha512", secretKey)
+        .update(originalPayload)
+        .digest("hex");
 
       const isValid = isValidPaystackSignature(tamperedPayload, signature, secretKey);
       expect(isValid).toBe(false);

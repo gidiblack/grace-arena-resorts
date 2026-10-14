@@ -46,8 +46,8 @@ export default function ForgotPasswordPage() {
         <Stack gap={4} textAlign="center">
           <Box p={4} bg="blue.50" borderRadius="lg" border="1px solid" borderColor="blue.200">
             <Text color="blue.800" fontSize="sm">
-              If an account matches <strong>{email}</strong>, a secure reset link has been dispatched.
-              The link is valid for 1 hour.
+              If an account matches <strong>{email}</strong>, a secure reset link has been
+              dispatched. The link is valid for 1 hour.
             </Text>
           </Box>
           <NextLink href={ROUTES.login || "/login"}>
@@ -66,7 +66,14 @@ export default function ForgotPasswordPage() {
             )}
 
             <Box>
-              <Text as="span" fontSize="sm" fontWeight="medium" color="gray.700" mb={1} display="block">
+              <Text
+                as="span"
+                fontSize="sm"
+                fontWeight="medium"
+                color="gray.700"
+                mb={1}
+                display="block"
+              >
                 Registered Email
               </Text>
               <Input
@@ -97,7 +104,12 @@ export default function ForgotPasswordPage() {
             <Text fontSize="sm" color="gray.600" textAlign="center" mt={3}>
               Remember your password?{" "}
               <NextLink href={ROUTES.login || "/login"}>
-                <Text as="span" color="blue.600" fontWeight="semibold" _hover={{ textDecoration: "underline" }}>
+                <Text
+                  as="span"
+                  color="blue.600"
+                  fontWeight="semibold"
+                  _hover={{ textDecoration: "underline" }}
+                >
                   Sign in
                 </Text>
               </NextLink>

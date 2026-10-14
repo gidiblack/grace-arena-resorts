@@ -5,10 +5,7 @@ import type { NextApiResponse } from "next";
  */
 export function setSecurityHeaders(res: NextApiResponse): void {
   // Enforce HSTS (2 years with subdomains and preload)
-  res.setHeader(
-    "Strict-Transport-Security",
-    "max-age=63072000; includeSubDomains; preload"
-  );
+  res.setHeader("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
 
   // Prevent MIME-sniffing
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -20,10 +17,7 @@ export function setSecurityHeaders(res: NextApiResponse): void {
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
 
   // Permissions policy
-  res.setHeader(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(), payment=()"
-  );
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
 
   // Cross-site scripting / content security baseline
   res.setHeader(

@@ -103,7 +103,12 @@ export default function VerifyEmailPage() {
             <Text fontSize="sm" color="gray.500" mt={4}>
               Already confirmed?{" "}
               <NextLink href={ROUTES.login || "/login"}>
-                <Text as="span" color="blue.600" fontWeight="semibold" _hover={{ textDecoration: "underline" }}>
+                <Text
+                  as="span"
+                  color="blue.600"
+                  fontWeight="semibold"
+                  _hover={{ textDecoration: "underline" }}
+                >
                   Sign in
                 </Text>
               </NextLink>

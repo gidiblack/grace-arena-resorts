@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  passwordPolicy,
-  registerSchema,
-  changePasswordSchema,
-  loginSchema,
-} from "../schemas";
+import { passwordPolicy, registerSchema, changePasswordSchema, loginSchema } from "../schemas";
 
 describe("Step 4: Authentication & User Profile Vertical Slice", () => {
   beforeEach(() => {

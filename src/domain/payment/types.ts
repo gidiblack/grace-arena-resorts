@@ -82,7 +82,9 @@ export interface PaystackWebhookPayload {
  */
 export function isGatewayDowntime(activeSettingValue?: string | null): boolean {
   if (!activeSettingValue) return false;
-  return activeSettingValue === "true" || activeSettingValue === "1" || activeSettingValue === "active";
+  return (
+    activeSettingValue === "true" || activeSettingValue === "1" || activeSettingValue === "active"
+  );
 }
 
 export const STANDARD_HOLD_WINDOW_MS = 30 * 60 * 1000; // 30 minutes

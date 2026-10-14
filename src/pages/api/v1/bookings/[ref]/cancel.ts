@@ -20,10 +20,7 @@ export default withApi(
     const isAdmin = ["resort_admin", "super_admin"].includes(user.role);
 
     // 1. Fetch booking
-    let query = supabase
-      .from("bookings")
-      .select("*")
-      .eq("reference", ref.toUpperCase().trim());
+    let query = supabase.from("bookings").select("*").eq("reference", ref.toUpperCase().trim());
 
     if (!isAdmin) {
       query = query.eq("user_id", user.id);
@@ -55,7 +52,12 @@ export default withApi(
 
     const payment = payments?.find((p) => p.status === "success");
     const totalPaid = payment ? payment.amount : 0;
-    const refundDetails = calculateCancellationRefund(totalPaid, booking.check_in_date, new Date(), 14);
+    const refundDetails = calculateCancellationRefund(
+      totalPaid,
+      booking.check_in_date,
+      new Date(),
+      14
+    );
 
     // 4. Update booking status to cancelled
     const { data: updatedBooking, error: updateError } = await supabase

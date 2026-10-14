@@ -22,7 +22,10 @@ export function validateCsrf(req: NextApiRequest): boolean {
   }
 
   // Exempt webhooks (such as Paystack callback which has HMAC-SHA512 verification)
-  if (req.url?.includes("/api/v1/payments/verify") || req.url?.includes("/api/v1/payments/webhook")) {
+  if (
+    req.url?.includes("/api/v1/payments/verify") ||
+    req.url?.includes("/api/v1/payments/webhook")
+  ) {
     return true;
   }
 

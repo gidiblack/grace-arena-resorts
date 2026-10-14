@@ -23,7 +23,10 @@ export const registerSchema = z
     email: z.string().email("Please provide a valid email address"),
     phone: z
       .string()
-      .regex(/^\+234\d{10}$/, "Phone number must be a valid Nigerian number in format: +234XXXXXXXXXX"),
+      .regex(
+        /^\+234\d{10}$/,
+        "Phone number must be a valid Nigerian number in format: +234XXXXXXXXXX"
+      ),
     password: passwordPolicy,
     confirmPassword: z.string(),
     consentAccepted: z.literal(true, {
@@ -97,7 +100,10 @@ export const updateProfileSchema = z.object({
   fullName: z.string().min(2).max(120).optional(),
   phone: z
     .string()
-    .regex(/^\+234\d{10}$/, "Phone number must be a valid Nigerian number in format: +234XXXXXXXXXX")
+    .regex(
+      /^\+234\d{10}$/,
+      "Phone number must be a valid Nigerian number in format: +234XXXXXXXXXX"
+    )
     .optional(),
 });
 

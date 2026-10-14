@@ -23,7 +23,10 @@ export const config = {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
-    return res.status(405).json({ success: false, error: { code: "METHOD_NOT_ALLOWED", message: "Only POST allowed" } });
+    return res.status(405).json({
+      success: false,
+      error: { code: "METHOD_NOT_ALLOWED", message: "Only POST allowed" },
+    });
   }
 
   // 1. Read raw body stream
@@ -32,7 +35,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     rawBody = await getRawBody(req);
   } catch (err) {
     logger.error("Failed to read raw body for Paystack webhook", { error: err });
-    return res.status(400).json({ success: false, error: { code: "BAD_REQUEST", message: "Unable to read request payload" } });
+    return res.status(400).json({
+      success: false,
+      error: { code: "BAD_REQUEST", message: "Unable to read request payload" },
+    });
   }
 
   // 2. Cryptographic signature validation with timing-safe comparison
@@ -43,7 +49,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
     return res.status(401).json({
       success: false,
-      error: { code: "INVALID_SIGNATURE", message: "Unauthorized: Webhook signature verification failed" },
+      error: {
+        code: "INVALID_SIGNATURE",
+        message: "Unauthorized: Webhook signature verification failed",
+      },
     });
   }
 
@@ -53,7 +62,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     payload = JSON.parse(rawBody.toString("utf8"));
   } catch (err) {
     logger.error("Failed to parse Paystack webhook JSON payload", { error: err });
-    return res.status(400).json({ success: false, error: { code: "INVALID_JSON", message: "Malformed JSON payload" } });
+    return res
+      .status(400)
+      .json({ success: false, error: { code: "INVALID_JSON", message: "Malformed JSON payload" } });
   }
 
   const supabase = getSupabaseAdminClient();
@@ -103,7 +114,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         let bookingId = payment?.booking_id;
         if (!bookingId) {
           const refPrefix = reference.split("-").slice(0, 2).join("-");
-          const { data: b } = await supabase.from("bookings").select("id").eq("reference", refPrefix).maybeSingle();
+          const { data: b } = await supabase
+            .from("bookings")
+            .select("id")
+            .eq("reference", refPrefix)
+            .maybeSingle();
           bookingId = b?.id;
         }
 
@@ -112,7 +127,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(200).json({ success: true, message: "No matching booking found" });
         }
 
-        const { data: booking } = await supabase.from("bookings").select("*").eq("id", bookingId).maybeSingle();
+        const { data: booking } = await supabase
+          .from("bookings")
+          .select("*")
+          .eq("id", bookingId)
+          .maybeSingle();
         if (!booking) {
           return res.status(200).json({ success: true });
         }
@@ -138,7 +157,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           await initiatePaystackRefund({
             transactionReferenceOrId: reference,
             amountKobo: payload.data.amount,
-            customerNote: "Automated refund: Booking hold window expired before checkout completion.",
+            customerNote:
+              "Automated refund: Booking hold window expired before checkout completion.",
           });
 
           if (payment) {
@@ -166,11 +186,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             templateData: {
               reference: booking.reference,
               amount: amountNaira,
-              message: "Your payment was received after your booking hold expired. A full refund has been automatically initiated.",
+              message:
+                "Your payment was received after your booking hold expired. A full refund has been automatically initiated.",
             },
           });
 
-          return res.status(200).json({ success: true, message: "Auto-refund processed for expired hold" });
+          return res
+            .status(200)
+            .json({ success: true, message: "Auto-refund processed for expired hold" });
         }
 
         // Valid payment: update payment status and confirm booking
@@ -247,7 +270,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               ],
             });
           } catch (pdfErr) {
-            logger.error("Failed to generate PDF confirmation on webhook charge.success", { error: pdfErr });
+            logger.error("Failed to generate PDF confirmation on webhook charge.success", {
+              error: pdfErr,
+            });
           }
         }
         break;
@@ -314,6 +339,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ success: true });
   } catch (err) {
     logger.error("Error processing Paystack webhook event", { event: payload.event, error: err });
-    return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: "Webhook handler failed" } });
+    return res
+      .status(500)
+      .json({ success: false, error: { code: "SERVER_ERROR", message: "Webhook handler failed" } });
   }
 }

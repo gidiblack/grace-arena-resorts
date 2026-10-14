@@ -21,7 +21,12 @@ export default withApi(
       .maybeSingle();
 
     if (existingUser) {
-      return fail(res, "EMAIL_ALREADY_EXISTS", "An account with this email address already exists", 409);
+      return fail(
+        res,
+        "EMAIL_ALREADY_EXISTS",
+        "An account with this email address already exists",
+        409
+      );
     }
 
     // 2. Hash password with bcrypt cost factor 12 per GAR-SRS Section 5.3
@@ -46,7 +51,12 @@ export default withApi(
         authUserId = crypto.randomUUID();
       } else {
         logger.error("Supabase auth user creation error", { error: authError });
-        return fail(res, "AUTH_CREATION_FAILED", "Failed to create user authentication identity", 500);
+        return fail(
+          res,
+          "AUTH_CREATION_FAILED",
+          "Failed to create user authentication identity",
+          500
+        );
       }
     } else {
       authUserId = authData.user.id;

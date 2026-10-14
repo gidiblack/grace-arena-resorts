@@ -237,7 +237,9 @@ export function renderBookingDocument(data: BookingPdfData) {
               <Text>{formatCurrency(data.tax)}</Text>
             </View>
             <View style={styles.grandTotalRow}>
-              <Text style={{ fontWeight: "bold", fontSize: 11, color: "#1A365D" }}>Total Amount:</Text>
+              <Text style={{ fontWeight: "bold", fontSize: 11, color: "#1A365D" }}>
+                Total Amount:
+              </Text>
               <Text style={{ fontWeight: "bold", fontSize: 11, color: "#B7791F" }}>
                 {formatCurrency(data.total)}
               </Text>
@@ -251,8 +253,9 @@ export function renderBookingDocument(data: BookingPdfData) {
             Cancellation & Check-in Notice:
           </Text>
           <Text style={{ fontSize: 8, color: "#718096", lineHeight: 1.4 }}>
-            Full refund applies for cancellations 72+ hours prior to check-in (14:00). 50% refund applies
-            between 24–72 hours. Cancellations within 24 hours and no-shows are non-refundable.
+            Full refund applies for cancellations 72+ hours prior to check-in (14:00). 50% refund
+            applies between 24–72 hours. Cancellations within 24 hours and no-shows are
+            non-refundable.
           </Text>
         </View>
 

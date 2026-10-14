@@ -9,7 +9,8 @@ export type UserRole = "guest" | "content_manager" | "resort_admin" | "super_adm
 export type RoomTier = "budget" | "standard" | "deluxe" | "executive" | "presidential" | "royal";
 export type RoomTypeStatus = "available" | "under_construction";
 export type RoomUnitStatus = "available" | "occupied" | "maintenance";
-export type BookingStatus = "pending" | "confirmed" | "checked_in" | "checked_out" | "cancelled" | "no_show";
+export type BookingStatus =
+  "pending" | "confirmed" | "checked_in" | "checked_out" | "cancelled" | "no_show";
 export type PaymentStatus = "pending" | "success" | "failed" | "refunded" | "partially_refunded";
 export type DiscountType = "percentage" | "fixed";
 export type DealCategory = "room" | "dining" | "package" | "seasonal";
@@ -742,5 +743,6 @@ export interface Database {
   };
 }
 
-export type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
+export type Tables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
 export type Enums<T extends keyof Database["public"]["Enums"]> = Database["public"]["Enums"][T];

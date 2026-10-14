@@ -1,13 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
-import {
-  Box,
-  Flex,
-  HStack,
-  Stack,
-  Text,
-  Spinner,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Stack, Text, Spinner } from "@chakra-ui/react";
 import AccountLayout from "@/features/account/components/AccountLayout";
 import BookingCard, { BookingRecord } from "@/features/account/components/BookingCard";
 import Button from "@/components/ui/button";
@@ -71,8 +64,7 @@ export default function AccountBookingsPage() {
           onClick={() => setActiveFilter("active")}
         >
           Confirmed &amp; Active (
-          {bookings.filter((b) => b.status === "confirmed" || b.status === "checked_in").length}
-          )
+          {bookings.filter((b) => b.status === "confirmed" || b.status === "checked_in").length})
         </Button>
         <Button
           variant={activeFilter === "pending" ? "primary" : "secondary"}
@@ -93,7 +85,8 @@ export default function AccountBookingsPage() {
           size="sm"
           onClick={() => setActiveFilter("cancelled")}
         >
-          Cancelled ({bookings.filter((b) => b.status === "cancelled" || b.status === "no_show").length})
+          Cancelled (
+          {bookings.filter((b) => b.status === "cancelled" || b.status === "no_show").length})
         </Button>
       </HStack>
 
@@ -103,13 +96,7 @@ export default function AccountBookingsPage() {
           <Spinner color="accent.500" size="xl" />
         </Flex>
       ) : filteredBookings.length === 0 ? (
-        <Box
-          bg="#0F172A"
-          p={10}
-          borderRadius="20px"
-          border="1px solid #1E293B"
-          textAlign="center"
-        >
+        <Box bg="#0F172A" p={10} borderRadius="20px" border="1px solid #1E293B" textAlign="center">
           <Text fontSize="18px" fontWeight="bold" mb={2}>
             No Reservations Found
           </Text>

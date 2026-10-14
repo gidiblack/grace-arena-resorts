@@ -27,7 +27,12 @@ export default withApi(
     }
 
     if (Date.now() > expiresAt) {
-      return fail(res, "TOKEN_EXPIRED", "The password reset link has expired. Please request a new one.", 400);
+      return fail(
+        res,
+        "TOKEN_EXPIRED",
+        "The password reset link has expired. Please request a new one.",
+        400
+      );
     }
 
     const supabase = getSupabaseAdminClient();

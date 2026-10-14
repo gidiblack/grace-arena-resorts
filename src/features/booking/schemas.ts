@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 export const step1DatesGuestsSchema = z.object({
-  checkInDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Check-in date must be in YYYY-MM-DD format"),
+  checkInDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Check-in date must be in YYYY-MM-DD format"),
   nights: z.number().int().min(1, "Minimum stay is 1 night").max(30, "Maximum stay is 30 nights"),
   adults: z.number().int().min(1, "At least 1 adult is required").max(10, "Maximum 10 adults"),
   children: z.number().int().min(0).max(10, "Maximum 10 children").default(0),

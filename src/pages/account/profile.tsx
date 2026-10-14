@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Flex,
-  HStack,
-  Icon,
-  Input,
-  SimpleGrid,
-  Stack,
-  Text,
-  Badge,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, Input, SimpleGrid, Stack, Text, Badge } from "@chakra-ui/react";
 import AccountLayout from "@/features/account/components/AccountLayout";
 import Button from "@/components/ui/button";
 import { FaUser, FaKey, FaShieldAlt, FaInfoCircle, FaCheck } from "react-icons/fa";
@@ -56,7 +46,9 @@ export default function AccountProfilePage() {
     setProfileError(null);
 
     if (phone && !/^\+234\d{10}$/.test(phone)) {
-      setProfileError("Phone number must be in +234XXXXXXXXXX Nigerian format (10 digits after +234)");
+      setProfileError(
+        "Phone number must be in +234XXXXXXXXXX Nigerian format (10 digits after +234)"
+      );
       setSavingProfile(false);
       return;
     }
@@ -94,7 +86,9 @@ export default function AccountProfilePage() {
 
     const policyResult = passwordPolicy.safeParse(newPassword);
     if (!policyResult.success) {
-      setPasswordError(policyResult.error.issues[0]?.message || "Password does not meet complexity requirements.");
+      setPasswordError(
+        policyResult.error.issues[0]?.message || "Password does not meet complexity requirements."
+      );
       setSavingPassword(false);
       return;
     }
@@ -150,7 +144,14 @@ export default function AccountProfilePage() {
           </Text>
 
           {profileSuccess && (
-            <Box p={3} mb={4} borderRadius="8px" bg="rgba(72, 187, 120, 0.15)" color="#68D391" fontSize="13px">
+            <Box
+              p={3}
+              mb={4}
+              borderRadius="8px"
+              bg="rgba(72, 187, 120, 0.15)"
+              color="#68D391"
+              fontSize="13px"
+            >
               <HStack gap={2}>
                 <Icon as={FaCheck} />
                 <Text>{profileSuccess}</Text>
@@ -159,7 +160,14 @@ export default function AccountProfilePage() {
           )}
 
           {profileError && (
-            <Box p={3} mb={4} borderRadius="8px" bg="rgba(229, 62, 62, 0.15)" color="#FC8181" fontSize="13px">
+            <Box
+              p={3}
+              mb={4}
+              borderRadius="8px"
+              bg="rgba(229, 62, 62, 0.15)"
+              color="#FC8181"
+              fontSize="13px"
+            >
               {profileError}
             </Box>
           )}
@@ -223,7 +231,8 @@ export default function AccountProfilePage() {
               <HStack gap={1.5} mt={1.5} color="gray.400" fontSize="11px">
                 <Icon as={FaInfoCircle} />
                 <Text>
-                  To change your registered email, please reach out to front desk concierge for identity verification.
+                  To change your registered email, please reach out to front desk concierge for
+                  identity verification.
                 </Text>
               </HStack>
             </Box>
@@ -256,7 +265,14 @@ export default function AccountProfilePage() {
           </Text>
 
           {passwordSuccess && (
-            <Box p={3} mb={4} borderRadius="8px" bg="rgba(72, 187, 120, 0.15)" color="#68D391" fontSize="13px">
+            <Box
+              p={3}
+              mb={4}
+              borderRadius="8px"
+              bg="rgba(72, 187, 120, 0.15)"
+              color="#68D391"
+              fontSize="13px"
+            >
               <HStack gap={2}>
                 <Icon as={FaCheck} />
                 <Text>{passwordSuccess}</Text>
@@ -265,7 +281,14 @@ export default function AccountProfilePage() {
           )}
 
           {passwordError && (
-            <Box p={3} mb={4} borderRadius="8px" bg="rgba(229, 62, 62, 0.15)" color="#FC8181" fontSize="13px">
+            <Box
+              p={3}
+              mb={4}
+              borderRadius="8px"
+              bg="rgba(229, 62, 62, 0.15)"
+              color="#FC8181"
+              fontSize="13px"
+            >
               {passwordError}
             </Box>
           )}

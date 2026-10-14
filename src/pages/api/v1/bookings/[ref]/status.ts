@@ -46,7 +46,9 @@ export default withApi(
       return fail(
         res,
         "INVALID_TRANSITION",
-        err instanceof Error ? err.message : `Invalid transition from ${currentStatus} to ${targetStatus}`,
+        err instanceof Error
+          ? err.message
+          : `Invalid transition from ${currentStatus} to ${targetStatus}`,
         400
       );
     }

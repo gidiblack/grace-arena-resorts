@@ -1,23 +1,10 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import {
-  Box,
-  Flex,
-  HStack,
-  Icon,
-  Text,
-  Badge,
-  Spinner,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, Text, Badge, Spinner } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
 import Button from "@/components/ui/button";
-import {
-  FaCalendarCheck,
-  FaKey,
-  FaSignOutAlt,
-  FaPlus,
-} from "react-icons/fa";
+import { FaCalendarCheck, FaKey, FaSignOutAlt, FaPlus } from "react-icons/fa";
 
 interface UserProfile {
   id: string;
@@ -34,11 +21,7 @@ interface AccountLayoutProps {
   activeTab: "overview" | "bookings" | "profile";
 }
 
-export default function AccountLayout({
-  children,
-  title,
-  activeTab,
-}: AccountLayoutProps) {
+export default function AccountLayout({ children, title, activeTab }: AccountLayoutProps) {
   const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -124,7 +107,14 @@ export default function AccountLayout({
                   <Text fontSize={{ base: "18px", md: "22px" }} fontWeight="bold" color="white">
                     {user.fullName || "Guest Account"}
                   </Text>
-                  <Badge bg="rgba(72, 187, 120, 0.2)" color="#48BB78" px={2.5} py={0.5} borderRadius="full" fontSize="11px">
+                  <Badge
+                    bg="rgba(72, 187, 120, 0.2)"
+                    color="#48BB78"
+                    px={2.5}
+                    py={0.5}
+                    borderRadius="full"
+                    fontSize="11px"
+                  >
                     Verified Guest
                   </Badge>
                 </HStack>
@@ -145,27 +135,15 @@ export default function AccountLayout({
           </Flex>
 
           {/* Navigation Tabs */}
-          <HStack
-            gap={2}
-            borderBottom="1px solid #1E293B"
-            pb={3}
-            mb={8}
-            overflowX="auto"
-          >
+          <HStack gap={2} borderBottom="1px solid #1E293B" pb={3} mb={8} overflowX="auto">
             <Link href="/account" style={{ textDecoration: "none" }}>
-              <Button
-                variant={activeTab === "overview" ? "primary" : "secondary"}
-                size="sm"
-              >
+              <Button variant={activeTab === "overview" ? "primary" : "secondary"} size="sm">
                 Overview
               </Button>
             </Link>
 
             <Link href="/account/bookings" style={{ textDecoration: "none" }}>
-              <Button
-                variant={activeTab === "bookings" ? "primary" : "secondary"}
-                size="sm"
-              >
+              <Button variant={activeTab === "bookings" ? "primary" : "secondary"} size="sm">
                 <HStack gap={2}>
                   <Icon as={FaCalendarCheck} />
                   <Text>My Bookings</Text>
@@ -174,10 +152,7 @@ export default function AccountLayout({
             </Link>
 
             <Link href="/account/profile" style={{ textDecoration: "none" }}>
-              <Button
-                variant={activeTab === "profile" ? "primary" : "secondary"}
-                size="sm"
-              >
+              <Button variant={activeTab === "profile" ? "primary" : "secondary"} size="sm">
                 <HStack gap={2}>
                   <Icon as={FaKey} />
                   <Text>Profile &amp; Password</Text>

@@ -33,7 +33,9 @@ export default withApi(
     // 1. Fetch room types, optionally filtered by resort campus
     let roomTypesQuery = supabase
       .from("room_types")
-      .select("id, name, tier, base_price, max_guests, total_units, status, amenities, images, buildings!inner(id, name, resorts!inner(id, name, slug))");
+      .select(
+        "id, name, tier, base_price, max_guests, total_units, status, amenities, images, buildings!inner(id, name, resorts!inner(id, name, slug))"
+      );
 
     if (resort && typeof resort === "string") {
       roomTypesQuery = roomTypesQuery.eq("buildings.resorts.slug", resort);

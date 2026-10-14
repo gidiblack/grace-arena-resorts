@@ -6,13 +6,15 @@ import { parsePagination, setPaginationHeaders } from "../pagination";
 import { verifyRecaptcha } from "../recaptcha";
 
 // Mock helper to generate mock req and res
-function createMockHttp(options: {
-  method?: string;
-  url?: string;
-  headers?: Record<string, string>;
-  body?: unknown;
-  query?: Record<string, string | string[]>;
-} = {}) {
+function createMockHttp(
+  options: {
+    method?: string;
+    url?: string;
+    headers?: Record<string, string>;
+    body?: unknown;
+    query?: Record<string, string | string[]>;
+  } = {}
+) {
   const req = {
     method: options.method || "GET",
     url: options.url || "/api/v1/test",
@@ -114,7 +116,10 @@ describe("Step 3: API Middleware Stack & Shared Primitives", () => {
       await handler(req, res);
 
       expect(res._getStatusCode()).toBe(400);
-      const body = res._getResponseBody() as { success: boolean; error: { code: string; details: unknown[] } };
+      const body = res._getResponseBody() as {
+        success: boolean;
+        error: { code: string; details: unknown[] };
+      };
       expect(body.success).toBe(false);
       expect(body.error.code).toBe("INVALID_REQUEST_BODY");
       expect(Array.isArray(body.error.details)).toBe(true);

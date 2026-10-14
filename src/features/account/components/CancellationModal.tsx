@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Flex,
-  HStack,
-  Icon,
-  Stack,
-  Text,
-  Badge,
-  Textarea,
-  Spinner,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, Stack, Text, Badge, Textarea, Spinner } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
 import { FaExclamationTriangle, FaTimes, FaUndo } from "react-icons/fa";
 
@@ -148,7 +138,14 @@ export default function CancellationModal({
             <Spinner color="accent.500" />
           </Flex>
         ) : error ? (
-          <Box p={3} mb={4} borderRadius="8px" bg="rgba(229, 62, 62, 0.15)" color="#FC8181" fontSize="13px">
+          <Box
+            p={3}
+            mb={4}
+            borderRadius="8px"
+            bg="rgba(229, 62, 62, 0.15)"
+            color="#FC8181"
+            fontSize="13px"
+          >
             {error}
           </Box>
         ) : preview ? (
@@ -168,15 +165,15 @@ export default function CancellationModal({
                     preview.refundPercentage === 100
                       ? "rgba(72, 187, 120, 0.2)"
                       : preview.refundPercentage === 50
-                      ? "rgba(252, 202, 70, 0.2)"
-                      : "rgba(229, 62, 62, 0.2)"
+                        ? "rgba(252, 202, 70, 0.2)"
+                        : "rgba(229, 62, 62, 0.2)"
                   }
                   color={
                     preview.refundPercentage === 100
                       ? "#48BB78"
                       : preview.refundPercentage === 50
-                      ? "accent.500"
-                      : "#FC8181"
+                        ? "accent.500"
+                        : "#FC8181"
                   }
                   px={2.5}
                   py={0.5}
@@ -184,7 +181,13 @@ export default function CancellationModal({
                   fontSize="12px"
                   fontWeight="bold"
                 >
-                  {preview.refundPercentage}% Refund ({preview.policyTier === "full_refund" ? "Full" : preview.policyTier === "partial_refund" ? "50%" : "No Refund"})
+                  {preview.refundPercentage}% Refund (
+                  {preview.policyTier === "full_refund"
+                    ? "Full"
+                    : preview.policyTier === "partial_refund"
+                      ? "50%"
+                      : "No Refund"}
+                  )
                 </Badge>
               </Flex>
 

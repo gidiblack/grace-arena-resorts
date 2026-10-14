@@ -43,7 +43,12 @@ export default function AuthLayout({ title, subtitle, children }: AuthLayoutProp
                 Grace Arena Resorts
               </Text>
             </NextLink>
-            <Heading as="h1" fontSize={{ base: "2xl", md: "3xl" }} color="gray.800" fontWeight="bold">
+            <Heading
+              as="h1"
+              fontSize={{ base: "2xl", md: "3xl" }}
+              color="gray.800"
+              fontWeight="bold"
+            >
               {title}
             </Heading>
             <Text fontSize="sm" color="gray.600">

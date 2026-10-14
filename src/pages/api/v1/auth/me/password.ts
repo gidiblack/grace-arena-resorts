@@ -25,7 +25,12 @@ export default withApi(
     // 2. Verify current password
     const isCurrentValid = await bcrypt.compare(currentPassword, dbUser.password_hash);
     if (!isCurrentValid) {
-      return fail(res, "INVALID_CURRENT_PASSWORD", "The current password provided is incorrect", 400);
+      return fail(
+        res,
+        "INVALID_CURRENT_PASSWORD",
+        "The current password provided is incorrect",
+        400
+      );
     }
 
     // 3. Hash new password with bcrypt cost factor >= 12
