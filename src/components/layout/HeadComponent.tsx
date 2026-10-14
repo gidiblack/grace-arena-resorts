@@ -16,7 +16,7 @@ function HeadComponent({ description, title, children }: Props) {
       <meta name="description" content={description} />
       <meta name="robots" content="follow,index,max-snippet:-1,max-video-preview:-1,max-image-preview:large" />
       <link rel="icon" href="/favicon.ico" />
-      <title>{title} | Grace Arena Resorts</title>
+      <title>{`${title} | Grace Arena Resorts`}</title>
       {children}
     </Head>
   );

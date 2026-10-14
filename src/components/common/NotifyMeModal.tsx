@@ -1,0 +1,174 @@
+import React, { useState } from "react";
+import { Box, Flex, HStack, Icon, Input, Stack, Text, Dialog } from "@chakra-ui/react";
+import Button from "@/components/ui/button";
+import { FaBell, FaCheckCircle, FaHardHat, FaTimes } from "react-icons/fa";
+
+interface NotifyMeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  roomTitle: string;
+  campusName: string;
+}
+
+export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
+  isOpen,
+  onClose,
+  roomTitle,
+  campusName,
+}) => {
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setIsLoading(true);
+    // Simulate API registration call (e.g. POST /api/v1/notify-me)
+    setTimeout(() => {
+      setIsLoading(false);
+      setSubmitted(true);
+    }, 700);
+  };
+
+  const handleResetAndClose = () => {
+    onClose();
+    setTimeout(() => {
+      setSubmitted(false);
+      setEmail("");
+      setPhone("");
+    }, 300);
+  };
+
+  return (
+    <Dialog.Root open={isOpen} onOpenChange={(details) => !details.open && handleResetAndClose()}>
+      <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)" />
+      <Dialog.Positioner>
+        <Dialog.Content
+          bg="#0F172A"
+          color="light.500"
+          border="1px solid #334155"
+          borderRadius="20px"
+          p={{ base: 6, md: 8 }}
+          maxW="480px"
+          w="92vw"
+          boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.75)">
+          <Flex justify="space-between" align="center" mb={4}>
+            <HStack gap={2}>
+              <Box bg="amber.500/20" color="#F59E0B" p={2} borderRadius="10px">
+                <Icon as={FaHardHat} boxSize={5} />
+              </Box>
+              <Box>
+                <Text fontSize="12px" fontWeight="bold" color="#F59E0B" letterSpacing="wide" textTransform="uppercase">
+                  Under Construction
+                </Text>
+                <Dialog.Title fontSize="18px" fontWeight="bold">
+                  {roomTitle}
+                </Dialog.Title>
+              </Box>
+            </HStack>
+            <Box
+              as="button"
+              onClick={handleResetAndClose}
+              p={1.5}
+              borderRadius="md"
+              _hover={{ bg: "#1E293B" }}
+              cursor="pointer">
+              <Icon as={FaTimes} boxSize={4} color="gray.400" />
+            </Box>
+          </Flex>
+
+          {submitted ? (
+            <Stack align="center" textAlign="center" py={6} gap={4}>
+              <Icon as={FaCheckCircle} color="green.400" boxSize={12} />
+              <Text fontSize="18px" fontWeight="bold" color="white">
+                You’re on the Priority List!
+              </Text>
+              <Text fontSize="13px" color="gray.300" maxW="360px">
+                We will email you at <strong style={{ color: "#FCCA46" }}>{email}</strong> the moment bookings open for the{" "}
+                <strong>{roomTitle}</strong> at {campusName}.
+              </Text>
+              <Button variant="primary" size="sm" onClick={handleResetAndClose} style={{ marginTop: "12px" }}>
+                Done
+              </Button>
+            </Stack>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <Stack gap={4}>
+                <Text fontSize="13px" color="gray.300" lineHeight="tall">
+                  The {roomTitle} is currently undergoing exquisite architectural finishing. Register below to receive
+                  exclusive early-bird access and special opening rates.
+                </Text>
+
+                <Box>
+                  <Text fontSize="12px" fontWeight="medium" mb={1.5} color="gray.300">
+                    Email Address *
+                  </Text>
+                  <Input
+                    required
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="e.g. grace@example.com"
+                    bg="#1E293B"
+                    border="1px solid #475569"
+                    color="white"
+                    px={3.5}
+                    py={2.5}
+                    borderRadius="8px"
+                    fontSize="14px"
+                    _focus={{ borderColor: "accent.500", outline: "none" }}
+                  />
+                </Box>
+
+                <Box>
+                  <Text fontSize="12px" fontWeight="medium" mb={1.5} color="gray.300">
+                    WhatsApp Number (Optional)
+                  </Text>
+                  <Input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. +234 812 345 6789"
+                    bg="#1E293B"
+                    border="1px solid #475569"
+                    color="white"
+                    px={3.5}
+                    py={2.5}
+                    borderRadius="8px"
+                    fontSize="14px"
+                    _focus={{ borderColor: "accent.500", outline: "none" }}
+                  />
+                </Box>
+
+                <Flex justify="flex-end" gap={3} mt={4}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleResetAndClose}
+                    style={{ fontSize: "13px", padding: "8px 18px" }}>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    disabled={isLoading}
+                    style={{ fontSize: "13px", padding: "8px 22px" }}>
+                    <Icon as={FaBell} mr={1.5} />
+                    {isLoading ? "Subscribing..." : "Notify Me"}
+                  </Button>
+                </Flex>
+              </Stack>
+            </form>
+          )}
+        </Dialog.Content>
+      </Dialog.Positioner>
+    </Dialog.Root>
+  );
+};
+
+export default NotifyMeModal;
