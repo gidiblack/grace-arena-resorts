@@ -10,7 +10,7 @@ interface WhatsAppFabProps {
 
 export function getContextAwareWhatsAppMessage(
   pathname: string,
-  query?: Record<string, any>
+  query?: Record<string, unknown>
 ): string {
   if (pathname.startsWith("/rooms")) {
     if (query?.room) {

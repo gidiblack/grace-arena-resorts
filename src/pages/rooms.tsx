@@ -73,7 +73,13 @@ const ROOMS_DATA: RoomItem[] = [
     maxGuests: 2,
     image: suite2.src,
     shortDesc: "Cozy refined room with comfortable king bed, vanity setup, and garden views.",
-    keyAmenities: ["King Bed (6×6)", "Air Conditioning", "Prayer Hut Access", "Free Wi-Fi", "Complimentary Breakfast"],
+    keyAmenities: [
+      "King Bed (6×6)",
+      "Air Conditioning",
+      "Prayer Hut Access",
+      "Free Wi-Fi",
+      "Complimentary Breakfast",
+    ],
     inRoomAmenities: [
       "King-size bed 6×6",
       "Air conditioner & Standing Fan",
@@ -87,7 +93,12 @@ const ROOMS_DATA: RoomItem[] = [
       "Intercom phone",
       "Welcome bottle of water",
     ],
-    resortAmenities: ["Dedicated Prayer Hut", "Swimming Pool & Sundeck", "Fitness Center access", "24/7 Security"],
+    resortAmenities: [
+      "Dedicated Prayer Hut",
+      "Swimming Pool & Sundeck",
+      "Fitness Center access",
+      "24/7 Security",
+    ],
   },
   {
     id: "elysian-fountain-deluxe",
@@ -100,8 +111,15 @@ const ROOMS_DATA: RoomItem[] = [
     priceNgn: 70000,
     maxGuests: 2,
     image: suite.src,
-    shortDesc: "Spacious deluxe comfort featuring relaxation chairs, upgraded vanity, and lush garden vistas.",
-    keyAmenities: ["King Bed", "Relaxation Chairs", "Prayer Hut Access", "Upgraded Bath Kit", "Free Wi-Fi"],
+    shortDesc:
+      "Spacious deluxe comfort featuring relaxation chairs, upgraded vanity, and lush garden vistas.",
+    keyAmenities: [
+      "King Bed",
+      "Relaxation Chairs",
+      "Prayer Hut Access",
+      "Upgraded Bath Kit",
+      "Free Wi-Fi",
+    ],
     inRoomAmenities: [
       "King-size bed & Bed lamps",
       "Air conditioning & standing fan",
@@ -115,7 +133,12 @@ const ROOMS_DATA: RoomItem[] = [
       "Intercom phone",
       "Welcome pack (water, drink & biscuits)",
     ],
-    resortAmenities: ["The Prayer Hut", "Gym & Pool access", "Full resort grounds access", "Daily room service"],
+    resortAmenities: [
+      "The Prayer Hut",
+      "Gym & Pool access",
+      "Full resort grounds access",
+      "Daily room service",
+    ],
   },
   {
     id: "elysian-oasis-deluxe-suite",
@@ -128,8 +151,15 @@ const ROOMS_DATA: RoomItem[] = [
     priceNgn: 80000,
     maxGuests: 2,
     image: suite2.src,
-    shortDesc: "Downstairs private apartment featuring dedicated kitchenette, microwave, and living area.",
-    keyAmenities: ["Private Kitchenette", "Microwave & Cooktop", "Prayer Hut Access", "King Bed", "Satellite TV"],
+    shortDesc:
+      "Downstairs private apartment featuring dedicated kitchenette, microwave, and living area.",
+    keyAmenities: [
+      "Private Kitchenette",
+      "Microwave & Cooktop",
+      "Prayer Hut Access",
+      "King Bed",
+      "Satellite TV",
+    ],
     inRoomAmenities: [
       "Exclusive suite with bedroom & kitchenette",
       "Kitchenette (sink, cupboard, small cooktop)",
@@ -142,7 +172,11 @@ const ROOMS_DATA: RoomItem[] = [
       "Intercom phone",
       "Welcome drink",
     ],
-    resortAmenities: ["Prayer Hut reservation", "Pool & Fitness Center", "Laundry & Ironing services"],
+    resortAmenities: [
+      "Prayer Hut reservation",
+      "Pool & Fitness Center",
+      "Laundry & Ironing services",
+    ],
   },
   {
     id: "elysian-oasis-premium-suite",
@@ -155,8 +189,15 @@ const ROOMS_DATA: RoomItem[] = [
     priceNgn: 90000,
     maxGuests: 2,
     image: suite.src,
-    shortDesc: "Elevated apartment with independent living room, private kitchenette, and scenic balcony view.",
-    keyAmenities: ["Separate Living Room", "Kitchenette", "Prayer Hut Access", "Balcony View", "Microwave"],
+    shortDesc:
+      "Elevated apartment with independent living room, private kitchenette, and scenic balcony view.",
+    keyAmenities: [
+      "Separate Living Room",
+      "Kitchenette",
+      "Prayer Hut Access",
+      "Balcony View",
+      "Microwave",
+    ],
     inRoomAmenities: [
       "Separate living room & bedroom",
       "Kitchenette with cooktop & microwave",
@@ -166,7 +207,12 @@ const ROOMS_DATA: RoomItem[] = [
       "Complimentary breakfast for one",
       "Premium bath products",
     ],
-    resortAmenities: ["The Prayer Hut", "Modern Mall access", "Recreation Park tennis", "Swimming pool"],
+    resortAmenities: [
+      "The Prayer Hut",
+      "Modern Mall access",
+      "Recreation Park tennis",
+      "Swimming pool",
+    ],
   },
   {
     id: "elysian-cabana-premium",
@@ -179,8 +225,15 @@ const ROOMS_DATA: RoomItem[] = [
     priceNgn: 120000,
     maxGuests: 2,
     image: elysian.src,
-    shortDesc: "Our flagship luxury cabana suite offering panoramic resort views and bespoke interior styling.",
-    keyAmenities: ["Cabana Terrace", "VIP Lounge Access", "Prayer Hut Access", "King Bed", "Priority Service"],
+    shortDesc:
+      "Our flagship luxury cabana suite offering panoramic resort views and bespoke interior styling.",
+    keyAmenities: [
+      "Cabana Terrace",
+      "VIP Lounge Access",
+      "Prayer Hut Access",
+      "King Bed",
+      "Priority Service",
+    ],
     inRoomAmenities: [
       "Expansive cabana terrace",
       "Super king bed",
@@ -190,7 +243,11 @@ const ROOMS_DATA: RoomItem[] = [
       "Luxury bathrobes and slippers",
       "Smart 55-inch TV",
     ],
-    resortAmenities: ["VIP Prayer Hut slots", "Pool cabana reservation", "Concierge dining support"],
+    resortAmenities: [
+      "VIP Prayer Hut slots",
+      "Pool cabana reservation",
+      "Concierge dining support",
+    ],
   },
   {
     id: "elysian-cabana-executive",
@@ -203,8 +260,15 @@ const ROOMS_DATA: RoomItem[] = [
     priceNgn: 180000,
     maxGuests: 4,
     image: suite.src,
-    shortDesc: "Grand twin suite ideal for families or retreat leaders. Accommodates up to 4 guests with luxury amenities.",
-    keyAmenities: ["Sleeps 4 Guests", "Twin Bedrooms", "Prayer Hut Access", "Spacious Lounge", "Kitchenette"],
+    shortDesc:
+      "Grand twin suite ideal for families or retreat leaders. Accommodates up to 4 guests with luxury amenities.",
+    keyAmenities: [
+      "Sleeps 4 Guests",
+      "Twin Bedrooms",
+      "Prayer Hut Access",
+      "Spacious Lounge",
+      "Kitchenette",
+    ],
     inRoomAmenities: [
       "Twin double bedrooms with en-suite baths",
       "Expansive communal lounge",
@@ -213,7 +277,12 @@ const ROOMS_DATA: RoomItem[] = [
       "Air conditioning throughout",
       "Complimentary breakfast for guests",
     ],
-    resortAmenities: ["Prayer Hut access", "Love Garden access", "Spa priority bookings", "Pool deck"],
+    resortAmenities: [
+      "Prayer Hut access",
+      "Love Garden access",
+      "Spa priority bookings",
+      "Pool deck",
+    ],
   },
 
   // GAR Village
@@ -228,8 +297,15 @@ const ROOMS_DATA: RoomItem[] = [
     priceNgn: 100000,
     maxGuests: 2,
     image: hut.src,
-    shortDesc: "Handcrafted traditional thatched hut equipped with ultra-modern interior luxuries and serene privacy.",
-    keyAmenities: ["Authentic Thatched Roof", "King Bed", "Prayer Hut Access", "Private Veranda", "Modern AC"],
+    shortDesc:
+      "Handcrafted traditional thatched hut equipped with ultra-modern interior luxuries and serene privacy.",
+    keyAmenities: [
+      "Authentic Thatched Roof",
+      "King Bed",
+      "Prayer Hut Access",
+      "Private Veranda",
+      "Modern AC",
+    ],
     inRoomAmenities: [
       "Naturally insulated thatched architecture",
       "King bed with artisanal wooden frame",
@@ -240,7 +316,12 @@ const ROOMS_DATA: RoomItem[] = [
       "Flat-screen satellite TV",
       "Private outdoor veranda",
     ],
-    resortAmenities: ["Direct Prayer Hut path", "Village Mall cuisine", "Recreation Park", "Fire pit evening gatherings"],
+    resortAmenities: [
+      "Direct Prayer Hut path",
+      "Village Mall cuisine",
+      "Recreation Park",
+      "Fire pit evening gatherings",
+    ],
   },
   {
     id: "village-presidential-hut",
@@ -254,8 +335,14 @@ const ROOMS_DATA: RoomItem[] = [
     maxGuests: null,
     image: village.src,
     isUnderConstruction: true,
-    shortDesc: "Grand presidential pavilion featuring dual master bedrooms, private dipping pool, and butler pantry.",
-    keyAmenities: ["Private Dipping Pool", "Dual Master Suites", "Dedicated Prayer Space", "Under Construction"],
+    shortDesc:
+      "Grand presidential pavilion featuring dual master bedrooms, private dipping pool, and butler pantry.",
+    keyAmenities: [
+      "Private Dipping Pool",
+      "Dual Master Suites",
+      "Dedicated Prayer Space",
+      "Under Construction",
+    ],
     inRoomAmenities: [
       "Multi-room luxury thatched pavilion",
       "Private plunge pool and sun lounge",
@@ -276,8 +363,14 @@ const ROOMS_DATA: RoomItem[] = [
     maxGuests: null,
     image: hut.src,
     isUnderConstruction: true,
-    shortDesc: "The pinnacle of African royal heritage. Designed for dignitaries, executive retreats, and family royalty.",
-    keyAmenities: ["Royal Courtyard", "Grand Throne Lounge", "VIP Security Perimeter", "Under Construction"],
+    shortDesc:
+      "The pinnacle of African royal heritage. Designed for dignitaries, executive retreats, and family royalty.",
+    keyAmenities: [
+      "Royal Courtyard",
+      "Grand Throne Lounge",
+      "VIP Security Perimeter",
+      "Under Construction",
+    ],
     inRoomAmenities: [
       "Sprawling imperial thatched lodge",
       "Private meeting salon and dining hall",
@@ -294,15 +387,24 @@ export default function RoomsPage() {
 
   // Modals state
   const [notifyModalOpen, setNotifyModalOpen] = useState(false);
-  const [notifyRoom, setNotifyRoom] = useState<{ title: string; campus: string }>({ title: "", campus: "" });
+  const [notifyRoom, setNotifyRoom] = useState<{ title: string; campus: string }>({
+    title: "",
+    campus: "",
+  });
 
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [activeRoomDetails, setActiveRoomDetails] = useState<RoomItem | null>(null);
 
   useEffect(() => {
-    if (router.query.type === "elysian") setSelectedCampus("elysian");
-    if (router.query.type === "village") setSelectedCampus("village");
-  }, [router.query.type]);
+    if (!router.isReady) return;
+    const type = router.query.type;
+    if (type === "elysian" || type === "village") {
+      const timer = setTimeout(() => {
+        setSelectedCampus(type);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [router.isReady, router.query.type]);
 
   const handleCampusChange = (campus: "all" | "elysian" | "village") => {
     setSelectedCampus(campus);
@@ -332,7 +434,8 @@ export default function RoomsPage() {
   return (
     <PageWrapper
       title="Rooms & Suites — Grace Arena Resorts"
-      description="Browse available luxury suites and authentic thatched huts across GAR Elysian and GAR Village in Igbo-Ora, Nigeria.">
+      description="Browse available luxury suites and authentic thatched huts across GAR Elysian and GAR Village in Igbo-Ora, Nigeria."
+    >
       {/* Header Banner */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.7), rgba(7, 7, 7, 0.9)), #070707"
@@ -340,18 +443,25 @@ export default function RoomsPage() {
         pb={{ base: 12, md: 16 }}
         px={{ base: 4, md: 8 }}
         color="white"
-        textAlign="center">
+        textAlign="center"
+      >
         <Stack maxW="50rem" mx="auto" gap={3} align="center">
-          <Text fontSize="12px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+          <Text
+            fontSize="12px"
+            fontWeight="bold"
+            color="accent.500"
+            letterSpacing="3px"
+            textTransform="uppercase"
+          >
             Wholesome Retreat Living
           </Text>
           <Text as="h1" fontSize={{ base: "30px", md: "46px" }} fontWeight="bold">
             Rooms &amp; Thatched Suites
           </Text>
           <Text fontSize="15px" color="gray.300" maxW="40rem">
-            Choose between modern architectural refinement at <strong>GAR Elysian</strong> or authentic thatched
-            heritage at <strong>GAR Village</strong>. All rooms enjoy complimentary breakfast and access to our
-            distinguished <strong>Prayer Hut</strong>.
+            Choose between modern architectural refinement at <strong>GAR Elysian</strong> or
+            authentic thatched heritage at <strong>GAR Village</strong>. All rooms enjoy
+            complimentary breakfast and access to our distinguished <strong>Prayer Hut</strong>.
           </Text>
 
           <HStack gap={4} pt={4} flexWrap="wrap" justify="center">
@@ -364,7 +474,8 @@ export default function RoomsPage() {
               href="https://wa.me/2348123456789?text=Hello%20Grace%20Arena%20Resorts,%20I%20want%20to%20inquire%20about%20room%20availability."
               target="_blank"
               rel="noopener noreferrer"
-              style={{ textDecoration: "none" }}>
+              style={{ textDecoration: "none" }}
+            >
               <HStack
                 px={4}
                 py={2.5}
@@ -372,7 +483,8 @@ export default function RoomsPage() {
                 border="1px solid #25D366"
                 color="#25D366"
                 _hover={{ bg: "rgba(37, 211, 102, 0.1)" }}
-                cursor="pointer">
+                cursor="pointer"
+              >
                 <Icon as={FaWhatsapp} boxSize={4} />
                 <Text fontSize="14px" fontWeight="bold">
                   Contact via WhatsApp
@@ -384,14 +496,23 @@ export default function RoomsPage() {
       </Box>
 
       {/* Filter Bar (SRS 3.2 item 2) */}
-      <Box bg="#0F172A" borderBottom="1px solid #1E293B" px={{ base: 4, md: 8 }} py={4} position="sticky" top="64px" zIndex={20}>
+      <Box
+        bg="#0F172A"
+        borderBottom="1px solid #1E293B"
+        px={{ base: 4, md: 8 }}
+        py={4}
+        position="sticky"
+        top="64px"
+        zIndex={20}
+      >
         <Flex
           maxW="82rem"
           mx="auto"
           flexDir={{ base: "column", md: "row" }}
           justify="space-between"
           align={{ base: "flex-start", md: "center" }}
-          gap={4}>
+          gap={4}
+        >
           {/* Campus Selector */}
           <HStack gap={2} bg="#1E293B" p={1} borderRadius="12px" flexWrap="wrap">
             <Box
@@ -405,7 +526,8 @@ export default function RoomsPage() {
               bg={selectedCampus === "all" ? "accent.500" : "transparent"}
               color={selectedCampus === "all" ? "dark.500" : "gray.300"}
               cursor="pointer"
-              transition="all 0.2s">
+              transition="all 0.2s"
+            >
               All Campuses ({ROOMS_DATA.length})
             </Box>
             <Box
@@ -419,7 +541,8 @@ export default function RoomsPage() {
               bg={selectedCampus === "elysian" ? "accent.500" : "transparent"}
               color={selectedCampus === "elysian" ? "dark.500" : "gray.300"}
               cursor="pointer"
-              transition="all 0.2s">
+              transition="all 0.2s"
+            >
               GAR Elysian (6)
             </Box>
             <Box
@@ -433,7 +556,8 @@ export default function RoomsPage() {
               bg={selectedCampus === "village" ? "accent.500" : "transparent"}
               color={selectedCampus === "village" ? "dark.500" : "gray.300"}
               cursor="pointer"
-              transition="all 0.2s">
+              transition="all 0.2s"
+            >
               GAR Village (3)
             </Box>
           </HStack>
@@ -458,7 +582,8 @@ export default function RoomsPage() {
                 bg={selectedTier === tier ? "rgba(252, 202, 70, 0.15)" : "transparent"}
                 color={selectedTier === tier ? "accent.500" : "gray.300"}
                 cursor="pointer"
-                whiteSpace="nowrap">
+                whiteSpace="nowrap"
+              >
                 {tier === "all" ? "All Tiers" : tier}
               </Box>
             ))}
@@ -477,7 +602,12 @@ export default function RoomsPage() {
               <Text fontSize="14px" color="gray.400">
                 Try selecting &ldquo;All Campuses&rdquo; or clearing tier filters.
               </Text>
-              <Button onClick={() => { setSelectedCampus("all"); setSelectedTier("all"); }}>
+              <Button
+                onClick={() => {
+                  setSelectedCampus("all");
+                  setSelectedTier("all");
+                }}
+              >
                 Reset Filters
               </Button>
             </Stack>
@@ -501,7 +631,8 @@ export default function RoomsPage() {
                     _hover={{
                       transform: "translateY(-4px)",
                       borderColor: isUnderConstruction ? "amber.500" : "accent.500",
-                    }}>
+                    }}
+                  >
                     {/* Image Area */}
                     <Box h="230px" position="relative" bg="#1E293B" overflow="hidden">
                       <Image
@@ -516,7 +647,14 @@ export default function RoomsPage() {
                       />
 
                       {/* Badges Overlay */}
-                      <Flex position="absolute" top={3} left={3} right={3} justify="space-between" align="center">
+                      <Flex
+                        position="absolute"
+                        top={3}
+                        left={3}
+                        right={3}
+                        justify="space-between"
+                        align="center"
+                      >
                         <Badge
                           bg={room.tierColor}
                           color="white"
@@ -525,19 +663,34 @@ export default function RoomsPage() {
                           borderRadius="full"
                           fontSize="11px"
                           fontWeight="bold"
-                          boxShadow="sm">
+                          boxShadow="sm"
+                        >
                           {room.tier} Tier
                         </Badge>
 
                         {isUnderConstruction ? (
-                          <HStack bg="#F59E0B" color="black" px={2.5} py={1} borderRadius="full" gap={1.5}>
+                          <HStack
+                            bg="#F59E0B"
+                            color="black"
+                            px={2.5}
+                            py={1}
+                            borderRadius="full"
+                            gap={1.5}
+                          >
                             <Icon as={FaHardHat} boxSize={3} />
                             <Text fontSize="11px" fontWeight="bold">
                               Under Construction
                             </Text>
                           </HStack>
                         ) : (
-                          <HStack bg="blackAlpha.700" color="white" px={2.5} py={1} borderRadius="full" gap={1}>
+                          <HStack
+                            bg="blackAlpha.700"
+                            color="white"
+                            px={2.5}
+                            py={1}
+                            borderRadius="full"
+                            gap={1}
+                          >
                             <Icon as={FaUsers} boxSize={3} color="accent.500" />
                             <Text fontSize="11px" fontWeight="medium">
                               Up to {room.maxGuests} Guests
@@ -550,7 +703,12 @@ export default function RoomsPage() {
                     {/* Content Details */}
                     <Stack p={6} gap={4} flex="1" justify="space-between">
                       <Stack gap={2}>
-                        <Text fontSize="11px" fontWeight="bold" color="accent.500" textTransform="uppercase">
+                        <Text
+                          fontSize="11px"
+                          fontWeight="bold"
+                          color="accent.500"
+                          textTransform="uppercase"
+                        >
                           {room.campusTitle} • {room.building}
                         </Text>
                         <Text fontSize="20px" fontWeight="bold" color="white">
@@ -562,7 +720,13 @@ export default function RoomsPage() {
 
                         {/* Top Key Amenities Summary (Prayer Hut always highlighted) */}
                         <Box pt={2} borderTop="1px solid #1E293B">
-                          <Text fontSize="11px" fontWeight="bold" color="gray.400" mb={2} textTransform="uppercase">
+                          <Text
+                            fontSize="11px"
+                            fontWeight="bold"
+                            color="gray.400"
+                            mb={2}
+                            textTransform="uppercase"
+                          >
                             Key Features &amp; Inclusions:
                           </Text>
                           <Stack gap={1.5}>
@@ -576,7 +740,8 @@ export default function RoomsPage() {
                                 <Text
                                   fontSize="12px"
                                   color={amenity.includes("Prayer") ? "accent.500" : "gray.300"}
-                                  fontWeight={amenity.includes("Prayer") ? "bold" : "normal"}>
+                                  fontWeight={amenity.includes("Prayer") ? "bold" : "normal"}
+                                >
                                   {amenity}
                                 </Text>
                               </HStack>
@@ -591,7 +756,11 @@ export default function RoomsPage() {
                           <Text fontSize="12px" color="gray.400">
                             Rate per night:
                           </Text>
-                          <Text fontSize="20px" fontWeight="bold" color={isUnderConstruction ? "#F59E0B" : "accent.500"}>
+                          <Text
+                            fontSize="20px"
+                            fontWeight="bold"
+                            color={isUnderConstruction ? "#F59E0B" : "accent.500"}
+                          >
                             {isUnderConstruction
                               ? "Price TBD"
                               : `₦${room.priceNgn?.toLocaleString()}`}
@@ -603,7 +772,8 @@ export default function RoomsPage() {
                             variant="secondary"
                             size="sm"
                             onClick={() => handleOpenDetails(room)}
-                            style={{ flex: 1, fontSize: "12px", padding: "8px" }}>
+                            style={{ flex: 1, fontSize: "12px", padding: "8px" }}
+                          >
                             View Details
                           </Button>
 
@@ -618,12 +788,16 @@ export default function RoomsPage() {
                                 padding: "8px",
                                 backgroundColor: "#F59E0B",
                                 color: "#000",
-                              }}>
+                              }}
+                            >
                               Notify Me
                             </Button>
                           ) : (
                             <Link href={`${ROUTES.booking}?room=${room.id}`} style={{ flex: 1.2 }}>
-                              <Button size="sm" style={{ width: "100%", fontSize: "12px", padding: "8px" }}>
+                              <Button
+                                size="sm"
+                                style={{ width: "100%", fontSize: "12px", padding: "8px" }}
+                              >
                                 Book This Room
                               </Button>
                             </Link>
@@ -648,7 +822,10 @@ export default function RoomsPage() {
       />
 
       {/* Full Amenities Detail Dialog (SRS 3.2 Item 5) */}
-      <Dialog.Root open={detailsModalOpen} onOpenChange={(details) => setDetailsModalOpen(details.open)}>
+      <Dialog.Root
+        open={detailsModalOpen}
+        onOpenChange={(details) => setDetailsModalOpen(details.open)}
+      >
         <Dialog.Backdrop bg="blackAlpha.850" backdropFilter="blur(8px)" />
         <Dialog.Positioner>
           <Dialog.Content
@@ -659,12 +836,18 @@ export default function RoomsPage() {
             p={{ base: 5, md: 8 }}
             maxW="620px"
             w="92vw"
-            boxShadow="2xl">
+            boxShadow="2xl"
+          >
             {activeRoomDetails && (
               <>
                 <Flex justify="space-between" align="flex-start" mb={4}>
                   <Box>
-                    <Text fontSize="12px" fontWeight="bold" color="accent.500" textTransform="uppercase">
+                    <Text
+                      fontSize="12px"
+                      fontWeight="bold"
+                      color="accent.500"
+                      textTransform="uppercase"
+                    >
                       {activeRoomDetails.campusTitle} • {activeRoomDetails.building}
                     </Text>
                     <Dialog.Title fontSize="22px" fontWeight="bold" color="white">
@@ -677,7 +860,8 @@ export default function RoomsPage() {
                     p={1.5}
                     borderRadius="md"
                     _hover={{ bg: "#1E293B" }}
-                    cursor="pointer">
+                    cursor="pointer"
+                  >
                     <Icon as={FaTimes} boxSize={5} color="gray.400" />
                   </Box>
                 </Flex>
@@ -685,7 +869,13 @@ export default function RoomsPage() {
                 <Stack gap={5} my={2}>
                   {/* In-Room Amenities */}
                   <Box>
-                    <Text fontSize="14px" fontWeight="bold" color="accent.500" mb={3} textTransform="uppercase">
+                    <Text
+                      fontSize="14px"
+                      fontWeight="bold"
+                      color="accent.500"
+                      mb={3}
+                      textTransform="uppercase"
+                    >
                       In-Room Amenities
                     </Text>
                     <SimpleGrid columns={{ base: 1, sm: 2 }} gap={2.5}>
@@ -702,7 +892,13 @@ export default function RoomsPage() {
 
                   {/* Resort Amenities */}
                   <Box pt={3} borderTop="1px solid #1E293B">
-                    <Text fontSize="14px" fontWeight="bold" color="accent.500" mb={3} textTransform="uppercase">
+                    <Text
+                      fontSize="14px"
+                      fontWeight="bold"
+                      color="accent.500"
+                      mb={3}
+                      textTransform="uppercase"
+                    >
                       Resort &amp; Spiritual Amenities
                     </Text>
                     <SimpleGrid columns={{ base: 1, sm: 2 }} gap={2.5}>
@@ -718,7 +914,13 @@ export default function RoomsPage() {
                   </Box>
                 </Stack>
 
-                <Flex justify="space-between" align="center" mt={6} pt={4} borderTop="1px solid #1E293B">
+                <Flex
+                  justify="space-between"
+                  align="center"
+                  mt={6}
+                  pt={4}
+                  borderTop="1px solid #1E293B"
+                >
                   <Box>
                     <Text fontSize="11px" color="gray.400">
                       Nightly Rate:
@@ -737,7 +939,8 @@ export default function RoomsPage() {
                       onClick={() => {
                         setDetailsModalOpen(false);
                         handleOpenNotify(activeRoomDetails);
-                      }}>
+                      }}
+                    >
                       Notify Me
                     </Button>
                   ) : (

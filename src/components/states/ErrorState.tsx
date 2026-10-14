@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Flex, HStack, Icon, Text, VStack } from "@chakra-ui/react";
+import { Flex, HStack, Icon, Text, VStack } from "@chakra-ui/react";
 import { MdErrorOutline } from "react-icons/md";
 import { FaWhatsapp } from "react-icons/fa";
 import Button from "@/components/ui/button";

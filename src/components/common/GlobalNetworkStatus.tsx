@@ -12,14 +12,16 @@ export const GlobalNetworkStatus: React.FC = () => {
     const handleOffline = () => setIsOffline(true);
     const handleOnline = () => setIsOffline(false);
 
-    if (!navigator.onLine) {
-      setIsOffline(true);
-    }
-
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
 
+    let timer: NodeJS.Timeout | undefined;
+    if (!navigator.onLine) {
+      timer = setTimeout(() => setIsOffline(true), 0);
+    }
+
     return () => {
+      if (timer) clearTimeout(timer);
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
     };

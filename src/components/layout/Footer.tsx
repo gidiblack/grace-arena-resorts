@@ -135,6 +135,7 @@ export const Footer = () => {
                 <Link href={ROUTES.home}>
                   <Image
                     asChild
+                    alt="Grace Arena Resorts Logo"
                     width="128px"
                     height="56px"
                     position="relative"

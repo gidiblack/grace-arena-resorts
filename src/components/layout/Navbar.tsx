@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Drawer,
   Flex,
@@ -128,6 +128,7 @@ export const Navbar = () => {
           <Link href={ROUTES.home} display="flex" alignItems="center">
             <Image
               asChild
+              alt="Grace Arena Resorts Logo"
               width={{ base: "76px", md: "90px", lg: "108px" }}
               height={{ base: "36px", md: "42px", lg: "48px" }}
               position="relative"
@@ -231,7 +232,14 @@ export const Navbar = () => {
               borderBottom="1px solid #1E293B"
             >
               <Link href={ROUTES.home} onClick={onClose}>
-                <Image asChild width="80px" height="38px" position="relative" objectFit="contain">
+                <Image
+                  asChild
+                  alt="Grace Arena Resorts Logo"
+                  width="80px"
+                  height="38px"
+                  position="relative"
+                  objectFit="contain"
+                >
                   <NextImage src={logo.src} alt="Grace Arena Logo" width={80} height={38} />
                 </Image>
               </Link>

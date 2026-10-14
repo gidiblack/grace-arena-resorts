@@ -38,6 +38,16 @@ export const CookieConsentBanner: React.FC = () => {
     }, 50);
 
     const handleOpenSettings = () => {
+      try {
+        const stored = localStorage.getItem(COOKIE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setAnalyticsAllowed(Boolean(parsed.analytics));
+          setMarketingAllowed(Boolean(parsed.marketing));
+        }
+      } catch {
+        // ignore
+      }
       setModalOpen(true);
     };
 
@@ -48,6 +58,16 @@ export const CookieConsentBanner: React.FC = () => {
       window.removeEventListener("gar:open-cookie-preferences", handleOpenSettings);
     };
   }, []);
+
+  // Safeguard: Ensure scroll lock and pointer events are immediately restored whenever modal closes
+  useEffect(() => {
+    if (!modalOpen && typeof document !== "undefined") {
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("pointer-events");
+      document.body.removeAttribute("data-scroll-locked");
+      document.documentElement.style.removeProperty("overflow");
+    }
+  }, [modalOpen]);
 
   const saveConsent = (analytics: boolean, marketing: boolean) => {
     const consent: CookieConsentState = {
@@ -67,16 +87,22 @@ export const CookieConsentBanner: React.FC = () => {
     }
     setIsVisible(false);
     setModalOpen(false);
+
+    if (typeof document !== "undefined") {
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("pointer-events");
+      document.body.removeAttribute("data-scroll-locked");
+      document.documentElement.style.removeProperty("overflow");
+    }
   };
 
   const handleAcceptAll = () => saveConsent(true, true);
   const handleRejectNonEssential = () => saveConsent(false, false);
   const handleSavePreferences = () => saveConsent(analyticsAllowed, marketingAllowed);
 
-  if (!isVisible && !modalOpen) return null;
-
   return (
     <>
+      {/* Bottom Bar: Only shown when initial consent is pending */}
       {isVisible && (
         <Box
           position="fixed"
@@ -150,7 +176,7 @@ export const CookieConsentBanner: React.FC = () => {
         </Box>
       )}
 
-      {/* Preferences Dialog */}
+      {/* Preferences Dialog: Persistently mounted in DOM so open/close transitions cleanly release scroll locks */}
       <Dialog.Root open={modalOpen} onOpenChange={(details) => setModalOpen(details.open)}>
         <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(6px)" />
         <Dialog.Positioner>
@@ -178,6 +204,7 @@ export const CookieConsentBanner: React.FC = () => {
                 _hover={{ bg: "#1f2937" }}
                 onClick={() => setModalOpen(false)}
                 cursor="pointer"
+                aria-label="Close preferences"
               >
                 <Icon as={FaTimes} boxSize={4} color="gray.400" />
               </Box>
@@ -228,6 +255,7 @@ export const CookieConsentBanner: React.FC = () => {
                     color={analyticsAllowed ? "dark.500" : "gray.300"}
                     onClick={() => setAnalyticsAllowed(!analyticsAllowed)}
                     cursor="pointer"
+                    aria-label={`Toggle Analytics cookies, currently ${analyticsAllowed ? "enabled" : "disabled"}`}
                   >
                     {analyticsAllowed ? "Enabled" : "Disabled"}
                   </Box>
@@ -255,6 +283,7 @@ export const CookieConsentBanner: React.FC = () => {
                     color={marketingAllowed ? "dark.500" : "gray.300"}
                     onClick={() => setMarketingAllowed(!marketingAllowed)}
                     cursor="pointer"
+                    aria-label={`Toggle Marketing cookies, currently ${marketingAllowed ? "enabled" : "disabled"}`}
                   >
                     {marketingAllowed ? "Enabled" : "Disabled"}
                   </Box>

@@ -146,14 +146,16 @@ export default function BookingPage() {
 
   // Pre-select room if query parameter exists
   useEffect(() => {
-    if (router.query.room) {
-      const match = AVAILABLE_ROOMS.find((r) => r.id === router.query.room);
-      if (match && selectedRooms.length === 0) {
+    if (!router.isReady || !router.query.room) return;
+    const match = AVAILABLE_ROOMS.find((r) => r.id === router.query.room);
+    if (match && selectedRooms.length === 0) {
+      const timer = setTimeout(() => {
         setSelectedRooms([{ room: match, count: 1 }]);
         setCurrentStep(2);
-      }
+      }, 0);
+      return () => clearTimeout(timer);
     }
-  }, [router.query.room, selectedRooms.length]);
+  }, [router.isReady, router.query.room, selectedRooms.length]);
 
   // Toggle or add room
   const handleAddRoom = (room: AvailableRoom) => {
@@ -194,7 +196,8 @@ export default function BookingPage() {
   return (
     <PageWrapper
       title="Book Your Stay — Grace Arena Resorts"
-      description="Reserve your peaceful Christian retreat, luxury suite or thatched hut at Grace Arena Resorts.">
+      description="Reserve your peaceful Christian retreat, luxury suite or thatched hut at Grace Arena Resorts."
+    >
       {/* Page Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"
@@ -202,9 +205,16 @@ export default function BookingPage() {
         pb={{ base: 6, md: 8 }}
         px={{ base: 4, md: 8 }}
         color="white"
-        textAlign="center">
+        textAlign="center"
+      >
         <Stack maxW="40rem" mx="auto" gap={2} align="center">
-          <Text fontSize="12px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+          <Text
+            fontSize="12px"
+            fontWeight="bold"
+            color="accent.500"
+            letterSpacing="3px"
+            textTransform="uppercase"
+          >
             Secure Booking Engine
           </Text>
           <Text as="h1" fontSize={{ base: "26px", md: "38px" }} fontWeight="bold">
@@ -214,7 +224,15 @@ export default function BookingPage() {
 
         {/* Stepper Bar (SRS 3.3 Item 1) */}
         {currentStep <= 4 && (
-          <Flex maxW="52rem" mx="auto" mt={8} justify="space-between" align="center" position="relative" px={4}>
+          <Flex
+            maxW="52rem"
+            mx="auto"
+            mt={8}
+            justify="space-between"
+            align="center"
+            position="relative"
+            px={4}
+          >
             {[
               { num: 1, label: "Dates & Guests" },
               { num: 2, label: "Select Rooms" },
@@ -232,7 +250,8 @@ export default function BookingPage() {
                   gap={1.5}
                   cursor={isDone ? "pointer" : "default"}
                   onClick={() => isDone && setCurrentStep(num)}
-                  zIndex={2}>
+                  zIndex={2}
+                >
                   <Flex
                     boxSize={{ base: 8, md: 9 }}
                     borderRadius="full"
@@ -243,14 +262,16 @@ export default function BookingPage() {
                     fontWeight="bold"
                     fontSize="13px"
                     border="2px solid"
-                    borderColor={isActive ? "accent.500" : isDone ? "#22C55E" : "#334155"}>
+                    borderColor={isActive ? "accent.500" : isDone ? "#22C55E" : "#334155"}
+                  >
                     {isDone ? <Icon as={FaCheckCircle} /> : num}
                   </Flex>
                   <Text
                     fontSize="11px"
                     fontWeight={isActive ? "bold" : "medium"}
                     color={isActive ? "accent.500" : isDone ? "white" : "gray.400"}
-                    display={{ base: isActive ? "block" : "none", sm: "block" }}>
+                    display={{ base: isActive ? "block" : "none", sm: "block" }}
+                  >
                     {label}
                   </Text>
                 </Flex>
@@ -261,16 +282,35 @@ export default function BookingPage() {
       </Box>
 
       {/* Main Wizard Area */}
-      <Box py={{ base: 8, md: 12 }} px={{ base: 4, md: 8, xl: 12 }} bg="#070707" color="white" minH="75vh">
+      <Box
+        py={{ base: 8, md: 12 }}
+        px={{ base: 4, md: 8, xl: 12 }}
+        bg="#070707"
+        color="white"
+        minH="75vh"
+      >
         <Box maxW="84rem" mx="auto">
           {currentStep === 5 ? (
             /* Confirmation Screen (SRS 3.3 Item 8) */
-            <Box maxW="46rem" mx="auto" bg="#0F172A" p={{ base: 6, md: 10 }} borderRadius="24px" border="1px solid #1E293B">
+            <Box
+              maxW="46rem"
+              mx="auto"
+              bg="#0F172A"
+              p={{ base: 6, md: 10 }}
+              borderRadius="24px"
+              border="1px solid #1E293B"
+            >
               <Stack align="center" textAlign="center" gap={4}>
                 <Box bg="green.500/20" color="#22C55E" p={4} borderRadius="full">
                   <Icon as={FaCheckCircle} boxSize={12} />
                 </Box>
-                <Text fontSize="12px" fontWeight="bold" color="accent.500" letterSpacing="widest" textTransform="uppercase">
+                <Text
+                  fontSize="12px"
+                  fontWeight="bold"
+                  color="accent.500"
+                  letterSpacing="widest"
+                  textTransform="uppercase"
+                >
                   Booking Confirmed
                 </Text>
                 <Text fontSize={{ base: "26px", md: "34px" }} fontWeight="bold">
@@ -287,13 +327,19 @@ export default function BookingPage() {
                 </Box>
 
                 <Text fontSize="14px" color="gray.300" maxW="34rem">
-                  A confirmation email has been dispatched to <strong>{guestEmail}</strong>. Your reservation is
-                  confirmed at Grace Arena Resorts, Igbo-Ora.
+                  A confirmation email has been dispatched to <strong>{guestEmail}</strong>. Your
+                  reservation is confirmed at Grace Arena Resorts, Igbo-Ora.
                 </Text>
 
                 {/* Summary Box */}
                 <Box w="full" bg="#0A0F1D" p={5} borderRadius="14px" textAlign="left" my={2}>
-                  <Text fontSize="13px" fontWeight="bold" color="accent.500" mb={3} textTransform="uppercase">
+                  <Text
+                    fontSize="13px"
+                    fontWeight="bold"
+                    color="accent.500"
+                    mb={3}
+                    textTransform="uppercase"
+                  >
                     Reservation Details
                   </Text>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3} fontSize="13px">
@@ -327,14 +373,16 @@ export default function BookingPage() {
                     variant="secondary"
                     size="sm"
                     onClick={() => window.print()}
-                    style={{ fontSize: "13px", padding: "10px 20px" }}>
+                    style={{ fontSize: "13px", padding: "10px 20px" }}
+                  >
                     <Icon as={FaPrint} mr={2} /> Print / Save PDF
                   </Button>
                   <a
                     href={`https://wa.me/2348123456789?text=Hello%20Grace%20Arena,%20I%20just%20completed%20booking%20ref:%20${bookingRef}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ textDecoration: "none" }}>
+                    style={{ textDecoration: "none" }}
+                  >
                     <HStack
                       px={4}
                       py={2.5}
@@ -343,7 +391,8 @@ export default function BookingPage() {
                       color="white"
                       fontWeight="bold"
                       fontSize="13px"
-                      cursor="pointer">
+                      cursor="pointer"
+                    >
                       <Icon as={FaWhatsapp} boxSize={4} />
                       <Text>Message Concierge on WhatsApp</Text>
                     </HStack>
@@ -352,7 +401,8 @@ export default function BookingPage() {
                     variant="primary"
                     size="sm"
                     onClick={() => router.push(ROUTES.home)}
-                    style={{ fontSize: "13px", padding: "10px 20px" }}>
+                    style={{ fontSize: "13px", padding: "10px 20px" }}
+                  >
                     Return to Homepage
                   </Button>
                 </HStack>
@@ -364,7 +414,12 @@ export default function BookingPage() {
               <Box gridColumn={{ base: "span 1", lg: "span 8" }}>
                 {/* STEP 1: Dates & Guests */}
                 {currentStep === 1 && (
-                  <Box bg="#0F172A" p={{ base: 6, md: 8 }} borderRadius="20px" border="1px solid #1E293B">
+                  <Box
+                    bg="#0F172A"
+                    p={{ base: 6, md: 8 }}
+                    borderRadius="20px"
+                    border="1px solid #1E293B"
+                  >
                     <HStack gap={3} mb={6}>
                       <Icon as={FaCalendarAlt} color="accent.500" boxSize={5} />
                       <Text fontSize="20px" fontWeight="bold">
@@ -405,7 +460,8 @@ export default function BookingPage() {
                             alignItems="center"
                             justifyContent="center"
                             cursor="pointer"
-                            onClick={() => setNights(Math.max(1, nights - 1))}>
+                            onClick={() => setNights(Math.max(1, nights - 1))}
+                          >
                             <Icon as={FaMinus} boxSize={3} />
                           </Box>
                           <Text fontSize="18px" fontWeight="bold" minW="40px" textAlign="center">
@@ -420,7 +476,8 @@ export default function BookingPage() {
                             alignItems="center"
                             justifyContent="center"
                             cursor="pointer"
-                            onClick={() => setNights(Math.min(30, nights + 1))}>
+                            onClick={() => setNights(Math.min(30, nights + 1))}
+                          >
                             <Icon as={FaPlus} boxSize={3} />
                           </Box>
                           <Text fontSize="12px" color="gray.400">
@@ -458,7 +515,8 @@ export default function BookingPage() {
                                 display="flex"
                                 alignItems="center"
                                 justifyContent="center"
-                                onClick={() => setAdults(Math.max(1, adults - 1))}>
+                                onClick={() => setAdults(Math.max(1, adults - 1))}
+                              >
                                 <Icon as={FaMinus} boxSize={2.5} />
                               </Box>
                               <Text fontWeight="bold">{adults}</Text>
@@ -470,7 +528,8 @@ export default function BookingPage() {
                                 display="flex"
                                 alignItems="center"
                                 justifyContent="center"
-                                onClick={() => setAdults(Math.min(10, adults + 1))}>
+                                onClick={() => setAdults(Math.min(10, adults + 1))}
+                              >
                                 <Icon as={FaPlus} boxSize={2.5} />
                               </Box>
                             </HStack>
@@ -496,7 +555,8 @@ export default function BookingPage() {
                                 display="flex"
                                 alignItems="center"
                                 justifyContent="center"
-                                onClick={() => setChildrenCount(Math.max(0, childrenCount - 1))}>
+                                onClick={() => setChildrenCount(Math.max(0, childrenCount - 1))}
+                              >
                                 <Icon as={FaMinus} boxSize={2.5} />
                               </Box>
                               <Text fontWeight="bold">{childrenCount}</Text>
@@ -508,7 +568,8 @@ export default function BookingPage() {
                                 display="flex"
                                 alignItems="center"
                                 justifyContent="center"
-                                onClick={() => setChildrenCount(Math.min(8, childrenCount + 1))}>
+                                onClick={() => setChildrenCount(Math.min(8, childrenCount + 1))}
+                              >
                                 <Icon as={FaPlus} boxSize={2.5} />
                               </Box>
                             </HStack>
@@ -527,7 +588,12 @@ export default function BookingPage() {
 
                 {/* STEP 2: Select Rooms */}
                 {currentStep === 2 && (
-                  <Box bg="#0F172A" p={{ base: 6, md: 8 }} borderRadius="20px" border="1px solid #1E293B">
+                  <Box
+                    bg="#0F172A"
+                    p={{ base: 6, md: 8 }}
+                    borderRadius="20px"
+                    border="1px solid #1E293B"
+                  >
                     <HStack justify="space-between" align="center" mb={6}>
                       <HStack gap={3}>
                         <Icon as={FaBed} color="accent.500" boxSize={5} />
@@ -543,7 +609,8 @@ export default function BookingPage() {
                     <Stack gap={4}>
                       {AVAILABLE_ROOMS.map((room) => {
                         const isSelected = selectedRooms.some((r) => r.room.id === room.id);
-                        const selectedCount = selectedRooms.find((r) => r.room.id === room.id)?.count || 0;
+                        const selectedCount =
+                          selectedRooms.find((r) => r.room.id === room.id)?.count || 0;
 
                         return (
                           <Flex
@@ -557,7 +624,8 @@ export default function BookingPage() {
                             align={{ sm: "center" }}
                             justify="space-between"
                             p={{ base: 4, sm: 4 }}
-                            gap={4}>
+                            gap={4}
+                          >
                             <HStack gap={4}>
                               <Image
                                 src={room.image}
@@ -605,7 +673,8 @@ export default function BookingPage() {
                                     bg="#22C55E"
                                     color="white"
                                     fontSize="12px"
-                                    fontWeight="bold">
+                                    fontWeight="bold"
+                                  >
                                     Added ({selectedCount})
                                   </Box>
                                   <Box
@@ -614,7 +683,8 @@ export default function BookingPage() {
                                     p={2}
                                     color="red.400"
                                     _hover={{ color: "red.300" }}
-                                    cursor="pointer">
+                                    cursor="pointer"
+                                  >
                                     <Icon as={FaTrash} boxSize={3.5} />
                                   </Box>
                                 </HStack>
@@ -623,7 +693,8 @@ export default function BookingPage() {
                                   variant="primary"
                                   size="sm"
                                   onClick={() => handleAddRoom(room)}
-                                  style={{ fontSize: "12px", padding: "8px 16px" }}>
+                                  style={{ fontSize: "12px", padding: "8px 16px" }}
+                                >
                                   Add Room
                                 </Button>
                               )}
@@ -641,7 +712,8 @@ export default function BookingPage() {
                         variant="primary"
                         size="md"
                         disabled={selectedRooms.length === 0}
-                        onClick={() => setCurrentStep(3)}>
+                        onClick={() => setCurrentStep(3)}
+                      >
                         Proceed to Guest Info &rarr;
                       </Button>
                     </Flex>
@@ -650,7 +722,12 @@ export default function BookingPage() {
 
                 {/* STEP 3: Guest Information */}
                 {currentStep === 3 && (
-                  <Box bg="#0F172A" p={{ base: 6, md: 8 }} borderRadius="20px" border="1px solid #1E293B">
+                  <Box
+                    bg="#0F172A"
+                    p={{ base: 6, md: 8 }}
+                    borderRadius="20px"
+                    border="1px solid #1E293B"
+                  >
                     <HStack justify="space-between" align="center" mb={6}>
                       <HStack gap={3}>
                         <Icon as={FaUserFriends} color="accent.500" boxSize={5} />
@@ -723,13 +800,24 @@ export default function BookingPage() {
                       </SimpleGrid>
 
                       {/* Prayer Hut Request (SRS Distinction) */}
-                      <Box bg="#1E293B" p={4} borderRadius="12px" border="1px solid rgba(252, 202, 70, 0.3)">
+                      <Box
+                        bg="#1E293B"
+                        p={4}
+                        borderRadius="12px"
+                        border="1px solid rgba(252, 202, 70, 0.3)"
+                      >
                         <Flex align="flex-start" gap={3}>
                           <input
                             type="checkbox"
                             checked={prayerHutInterest}
                             onChange={(e) => setPrayerHutInterest(e.target.checked)}
-                            style={{ cursor: "pointer", marginTop: "4px", accentColor: "#FCCA46", width: "16px", height: "16px" }}
+                            style={{
+                              cursor: "pointer",
+                              marginTop: "4px",
+                              accentColor: "#FCCA46",
+                              width: "16px",
+                              height: "16px",
+                            }}
                           />
                           <Box>
                             <HStack gap={2}>
@@ -739,8 +827,8 @@ export default function BookingPage() {
                               </Text>
                             </HStack>
                             <Text fontSize="12px" color="gray.300" mt={1}>
-                              Complimentary for guests. Our team will schedule private quiet hours for you at the
-                              sanctuary during your stay.
+                              Complimentary for guests. Our team will schedule private quiet hours
+                              for you at the sanctuary during your stay.
                             </Text>
                           </Box>
                         </Flex>
@@ -770,7 +858,8 @@ export default function BookingPage() {
                         variant="primary"
                         size="md"
                         disabled={!guestName || !guestEmail || !guestPhone}
-                        onClick={() => setCurrentStep(4)}>
+                        onClick={() => setCurrentStep(4)}
+                      >
                         Review &amp; Payment &rarr;
                       </Button>
                     </Flex>
@@ -779,7 +868,12 @@ export default function BookingPage() {
 
                 {/* STEP 4: Review & Payment */}
                 {currentStep === 4 && (
-                  <Box bg="#0F172A" p={{ base: 6, md: 8 }} borderRadius="20px" border="1px solid #1E293B">
+                  <Box
+                    bg="#0F172A"
+                    p={{ base: 6, md: 8 }}
+                    borderRadius="20px"
+                    border="1px solid #1E293B"
+                  >
                     <HStack justify="space-between" align="center" mb={6}>
                       <HStack gap={3}>
                         <Icon as={FaCreditCard} color="accent.500" boxSize={5} />
@@ -794,7 +888,13 @@ export default function BookingPage() {
 
                     {/* Summary Card */}
                     <Box bg="#1E293B" p={5} borderRadius="14px" mb={6}>
-                      <Text fontSize="13px" fontWeight="bold" color="accent.500" mb={3} textTransform="uppercase">
+                      <Text
+                        fontSize="13px"
+                        fontWeight="bold"
+                        color="accent.500"
+                        mb={3}
+                        textTransform="uppercase"
+                      >
                         Stay Overview
                       </Text>
                       <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3} fontSize="13px">
@@ -828,7 +928,8 @@ export default function BookingPage() {
                           borderRadius="12px"
                           border="2px solid"
                           borderColor="accent.500"
-                          bg="rgba(252, 202, 70, 0.08)">
+                          bg="rgba(252, 202, 70, 0.08)"
+                        >
                           <Flex justify="space-between" align="center">
                             <HStack gap={3}>
                               <Icon as={FaShieldAlt} color="accent.500" boxSize={5} />
@@ -852,7 +953,8 @@ export default function BookingPage() {
                             href={`https://wa.me/2348123456789?text=Hello%20Grace%20Arena,%20I%20would%20like%20to%20pay%20manually%20for%20my%20booking%20(${guestName},%20${totalAmount}NGN)`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+                            style={{ textDecoration: "none", color: "inherit", display: "block" }}
+                          >
                             <Flex justify="space-between" align="center">
                               <HStack gap={3}>
                                 <Icon as={FaWhatsapp} color="#25D366" boxSize={5} />
@@ -880,7 +982,8 @@ export default function BookingPage() {
                         size="lg"
                         disabled={isProcessingPayment}
                         onClick={handleSimulatePayment}
-                        style={{ padding: "14px 36px" }}>
+                        style={{ padding: "14px 36px" }}
+                      >
                         {isProcessingPayment
                           ? "Securing Reservation..."
                           : `Pay ₦${totalAmount.toLocaleString()} with Paystack`}
@@ -898,7 +1001,8 @@ export default function BookingPage() {
                   borderRadius="20px"
                   border="1px solid #1E293B"
                   position="sticky"
-                  top="90px">
+                  top="90px"
+                >
                   <Text fontSize="16px" fontWeight="bold" color="white" mb={4}>
                     Booking Summary
                   </Text>
@@ -928,7 +1032,12 @@ export default function BookingPage() {
                     ) : (
                       <Stack gap={2}>
                         {selectedRooms.map(({ room, count }) => (
-                          <Flex key={room.id} justify="space-between" align="center" fontSize="13px">
+                          <Flex
+                            key={room.id}
+                            justify="space-between"
+                            align="center"
+                            fontSize="13px"
+                          >
                             <Box>
                               <Text fontWeight="medium">{room.name}</Text>
                               <Text fontSize="11px" color="gray.400">
