@@ -599,51 +599,51 @@ git commit -m "feat: global shell, consent, accessibility baseline, page transit
 **Milestone:** M1 · **Estimated Effort:** 8–12 days · **Branch:** `feature/gar-m1-marketing-site` · **PR:** Step 6 PR (or 2 sub-PRs) merged to `main`
 
 ### Step Checklist
-- [ ] Implement all public pages per SRS Section 3: Home, About, Facilities, Restaurants, Gems, Events, Deals, Contact, Privacy
-- [ ] **Home Page:** Hero video with mobile poster fallback, 4 Off-Beat Gems cards with 5s auto-rotate, Resort Categories cards, Amenities Snapshot (`GET /api/v1/amenities`), Facilities Carousel, Photo Gallery (`GET /api/v1/media?category=gallery&page=home`), MapSection with Google Maps embed
-- [ ] Implement accessible Lightbox component (`src/components/common/Lightbox.tsx`) with arrow navigation, Escape to close, focus trap, and screen reader alt announcements
-- [ ] Implement MapSection (`src/components/common/MapSection.tsx`) with fallback to static image + directions link
-- [ ] Implement public detail endpoints:
+- [x] Implement all public pages per SRS Section 3: Home, About, Facilities, Restaurants, Gems, Events, Deals, Contact, Privacy
+- [x] **Home Page:** Hero video with mobile poster fallback, 4 Off-Beat Gems cards with 5s auto-rotate, Resort Categories cards, Amenities Snapshot (`GET /api/v1/amenities`), Facilities Carousel, Photo Gallery (`GET /api/v1/media?category=gallery&page=home`), MapSection with Google Maps embed
+- [x] Implement accessible Lightbox component (`src/components/common/Lightbox.tsx`) with arrow navigation, Escape to close, focus trap, and screen reader alt announcements
+- [x] Implement MapSection (`src/components/common/MapSection.tsx`) with fallback to static image + directions link
+- [x] Implement public detail endpoints:
   - `GET /api/v1/facilities/[id].ts`
   - `GET /api/v1/restaurants/[id].ts`
   - `GET /api/v1/deals/[id].ts`
   - `GET /api/v1/amenities/index.ts` (resort-level amenities from Amenity entity)
   - `GET /api/v1/media/index.ts` (public read access filtered by category/page)
-- [ ] Implement newsletter double opt-in (`/api/v1/newsletter/subscribe` + `/api/v1/newsletter/confirm`) and unsubscribe (`/api/v1/newsletter/unsubscribe`)
-- [ ] Implement contact form (rate limited 3/hr/IP) and event inquiries form (rate limited 5/hr/IP) with reCAPTCHA
-- [ ] Implement JSON-LD structured data for every page type (`Hotel`, `Organization`, `TouristAttraction`, `Restaurant`, `Event`, `Offer`, `ContactPage`, `LocalBusiness`)
+- [x] Implement newsletter double opt-in (`/api/v1/newsletter/subscribe` + `/api/v1/newsletter/confirm`) and unsubscribe (`/api/v1/newsletter/unsubscribe`)
+- [x] Implement contact form (rate limited 3/hr/IP) and event inquiries form (rate limited 5/hr/IP) with reCAPTCHA
+- [x] Implement JSON-LD structured data for every page type (`Hotel`, `Organization`, `TouristAttraction`, `Restaurant`, `Event`, `Offer`, `ContactPage`, `LocalBusiness`)
 
 ### Explicit File Paths
-- [ ] src/pages/index.tsx
-- [ ] src/pages/about.tsx
-- [ ] src/pages/facilities.tsx
-- [ ] src/pages/restaurants.tsx
-- [ ] src/pages/gems.tsx
-- [ ] src/pages/events.tsx
-- [ ] src/pages/deals.tsx
-- [ ] src/pages/contact.tsx
-- [ ] src/pages/privacy.tsx
-- [ ] src/pages/api/v1/content/[page].ts
-- [ ] src/pages/api/v1/facilities/index.ts
-- [ ] src/pages/api/v1/facilities/[id].ts
-- [ ] src/pages/api/v1/restaurants/index.ts
-- [ ] src/pages/api/v1/restaurants/[id].ts
-- [ ] src/pages/api/v1/restaurants/[id]/menu.ts
-- [ ] src/pages/api/v1/gems/index.ts
-- [ ] src/pages/api/v1/events/index.ts
-- [ ] src/pages/api/v1/events/inquiries.ts
-- [ ] src/pages/api/v1/deals/index.ts
-- [ ] src/pages/api/v1/deals/[id].ts
-- [ ] src/pages/api/v1/contact/index.ts
-- [ ] src/pages/api/v1/newsletter/subscribe.ts
-- [ ] src/pages/api/v1/newsletter/confirm.ts
-- [ ] src/pages/api/v1/newsletter/unsubscribe.ts
-- [ ] src/pages/api/v1/amenities/index.ts
-- [ ] src/pages/api/v1/media/index.ts
-- [ ] src/components/common/Lightbox.tsx
-- [ ] src/components/common/MapSection.tsx
-- [ ] src/components/home/HeroVideo.tsx
-- [ ] src/features/content/*
+- [x] src/pages/index.tsx
+- [x] src/pages/about.tsx
+- [x] src/pages/facilities.tsx
+- [x] src/pages/restaurants.tsx
+- [x] src/pages/gems.tsx
+- [x] src/pages/events.tsx
+- [x] src/pages/deals.tsx
+- [x] src/pages/contact.tsx
+- [x] src/pages/privacy.tsx
+- [x] src/pages/api/v1/content/[page].ts
+- [x] src/pages/api/v1/facilities/index.ts
+- [x] src/pages/api/v1/facilities/[id].ts
+- [x] src/pages/api/v1/restaurants/index.ts
+- [x] src/pages/api/v1/restaurants/[id].ts
+- [x] src/pages/api/v1/restaurants/[id]/menu.ts
+- [x] src/pages/api/v1/gems/index.ts
+- [x] src/pages/api/v1/events/index.ts
+- [x] src/pages/api/v1/events/inquiries.ts
+- [x] src/pages/api/v1/deals/index.ts
+- [x] src/pages/api/v1/deals/[id].ts
+- [x] src/pages/api/v1/contact/index.ts
+- [x] src/pages/api/v1/newsletter/subscribe.ts
+- [x] src/pages/api/v1/newsletter/confirm.ts
+- [x] src/pages/api/v1/newsletter/unsubscribe.ts
+- [x] src/pages/api/v1/amenities/index.ts
+- [x] src/pages/api/v1/media/index.ts
+- [x] src/components/common/Lightbox.tsx
+- [x] src/components/common/MapSection.tsx
+- [x] src/components/home/HeroVideo.tsx
+- [x] src/features/content/*
 
 ### Commands
 ```powershell
@@ -654,12 +654,12 @@ npm run dev
 ```
 
 ### Verification Checklist
-- [ ] Hero video falls back to poster image on mobile (<768px) and `prefers-reduced-motion`
-- [ ] Lightbox keyboard navigation (Left/Right/Esc) and focus trap work correctly
-- [ ] Google Maps fallback image and link render when embed fails
-- [ ] Newsletter flow: subscribe -> confirmation email -> token confirmation -> unsubscribe works end-to-end
-- [ ] Form rate limits enforced: contact 3/hr/IP, inquiries 5/hr/IP
-- [ ] JSON-LD valid and present on every public page
+- [x] Hero video falls back to poster image on mobile (<768px) and `prefers-reduced-motion`
+- [x] Lightbox keyboard navigation (Left/Right/Esc) and focus trap work correctly
+- [x] Google Maps fallback image and link render when embed fails
+- [x] Newsletter flow: subscribe -> confirmation email -> token confirmation -> unsubscribe works end-to-end
+- [x] Form rate limits enforced: contact 3/hr/IP, inquiries 5/hr/IP
+- [x] JSON-LD valid and present on every public page
 
 ### STOP & COMMIT
 ```powershell
@@ -674,25 +674,25 @@ git commit -m "feat: public pages, APIs, amenities/media, newsletter double opt-
 **Milestone:** M1 · **Estimated Effort:** 3–5 days · **Branch:** `feature/gar-m1-marketing-site` · **PR:** Step 7 PR merged to `main` — **Completes Milestone 1**
 
 ### Step Checklist
-- [ ] Implement room listing with resort toggle (Elysian vs Village) and tier filtering
-- [ ] Implement `GET /api/v1/buildings` public endpoint to list buildings with campus association
-- [ ] Enforce under-construction behavior for Presidential and Royal room types:
+- [x] Implement room listing with resort toggle (Elysian vs Village) and tier filtering
+- [x] Implement `GET /api/v1/buildings` public endpoint to list buildings with campus association
+- [x] Enforce under-construction behavior for Presidential and Royal room types:
   - Greyed/outlined card styling with "Under Construction" badge
   - "Price TBD" instead of numeric rate
   - "Notify Me" button instead of "Book This Room"
-- [ ] Implement notify-me capture endpoint (`POST /api/v1/notify-me`) with duplicate suppression (same email + roomTypeId returns 200 without creating a second record)
-- [ ] Render Prayer Hut and shared amenities with conditional tooltips ("Subject to availability")
-- [ ] Render room detail amenities categorized into "In-Room Amenities" and "Resort Amenities" from `RoomType.amenities` JSON
-- [ ] Exclude under-construction room types from `makesOffer` structured data
-- [ ] Responsive room cards: 1 column mobile, 2 columns tablet, 3 columns desktop; resort tabs full width on mobile
+- [x] Implement notify-me capture endpoint (`POST /api/v1/notify-me`) with duplicate suppression (same email + roomTypeId returns 200 without creating a second record)
+- [x] Render Prayer Hut and shared amenities with conditional tooltips ("Subject to availability")
+- [x] Render room detail amenities categorized into "In-Room Amenities" and "Resort Amenities" from `RoomType.amenities` JSON
+- [x] Exclude under-construction room types from `makesOffer` structured data
+- [x] Responsive room cards: 1 column mobile, 2 columns tablet, 3 columns desktop; resort tabs full width on mobile
 
 ### Explicit File Paths
-- [ ] src/pages/rooms.tsx
-- [ ] src/pages/api/v1/rooms/index.ts
-- [ ] src/pages/api/v1/rooms/[id].ts
-- [ ] src/pages/api/v1/buildings/index.ts
-- [ ] src/pages/api/v1/notify-me.ts
-- [ ] src/features/rooms/*
+- [x] src/pages/rooms.tsx
+- [x] src/pages/api/v1/rooms/index.ts
+- [x] src/pages/api/v1/rooms/[id].ts
+- [x] src/pages/api/v1/buildings/index.ts
+- [x] src/pages/api/v1/notify-me.ts
+- [x] src/features/rooms/*
 
 ### Commands
 ```powershell
@@ -702,12 +702,12 @@ npm run test
 ```
 
 ### Verification Checklist
-- [ ] Presidential and Royal huts display Under Construction badge, Price TBD, and Notify Me CTA
-- [ ] Notify Me duplicate submissions return 200 without creating duplicate rows
-- [ ] RoomType amenity JSON parses into In-Room vs Resort Amenities sections
-- [ ] Under-construction rooms excluded from JSON-LD `makesOffer`
-- [ ] Buildings endpoint returns campus associations
-- [ ] M1 Exit Criteria verified: all public pages, room browsing, WhatsApp CTAs, consent, SEO baseline operational
+- [x] Presidential and Royal huts display Under Construction badge, Price TBD, and Notify Me CTA
+- [x] Notify Me duplicate submissions return 200 without creating duplicate rows
+- [x] RoomType amenity JSON parses into In-Room vs Resort Amenities sections
+- [x] Under-construction rooms excluded from JSON-LD `makesOffer`
+- [x] Buildings endpoint returns campus associations
+- [x] M1 Exit Criteria verified: all public pages, room browsing, WhatsApp CTAs, consent, SEO baseline operational
 
 ### STOP & COMMIT
 ```powershell
