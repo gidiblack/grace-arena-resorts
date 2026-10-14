@@ -707,6 +707,9 @@ export default function BookingPage() {
                             color="white"
                             p={3}
                             borderRadius="8px"
+                            style={{ colorScheme: "dark" }}
+                            _placeholder={{ color: "gray.400", opacity: 1 }}
+                            _focus={{ borderColor: "accent.500", outline: "none" }}
                           />
                         </Box>
                         <Box>
@@ -1031,6 +1034,8 @@ export default function BookingPage() {
                             color="white"
                             p={3}
                             borderRadius="8px"
+                            _placeholder={{ color: "gray.400", opacity: 1 }}
+                            _focus={{ borderColor: "accent.500", outline: "none" }}
                           />
                         </Box>
                         <Box>
@@ -1047,6 +1052,8 @@ export default function BookingPage() {
                             color="white"
                             p={3}
                             borderRadius="8px"
+                            _placeholder={{ color: "gray.400", opacity: 1 }}
+                            _focus={{ borderColor: "accent.500", outline: "none" }}
                           />
                         </Box>
                       </SimpleGrid>
@@ -1068,6 +1075,11 @@ export default function BookingPage() {
                           color="white"
                           p={3}
                           borderRadius="8px"
+                          _placeholder={{ color: "gray.400", opacity: 1 }}
+                          _focus={{
+                            borderColor: phoneError ? "#E53E3E" : "accent.500",
+                            outline: "none",
+                          }}
                         />
                         {phoneError && (
                           <Text fontSize="12px" color="#FC8181" mt={1}>
@@ -1134,6 +1146,8 @@ export default function BookingPage() {
                           p={3}
                           borderRadius="8px"
                           rows={3}
+                          _placeholder={{ color: "gray.400", opacity: 1 }}
+                          _focus={{ borderColor: "accent.500", outline: "none" }}
                         />
                       </Box>
                     </Stack>
@@ -1294,6 +1308,8 @@ export default function BookingPage() {
                             p={2.5}
                             borderRadius="8px"
                             fontSize="13px"
+                            _placeholder={{ color: "gray.400", opacity: 1 }}
+                            _focus={{ borderColor: "accent.500", outline: "none" }}
                           />
                           <Button
                             variant="secondary"

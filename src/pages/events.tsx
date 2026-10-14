@@ -234,9 +234,10 @@ export default function EventsPage() {
                         padding: "10px",
                         backgroundColor: "#1E293B",
                         border: "1px solid #334155",
-                        color: "white",
+                        color: "#F8FAFC",
                         borderRadius: "8px",
                         fontSize: "14px",
+                        outline: "none",
                       }}
                     >
                       <option value="Church / Leadership Retreat">
@@ -271,6 +272,9 @@ export default function EventsPage() {
                         p={2.5}
                         borderRadius="8px"
                         fontSize="14px"
+                        style={{ colorScheme: "dark" }}
+                        _placeholder={{ color: "gray.400", opacity: 1 }}
+                        _focus={{ borderColor: "accent.500", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
                       />
                     </Box>
 
@@ -290,6 +294,8 @@ export default function EventsPage() {
                         p={2.5}
                         borderRadius="8px"
                         fontSize="14px"
+                        _placeholder={{ color: "gray.400", opacity: 1 }}
+                        _focus={{ borderColor: "accent.500", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
                       />
                     </Box>
                   </SimpleGrid>
@@ -310,6 +316,8 @@ export default function EventsPage() {
                         p={2.5}
                         borderRadius="8px"
                         fontSize="14px"
+                        _placeholder={{ color: "gray.400", opacity: 1 }}
+                        _focus={{ borderColor: "accent.500", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
                       />
                     </Box>
 
@@ -329,6 +337,8 @@ export default function EventsPage() {
                         p={2.5}
                         borderRadius="8px"
                         fontSize="14px"
+                        _placeholder={{ color: "gray.400", opacity: 1 }}
+                        _focus={{ borderColor: "accent.500", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
                       />
                     </Box>
                   </SimpleGrid>
@@ -349,6 +359,8 @@ export default function EventsPage() {
                       p={2.5}
                       borderRadius="8px"
                       fontSize="14px"
+                      _placeholder={{ color: "gray.400", opacity: 1 }}
+                      _focus={{ borderColor: "accent.500", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
                     />
                   </Box>
 
@@ -367,6 +379,8 @@ export default function EventsPage() {
                       borderRadius="8px"
                       fontSize="13px"
                       rows={3}
+                      _placeholder={{ color: "gray.400", opacity: 1 }}
+                      _focus={{ borderColor: "accent.500", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
                     />
                   </Box>
 

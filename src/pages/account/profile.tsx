@@ -187,6 +187,8 @@ export default function AccountProfilePage() {
                 p={3}
                 borderRadius="8px"
                 fontSize="13px"
+                _placeholder={{ color: "gray.400", opacity: 1 }}
+                _focus={{ borderColor: "brand.gold", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
               />
             </Box>
 
@@ -204,6 +206,8 @@ export default function AccountProfilePage() {
                 p={3}
                 borderRadius="8px"
                 fontSize="13px"
+                _placeholder={{ color: "gray.400", opacity: 1 }}
+                _focus={{ borderColor: "brand.gold", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
               />
             </Box>
 
@@ -222,7 +226,7 @@ export default function AccountProfilePage() {
                 readOnly
                 bg="#182234"
                 border="1px solid #2D3748"
-                color="gray.400"
+                color="gray.300"
                 cursor="not-allowed"
                 p={3}
                 borderRadius="8px"
@@ -309,6 +313,8 @@ export default function AccountProfilePage() {
                 p={3}
                 borderRadius="8px"
                 fontSize="13px"
+                _placeholder={{ color: "gray.400", opacity: 1 }}
+                _focus={{ borderColor: "brand.gold", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
               />
             </Box>
 
@@ -327,6 +333,8 @@ export default function AccountProfilePage() {
                 p={3}
                 borderRadius="8px"
                 fontSize="13px"
+                _placeholder={{ color: "gray.400", opacity: 1 }}
+                _focus={{ borderColor: "brand.gold", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
               />
             </Box>
 
@@ -345,6 +353,8 @@ export default function AccountProfilePage() {
                 p={3}
                 borderRadius="8px"
                 fontSize="13px"
+                _placeholder={{ color: "gray.400", opacity: 1 }}
+                _focus={{ borderColor: "brand.gold", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
               />
             </Box>
           </Stack>

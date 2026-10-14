@@ -22,6 +22,7 @@ export default function AuthLayout({ title, subtitle, children }: AuthLayoutProp
         bg="linear-gradient(180deg, #F7FAFC 0%, #EDF2F7 100%)"
       >
         <Box
+          data-theme="light"
           w="full"
           maxW="480px"
           bg="white"

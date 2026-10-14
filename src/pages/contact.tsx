@@ -274,6 +274,8 @@ export default function ContactPage() {
                           p={3}
                           borderRadius="8px"
                           fontSize="14px"
+                          _placeholder={{ color: "gray.400", opacity: 1 }}
+                          _focus={{ borderColor: "accent.500", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
                         />
                       </Box>
 
@@ -294,6 +296,8 @@ export default function ContactPage() {
                             p={3}
                             borderRadius="8px"
                             fontSize="14px"
+                            _placeholder={{ color: "gray.400", opacity: 1 }}
+                            _focus={{ borderColor: "accent.500", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
                           />
                         </Box>
 
@@ -313,6 +317,8 @@ export default function ContactPage() {
                             p={3}
                             borderRadius="8px"
                             fontSize="14px"
+                            _placeholder={{ color: "gray.400", opacity: 1 }}
+                            _focus={{ borderColor: "accent.500", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
                           />
                         </Box>
                       </SimpleGrid>
@@ -332,6 +338,8 @@ export default function ContactPage() {
                           p={3}
                           borderRadius="8px"
                           fontSize="14px"
+                          _placeholder={{ color: "gray.400", opacity: 1 }}
+                          _focus={{ borderColor: "accent.500", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
                         />
                       </Box>
 
@@ -351,6 +359,8 @@ export default function ContactPage() {
                           borderRadius="8px"
                           fontSize="13px"
                           rows={4}
+                          _placeholder={{ color: "gray.400", opacity: 1 }}
+                          _focus={{ borderColor: "accent.500", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
                         />
                       </Box>
 

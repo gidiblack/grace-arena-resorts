@@ -104,6 +104,13 @@ export default function RegisterPage() {
               required
               size="lg"
               borderRadius="lg"
+              className="auth-input"
+              color="gray.900"
+              bg="white"
+              border="1px solid"
+              borderColor="gray.300"
+              _placeholder={{ color: "gray.500", opacity: 1 }}
+              _focus={{ borderColor: "yellow.600", outline: "none", boxShadow: "0 0 0 1px #D97706" }}
             />
           </Box>
 
@@ -127,6 +134,13 @@ export default function RegisterPage() {
               required
               size="lg"
               borderRadius="lg"
+              className="auth-input"
+              color="gray.900"
+              bg="white"
+              border="1px solid"
+              borderColor="gray.300"
+              _placeholder={{ color: "gray.500", opacity: 1 }}
+              _focus={{ borderColor: "yellow.600", outline: "none", boxShadow: "0 0 0 1px #D97706" }}
             />
           </Box>
 
@@ -150,6 +164,13 @@ export default function RegisterPage() {
               required
               size="lg"
               borderRadius="lg"
+              className="auth-input"
+              color="gray.900"
+              bg="white"
+              border="1px solid"
+              borderColor="gray.300"
+              _placeholder={{ color: "gray.500", opacity: 1 }}
+              _focus={{ borderColor: "yellow.600", outline: "none", boxShadow: "0 0 0 1px #D97706" }}
             />
           </Box>
 
@@ -173,6 +194,13 @@ export default function RegisterPage() {
               required
               size="lg"
               borderRadius="lg"
+              className="auth-input"
+              color="gray.900"
+              bg="white"
+              border="1px solid"
+              borderColor="gray.300"
+              _placeholder={{ color: "gray.500", opacity: 1 }}
+              _focus={{ borderColor: "yellow.600", outline: "none", boxShadow: "0 0 0 1px #D97706" }}
             />
             <Text fontSize="xs" color="gray.500" mt={1}>
               At least 8 characters, including 1 uppercase, 1 lowercase, and 1 number.
@@ -199,6 +227,13 @@ export default function RegisterPage() {
               required
               size="lg"
               borderRadius="lg"
+              className="auth-input"
+              color="gray.900"
+              bg="white"
+              border="1px solid"
+              borderColor="gray.300"
+              _placeholder={{ color: "gray.500", opacity: 1 }}
+              _focus={{ borderColor: "yellow.600", outline: "none", boxShadow: "0 0 0 1px #D97706" }}
             />
           </Box>
 

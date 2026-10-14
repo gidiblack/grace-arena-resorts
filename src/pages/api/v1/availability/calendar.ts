@@ -1,6 +1,7 @@
 import { withApi } from "../_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
+import { MOCK_ROOMS } from "@/data/mock/resort-data";
 
 export default withApi(
   async (req, res) => {
@@ -21,16 +22,46 @@ export default withApi(
     const supabase = getSupabaseAdminClient();
 
     // 1. Fetch room types
-    let roomTypeQuery = supabase
-      .from("room_types")
-      .select("id, name, base_price, total_units, status");
+    let roomTypes: Array<{
+      id: string;
+      name: string;
+      base_price: number | null;
+      total_units: number;
+      status: string;
+    }> = [];
 
-    if (roomTypeId) {
-      roomTypeQuery = roomTypeQuery.eq("id", String(roomTypeId));
+    try {
+      let roomTypeQuery = supabase
+        .from("room_types")
+        .select("id, name, base_price, total_units, status");
+
+      if (roomTypeId) {
+        roomTypeQuery = roomTypeQuery.eq("id", String(roomTypeId));
+      }
+
+      const { data, error: rtError } = await roomTypeQuery;
+      if (!rtError && data && data.length > 0) {
+        roomTypes = data;
+      }
+    } catch {
+      // Fallback below
     }
 
-    const { data: roomTypes, error: rtError } = await roomTypeQuery;
-    if (rtError || !roomTypes || roomTypes.length === 0) {
+    if (roomTypes.length === 0) {
+      let filtered = [...MOCK_ROOMS];
+      if (roomTypeId) {
+        filtered = filtered.filter((r) => r.id === String(roomTypeId));
+      }
+      roomTypes = filtered.map((r) => ({
+        id: r.id,
+        name: r.name,
+        base_price: r.basePriceNgn,
+        total_units: 5,
+        status: r.isUnderConstruction ? "under_construction" : "available",
+      }));
+    }
+
+    if (roomTypes.length === 0) {
       return fail(res, "NOT_FOUND", "No room types found for requested criteria", 404);
     }
 

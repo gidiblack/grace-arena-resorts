@@ -226,6 +226,8 @@ export default function CancellationModal({
                 p={2.5}
                 borderRadius="8px"
                 rows={2}
+                _placeholder={{ color: "gray.400", opacity: 1 }}
+                _focus={{ borderColor: "brand.gold", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
               />
             </Box>
           </Stack>
