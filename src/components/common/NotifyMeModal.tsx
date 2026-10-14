@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Box, Flex, HStack, Icon, Input, Stack, Text, Dialog } from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, Input, Stack, Text, Dialog, Portal } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
+import { cleanupModalLocks, useModalCleanup } from "@/helpers/modal-cleanup";
 import { FaBell, FaCheckCircle, FaHardHat, FaTimes } from "react-icons/fa";
 
 interface NotifyMeModalProps {
@@ -18,6 +19,7 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
   campusName,
   roomTypeId,
 }) => {
+  useModalCleanup(isOpen);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -60,6 +62,7 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
   };
 
   const handleResetAndClose = () => {
+    cleanupModalLocks();
     onClose();
     setTimeout(() => {
       setSubmitted(false);
@@ -73,23 +76,32 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
   return (
     <Dialog.Root
       open={isOpen}
-      onOpenChange={(details) => !details.open && handleResetAndClose()}
+      onOpenChange={(details) => {
+        if (!details.open) {
+          handleResetAndClose();
+          cleanupModalLocks();
+        }
+      }}
+      preventScroll={false}
       trapFocus={false}
       restoreFocus={false}
     >
-      <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)" />
-      <Dialog.Positioner>
-        <Dialog.Content
-          bg="#0F172A"
-          color="light.500"
-          border="1px solid #334155"
-          borderRadius="20px"
-          p={{ base: 6, md: 8 }}
-          maxW="480px"
-          w="92vw"
-          boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.75)"
-          tabIndex={-1}
-        >
+      <Portal>
+        <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)" />
+        <Dialog.Positioner>
+          <Dialog.Content
+            bg="#0F172A"
+            color="light.500"
+            border="1px solid #334155"
+            borderRadius="20px"
+            p={{ base: 6, md: 8 }}
+            maxW="480px"
+            maxH="90vh"
+            overflowY="auto"
+            w="92vw"
+            boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.75)"
+            tabIndex={-1}
+          >
           <Flex justify="space-between" align="center" mb={4}>
             <HStack gap={2}>
               <Box bg="amber.500/20" color="#F59E0B" p={2} borderRadius="10px">
@@ -241,6 +253,7 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
           )}
         </Dialog.Content>
       </Dialog.Positioner>
+      </Portal>
     </Dialog.Root>
   );
 };

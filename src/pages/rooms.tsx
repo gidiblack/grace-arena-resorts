@@ -21,6 +21,7 @@ import {
   RoomFilterBar,
   RoomDetailsModal,
 } from "@/features/rooms";
+import { cleanupModalLocks } from "@/helpers/modal-cleanup";
 import { FaWhatsapp } from "react-icons/fa";
 
 export default function RoomsPage() {
@@ -203,7 +204,10 @@ export default function RoomsPage() {
       {/* Under Construction Notify Modal */}
       <NotifyMeModal
         isOpen={notifyModalOpen}
-        onClose={() => setNotifyModalOpen(false)}
+        onClose={() => {
+          setNotifyModalOpen(false);
+          cleanupModalLocks();
+        }}
         roomTitle={notifyRoom.title}
         campusName={notifyRoom.campus}
         roomTypeId={notifyRoom.id}
@@ -212,7 +216,10 @@ export default function RoomsPage() {
       {/* Full Amenities Detail Dialog (Categorized In-Room vs Resort Amenities) */}
       <RoomDetailsModal
         isOpen={detailsModalOpen}
-        onClose={() => setDetailsModalOpen(false)}
+        onClose={() => {
+          setDetailsModalOpen(false);
+          cleanupModalLocks();
+        }}
         room={activeRoomDetails}
         onOpenNotify={handleOpenNotify}
       />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Box, Flex, HStack, Stack, Text, Dialog, Icon } from "@chakra-ui/react";
+import { Box, Flex, HStack, Stack, Text, Dialog, Icon, Portal } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
+import { cleanupModalLocks, useModalCleanup } from "@/helpers/modal-cleanup";
 import { FaShieldAlt, FaTimes, FaCheck, FaLock } from "react-icons/fa";
 
 export type CookieConsentState = {
@@ -16,6 +17,7 @@ const COOKIE_KEY = "gar_cookie_consent";
 export const CookieConsentBanner: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  useModalCleanup(modalOpen);
   const [analyticsAllowed, setAnalyticsAllowed] = useState(false);
   const [marketingAllowed, setMarketingAllowed] = useState(false);
 
@@ -87,13 +89,7 @@ export const CookieConsentBanner: React.FC = () => {
     }
     setIsVisible(false);
     setModalOpen(false);
-
-    if (typeof document !== "undefined") {
-      document.body.style.removeProperty("overflow");
-      document.body.style.removeProperty("pointer-events");
-      document.body.removeAttribute("data-scroll-locked");
-      document.documentElement.style.removeProperty("overflow");
-    }
+    cleanupModalLocks();
   };
 
   const handleAcceptAll = () => saveConsent(true, true);
@@ -176,26 +172,35 @@ export const CookieConsentBanner: React.FC = () => {
         </Box>
       )}
 
-      {/* Preferences Dialog: Persistently mounted in DOM so open/close transitions cleanly release scroll locks */}
+      {/* Preferences Dialog: Persistently mounted in DOM with Portal so open/close transitions cleanly release scroll locks */}
       <Dialog.Root
         open={modalOpen}
-        onOpenChange={(details) => setModalOpen(details.open)}
+        onOpenChange={(details) => {
+          setModalOpen(details.open);
+          if (!details.open) {
+            cleanupModalLocks();
+          }
+        }}
+        preventScroll={false}
         trapFocus={false}
         restoreFocus={false}
       >
-        <Dialog.Backdrop bg="blackAlpha.850" backdropFilter="blur(6px)" />
-        <Dialog.Positioner>
-          <Dialog.Content
-            bg="#111827"
-            color="light.500"
-            border="1px solid #374151"
-            borderRadius="16px"
-            p={{ base: 5, md: 7 }}
-            maxW="540px"
-            w="90vw"
-            boxShadow="2xl"
-            tabIndex={-1}
-          >
+        <Portal>
+          <Dialog.Backdrop bg="blackAlpha.850" backdropFilter="blur(6px)" />
+          <Dialog.Positioner>
+            <Dialog.Content
+              bg="#111827"
+              color="light.500"
+              border="1px solid #374151"
+              borderRadius="16px"
+              p={{ base: 5, md: 7 }}
+              maxW="540px"
+              maxH="90vh"
+              overflowY="auto"
+              w="90vw"
+              boxShadow="2xl"
+              tabIndex={-1}
+            >
             <Flex justify="space-between" align="center" mb={4}>
               <HStack gap={2}>
                 <Icon as={FaShieldAlt} color="accent.500" boxSize={5} />
@@ -331,6 +336,7 @@ export const CookieConsentBanner: React.FC = () => {
             </Flex>
           </Dialog.Content>
         </Dialog.Positioner>
+        </Portal>
       </Dialog.Root>
     </>
   );

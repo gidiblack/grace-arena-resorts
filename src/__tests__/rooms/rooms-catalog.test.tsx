@@ -6,9 +6,20 @@ import {
   parseRoomAmenities,
   RoomCard,
   RoomFilterBar,
+  RoomDetailsModal,
   RoomType,
 } from "@/features/rooms";
+import { cleanupModalLocks } from "@/helpers/modal-cleanup";
 import { generateRoomsPageJsonLd } from "@/lib/seo/meta";
+
+vi.mock("next/router", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    pathname: "/rooms",
+    query: {},
+    asPath: "/rooms",
+  }),
+}));
 
 const mockActiveRoom: RoomType = {
   id: "elysian-fountain-standard",
@@ -167,6 +178,57 @@ describe("Step 7 Rooms Catalog & Under-Construction Features", () => {
 
       fireEvent.click(screen.getByText("Village (3)"));
       expect(onCampusChange).toHaveBeenCalledWith("village");
+    });
+  });
+
+  describe("RoomDetailsModal & DOM Locks Cleanup", () => {
+    it("renders room details when open, including categorized amenities and Book CTA", () => {
+      const onClose = vi.fn();
+      const onOpenNotify = vi.fn();
+
+      renderWithChakra(
+        <RoomDetailsModal
+          isOpen={true}
+          onClose={onClose}
+          room={mockActiveRoom}
+          onOpenNotify={onOpenNotify}
+        />
+      );
+
+      expect(screen.getByTestId("room-details-modal")).toBeInTheDocument();
+      expect(screen.getByText("Standard Room")).toBeInTheDocument();
+      expect(screen.getByText("₦60,000 / night")).toBeInTheDocument();
+      expect(screen.getByText("In-Room Amenities")).toBeInTheDocument();
+      expect(screen.getByText("Resort & Spiritual Amenities")).toBeInTheDocument();
+      expect(screen.getByText("Book This Room")).toBeInTheDocument();
+    });
+
+    it("cleans pointer-events, scroll-lock, and inert locks from DOM on cleanupModalLocks", () => {
+      // Simulate locks applied to body, documentElement, and mock __next
+      document.body.style.pointerEvents = "none";
+      document.body.style.overflow = "hidden";
+      document.body.setAttribute("data-scroll-lock", "true");
+      document.body.setAttribute("data-inert", "true");
+
+      const dummyNext = document.createElement("div");
+      dummyNext.id = "__next";
+      dummyNext.setAttribute("inert", "");
+      dummyNext.setAttribute("aria-hidden", "true");
+      dummyNext.setAttribute("data-inerted", "");
+      document.body.appendChild(dummyNext);
+
+      // Execute cleanup
+      cleanupModalLocks();
+
+      expect(document.body.style.pointerEvents).toBe("");
+      expect(document.body.style.overflow).toBe("");
+      expect(document.body.hasAttribute("data-scroll-lock")).toBe(false);
+      expect(document.body.hasAttribute("data-inert")).toBe(false);
+      expect(dummyNext.hasAttribute("inert")).toBe(false);
+      expect(dummyNext.hasAttribute("aria-hidden")).toBe(false);
+      expect(dummyNext.hasAttribute("data-inerted")).toBe(false);
+
+      document.body.removeChild(dummyNext);
     });
   });
 });

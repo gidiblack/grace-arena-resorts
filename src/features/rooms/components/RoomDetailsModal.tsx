@@ -10,12 +10,14 @@ import {
   Stack,
   Text,
   Dialog,
+  Portal,
 } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { ROUTES } from "@/constants/ROUTES";
 import { RoomType, parseRoomAmenities } from "../types";
 import { resolveRoomImage, FALLBACK_ROOM_IMAGE } from "../utils/image-resolver";
+import { cleanupModalLocks, useModalCleanup } from "@/helpers/modal-cleanup";
 import { FaCheck, FaPray, FaTimes } from "react-icons/fa";
 
 interface RoomDetailsModalProps {
@@ -32,6 +34,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   onOpenNotify,
 }) => {
   const router = useRouter();
+  useModalCleanup(isOpen && !!room);
 
   if (!room) return null;
 
@@ -42,24 +45,33 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   return (
     <Dialog.Root
       open={isOpen}
-      onOpenChange={(details) => !details.open && onClose()}
+      onOpenChange={(details) => {
+        if (!details.open) {
+          onClose();
+          cleanupModalLocks();
+        }
+      }}
+      preventScroll={false}
       trapFocus={false}
       restoreFocus={false}
     >
-      <Dialog.Backdrop bg="blackAlpha.850" backdropFilter="blur(8px)" />
-      <Dialog.Positioner>
-        <Dialog.Content
-          bg="#0F172A"
-          color="light.500"
-          border="1px solid #334155"
-          borderRadius="20px"
-          p={{ base: 5, md: 8 }}
-          maxW="640px"
-          w="92vw"
-          boxShadow="2xl"
-          data-testid="room-details-modal"
-          tabIndex={-1}
-        >
+      <Portal>
+        <Dialog.Backdrop bg="blackAlpha.850" backdropFilter="blur(8px)" />
+        <Dialog.Positioner>
+          <Dialog.Content
+            bg="#0F172A"
+            color="light.500"
+            border="1px solid #334155"
+            borderRadius="20px"
+            p={{ base: 5, md: 8 }}
+            maxW="640px"
+            maxH="90vh"
+            overflowY="auto"
+            w="92vw"
+            boxShadow="2xl"
+            data-testid="room-details-modal"
+            tabIndex={-1}
+          >
           <Flex justify="space-between" align="flex-start" mb={3}>
             <Box>
               <Text
@@ -77,7 +89,10 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
             <Dialog.CloseTrigger asChild>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => {
+                  cleanupModalLocks();
+                  onClose();
+                }}
                 aria-label="Close dialog"
                 tabIndex={0}
                 style={{
@@ -245,6 +260,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
                 size="sm"
                 tabIndex={0}
                 onClick={() => {
+                  cleanupModalLocks();
                   onClose();
                   onOpenNotify(room);
                 }}
@@ -262,6 +278,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
                 size="sm"
                 tabIndex={0}
                 onClick={() => {
+                  cleanupModalLocks();
                   onClose();
                   router.push(`${ROUTES.booking}?room=${room.id}`);
                 }}
@@ -272,6 +289,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
           </Flex>
         </Dialog.Content>
       </Dialog.Positioner>
+      </Portal>
     </Dialog.Root>
   );
 };
