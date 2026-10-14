@@ -19,6 +19,7 @@
     "@chakra-ui/cli": "^3.34.0",
     "@chakra-ui/react": "^3.34.0",
     "@emotion/react": "^11.14.0",
+    "@react-pdf/renderer": "^4.9.0",
     "@sendgrid/mail": "^8.1.6",
     "@supabase/supabase-js": "^2.117.3",
     "@types/cookie": "^0.6.0",
