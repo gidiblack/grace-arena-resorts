@@ -1,12 +1,18 @@
 import React from "react";
-import { Box, Stack, Text, SimpleGrid } from "@chakra-ui/react";
+import { Box, Stack, Text } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
+import { generateWebPageJsonLd } from "@/lib/seo/meta";
 
 export default function PrivacyPolicyPage() {
   return (
     <PageWrapper
       title="Privacy Policy (NDPR & GDPR) — Grace Arena Resorts"
-      description="Grace Arena Resorts data protection policy under the Nigeria Data Protection Regulation (NDPR).">
+      description="Grace Arena Resorts data protection policy under the Nigeria Data Protection Regulation (NDPR)."
+      jsonLd={generateWebPageJsonLd({
+        title: "Privacy Policy (NDPR & GDPR)",
+        description: "Grace Arena Resorts data protection policy under the Nigeria Data Protection Regulation (NDPR).",
+        url: "/privacy",
+      })}>
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"
         pt={{ base: "100px", md: "130px" }}

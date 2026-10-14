@@ -11,14 +11,12 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
-import Button from "@/components/ui/button";
-import { ROUTES } from "@/constants/ROUTES";
-import Link from "next/link";
+import { generateTouristAttractionJsonLd } from "@/lib/seo/meta";
 import hut from "@/assets/hut.jpg";
 import pool from "@/assets/pool.jpg";
 import elysian from "@/assets/gar-elysian.jpg";
 import village from "@/assets/gar-village.jpg";
-import { FaClock, FaCompass, FaMapPin, FaPray, FaWhatsapp } from "react-icons/fa";
+import { FaClock, FaMapPin, FaWhatsapp } from "react-icons/fa";
 
 interface GemItem {
   id: string;
@@ -91,7 +89,11 @@ export default function GemsPage() {
   return (
     <PageWrapper
       title="Off-Beat Gems — Things to Do Near Grace Arena Resorts"
-      description="Discover local attractions in Igbo-Ora (The Land of Twins), hike Idere Hills, experience cultural tours, and enjoy prayer walks.">
+      description="Discover local attractions in Igbo-Ora (The Land of Twins), hike Idere Hills, experience cultural tours, and enjoy prayer walks."
+      jsonLd={generateTouristAttractionJsonLd(
+        "Igbo-Ora Attractions & Off-Beat Gems",
+        "Discover local attractions in Igbo-Ora, hike Idere Hills, experience cultural tours, and enjoy prayer walks."
+      )}>
       {/* Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"

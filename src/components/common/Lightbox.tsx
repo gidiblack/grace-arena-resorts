@@ -73,6 +73,21 @@ export const Lightbox: React.FC<LightboxProps> = ({
       aria-label="Image gallery lightbox"
     >
       {/* Top bar */}
+      <div
+        aria-live="polite"
+        style={{
+          position: "absolute",
+          width: 1,
+          height: 1,
+          padding: 0,
+          margin: -1,
+          overflow: "hidden",
+          clip: "rect(0,0,0,0)",
+          border: 0,
+        }}
+      >
+        {`Viewing image ${currentIndex + 1} of ${images.length}: ${currentImage.title || currentImage.alt}`}
+      </div>
       <Flex justify="space-between" align="center" w="full" maxW="75rem" mx="auto" zIndex={2}>
         <HStack gap={3}>
           <Text

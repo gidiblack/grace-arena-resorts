@@ -11,6 +11,8 @@ import {
   Textarea,
 } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
+import MapSection from "@/components/common/MapSection";
+import { generateContactPageJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
 import { FaPhoneAlt, FaEnvelope, FaWhatsapp, FaMapMarkerAlt, FaCheckCircle, FaClock } from "react-icons/fa";
 
@@ -20,17 +22,48 @@ export default function ContactPage() {
   const [phone, setPhone] = useState("+234");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/v1/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: name,
+          email,
+          phoneNumber: phone,
+          subject,
+          message,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error?.message || "Failed to submit message. Please try again.");
+      }
+
+      setSubmitted(true);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred. Please try again later.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <PageWrapper
       title="Contact Us — Grace Arena Resorts"
-      description="Get in touch with Grace Arena Resorts in Igbo-Ora, Oyo State, Nigeria. Bookings, directions, and WhatsApp inquiries.">
+      description="Get in touch with Grace Arena Resorts in Igbo-Ora, Oyo State, Nigeria. Bookings, directions, and WhatsApp inquiries."
+      jsonLd={generateContactPageJsonLd()}>
       {/* Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"
@@ -283,12 +316,21 @@ export default function ContactPage() {
                         />
                       </Box>
 
+                      {error && (
+                        <Box bg="red.900" border="1px solid red" p={3} borderRadius="8px">
+                          <Text fontSize="13px" color="red.200">
+                            {error}
+                          </Text>
+                        </Box>
+                      )}
+
                       <Button
                         type="submit"
                         variant="primary"
                         size="md"
-                        style={{ width: "100%", marginTop: "8px", padding: "12px" }}>
-                        Send Message
+                        disabled={loading}
+                        style={{ width: "100%", marginTop: "8px", padding: "12px", opacity: loading ? 0.7 : 1 }}>
+                        {loading ? "Sending Message..." : "Send Message"}
                       </Button>
                     </Stack>
                   </form>
@@ -299,25 +341,7 @@ export default function ContactPage() {
 
           {/* Interactive Location Map Frame (SRS 3.10) */}
           <Box mt={14}>
-            <Text fontSize="20px" fontWeight="bold" mb={4}>
-              Locate Grace Arena in Igbo-Ora
-            </Text>
-            <Box
-              h={{ base: "300px", md: "400px" }}
-              borderRadius="20px"
-              overflow="hidden"
-              border="1px solid #1E293B"
-              boxShadow="0 10px 30px rgba(0,0,0,0.5)">
-              <iframe
-                title="Grace Arena Resorts Location Map"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126435.53982449757!2d3.20815185!3d7.433333!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x10398bb2c2b3c299%3A0x6b63d91cf97ceea7!2sIgbo-Ora%2C%20Oyo!5e0!3m2!1sen!2sng!4v1700000000000"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </Box>
+            <MapSection />
           </Box>
         </Box>
       </Box>

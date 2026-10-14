@@ -2,7 +2,6 @@ import React from "react";
 import {
   Box,
   Flex,
-  HStack,
   Icon,
   Image,
   SimpleGrid,
@@ -11,14 +10,13 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
+import { generateOrganizationJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
 import { ROUTES } from "@/constants/ROUTES";
 import Link from "next/link";
 import HeroBg from "@/assets/hero-bg.jpg";
-import hut from "@/assets/hut.jpg";
 import elysian from "@/assets/gar-elysian.jpg";
-import sectionBg from "@/assets/paper-bg.png";
-import { FaCross, FaPray, FaHeart, FaAward, FaSeedling, FaShieldAlt } from "react-icons/fa";
+import { FaCross, FaHeart, FaSeedling, FaShieldAlt } from "react-icons/fa";
 
 export default function AboutPage() {
   const VALUES = [
@@ -54,7 +52,8 @@ export default function AboutPage() {
   return (
     <PageWrapper
       title="About Us — Grace Arena Resorts"
-      description="Learn the vision, Christian foundations, and cultural story behind Grace Arena Resorts in Igbo-Ora, Oyo State, Nigeria.">
+      description="Learn the vision, Christian foundations, and cultural story behind Grace Arena Resorts in Igbo-Ora, Oyo State, Nigeria."
+      jsonLd={generateOrganizationJsonLd()}>
       {/* Hero */}
       <Box
         bg={`linear-gradient(rgba(7, 7, 7, 0.7), rgba(7, 7, 7, 0.9)), url(${HeroBg.src})`}

@@ -8,6 +8,7 @@ interface HeadComponentProps {
   canonical?: string;
   ogImage?: string;
   noIndex?: boolean;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   children?: React.ReactNode;
 }
 
@@ -17,6 +18,7 @@ export const HeadComponent: React.FC<HeadComponentProps> = ({
   canonical,
   ogImage = DEFAULT_OG_IMAGE,
   noIndex = false,
+  jsonLd,
   children,
 }) => {
   const fullTitle = title ? `${title} | Grace Arena Resorts` : DEFAULT_SITE_TITLE;
@@ -54,6 +56,15 @@ export const HeadComponent: React.FC<HeadComponentProps> = ({
 
       <link rel="icon" href="/favicon.ico" />
       <title>{fullTitle}</title>
+
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd),
+          }}
+        />
+      )}
       {children}
     </Head>
   );

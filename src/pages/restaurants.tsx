@@ -11,13 +11,12 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
-import Button from "@/components/ui/button";
-import { ROUTES } from "@/constants/ROUTES";
+import { generateRestaurantJsonLd } from "@/lib/seo/meta";
 import dining from "@/assets/dining.jpg";
 import hut from "@/assets/hut.jpg";
 import elysian from "@/assets/gar-elysian.jpg";
 import village from "@/assets/gar-village.jpg";
-import { FaUtensils, FaClock, FaWhatsapp, FaPepperHot, FaLeaf } from "react-icons/fa";
+import { FaClock, FaWhatsapp, FaPepperHot, FaLeaf } from "react-icons/fa";
 
 interface MenuItem {
   name: string;
@@ -154,7 +153,8 @@ export default function RestaurantsPage() {
   return (
     <PageWrapper
       title="Restaurants & Dining — Grace Arena Resorts"
-      description="Enjoy fine dining, authentic Yoruba delicacies, flame-grilled suya, and refreshing beverages across our scenic resort restaurants.">
+      description="Enjoy fine dining, authentic Yoruba delicacies, flame-grilled suya, and refreshing beverages across our scenic resort restaurants."
+      jsonLd={generateRestaurantJsonLd(venue.name)}>
       {/* Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"

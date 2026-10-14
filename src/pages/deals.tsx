@@ -11,6 +11,7 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
+import { generateOfferJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
 import { ROUTES } from "@/constants/ROUTES";
 import Link from "next/link";
@@ -18,7 +19,7 @@ import suite from "@/assets/suite.jpg";
 import dining from "@/assets/dining.jpg";
 import hut from "@/assets/hut.jpg";
 import elysian from "@/assets/gar-elysian.jpg";
-import { FaTag, FaCalendarAlt, FaCheck, FaCopy } from "react-icons/fa";
+import { FaTag } from "react-icons/fa";
 
 interface DealItem {
   id: string;
@@ -98,7 +99,8 @@ export default function DealsPage() {
   return (
     <PageWrapper
       title="Deals & Offers — Grace Arena Resorts"
-      description="Enjoy seasonal discounts, ministry retreat packages, and exclusive deals at Grace Arena Resorts.">
+      description="Enjoy seasonal discounts, ministry retreat packages, and exclusive deals at Grace Arena Resorts."
+      jsonLd={DEALS_DATA.map((d) => generateOfferJsonLd(d.title, d.discountText, d.promoCode))}>
       {/* Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"

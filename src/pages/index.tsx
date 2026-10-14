@@ -14,6 +14,9 @@ import {
 import PageWrapper from "@/components/layout/PageWrapper";
 import PageSection from "@/components/layout/PageSection";
 import Lightbox, { LightboxImage } from "@/components/common/Lightbox";
+import HeroVideo from "@/components/home/HeroVideo";
+import MapSection from "@/components/common/MapSection";
+import { generateHotelJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
 import NextLink from "next/link";
 
@@ -30,40 +33,13 @@ import suite from "@/assets/suite.jpg";
 import suite2 from "@/assets/suite2.jpg";
 
 // Icons
-import { FaArrowRightLong, FaArrowRight, FaArrowLeft, FaLocationDot, FaWhatsapp } from "react-icons/fa6";
+import { FaArrowRightLong, FaArrowRight, FaArrowLeft } from "react-icons/fa6";
 import { MdKingBed, MdLocalLaundryService, MdPool } from "react-icons/md";
 import { TbAirConditioning } from "react-icons/tb";
-import { PiChefHatBold, PiPlantFill } from "react-icons/pi";
+import { PiChefHatBold } from "react-icons/pi";
 import { BiDumbbell } from "react-icons/bi";
 import { FaWifi, FaPray } from "react-icons/fa";
 import { ROUTES } from "@/constants/ROUTES";
-
-const GEMS = [
-  {
-    title: "Luxurious Accommodations",
-    subtitle: "Suites & Thatched Huts",
-    image: suite.src,
-    link: ROUTES.rooms,
-  },
-  {
-    title: "Exquisite Dining",
-    subtitle: "Local & Continental",
-    image: dining.src,
-    link: ROUTES.restaurants,
-  },
-  {
-    title: "The Prayer Hut",
-    subtitle: "Spiritual Tranquility",
-    image: hut.src,
-    link: ROUTES.facilities,
-  },
-  {
-    title: "Serene Pool & Wellness",
-    subtitle: "Recreation & Spa",
-    image: pool.src,
-    link: ROUTES.facilities,
-  },
-];
 
 const CAMPUSES = [
   {
@@ -160,101 +136,10 @@ export default function Home() {
   return (
     <PageWrapper
       title="Grace Arena Resorts — Serene Christian Retreat in Igbo-Ora"
-      description="Experience luxury, faith-centered serenity, and rich hospitality in Igbo-Ora, Oyo State. Choose between GAR Elysian luxury suites and GAR Village rustic thatched huts.">
-      {/* 1. Hero Section */}
-      <Box
-        position="relative"
-        minH={{ base: "88vh", md: "92vh" }}
-        bg={`linear-gradient(rgba(7, 7, 7, 0.45), rgba(7, 7, 7, 0.75)), url(${HeroBg.src})`}
-        bgSize="cover"
-        bgPos="center"
-        display="flex"
-        flexDirection="column"
-        justifyContent="center"
-        alignItems="center"
-        px={{ base: 4, md: 8, xl: 12 }}
-        pt={{ base: "100px", md: "120px" }}
-        pb={{ base: "60px", md: "80px" }}>
-        <Stack maxW="58rem" textAlign="center" align="center" gap={{ base: 4, md: 5 }}>
-          <Text
-            fontSize={{ base: "12px", md: "14px" }}
-            fontWeight="bold"
-            letterSpacing={{ base: "3px", md: "4px" }}
-            color="accent.500"
-            textTransform="uppercase">
-            A Serene Christian Retreat in Igbo-Ora, Nigeria
-          </Text>
-
-          <Text
-            as="h1"
-            fontSize={{ base: "32px", sm: "42px", md: "56px", lg: "64px" }}
-            fontWeight="bold"
-            color="white"
-            lineHeight={{ base: "1.15", md: "1.1" }}>
-            Your Comfort, <br />
-            <Text as="span" color="accent.500">
-              Our Sacred Priority
-            </Text>
-          </Text>
-
-          <Text
-            fontSize={{ base: "15px", sm: "17px", md: "19px" }}
-            color="gray.200"
-            maxW="42rem"
-            lineHeight="tall">
-            Step away from the city hustle into wholesome tranquility. Immerse yourself in refined accommodations,
-            the peaceful Prayer Hut, lush landscapes, and authentic Nigerian warmth.
-          </Text>
-
-          <HStack gap={4} pt={4} flexWrap="wrap" justify="center">
-            <Link href={ROUTES.booking}>
-              <Button size="lg" style={{ padding: "14px 36px", fontSize: "15px" }}>
-                Book Your Stay
-              </Button>
-            </Link>
-            <Link href={ROUTES.rooms}>
-              <Button variant="outline" size="lg" style={{ padding: "14px 32px", fontSize: "15px" }}>
-                Explore Rooms &amp; Suites
-              </Button>
-            </Link>
-          </HStack>
-        </Stack>
-
-        {/* 4 Floating Gem Cards */}
-        <Box w="full" maxW="76rem" mt={{ base: 12, md: 16 }}>
-          <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} gap={{ base: 3, md: 4 }}>
-            {GEMS.map(({ title, subtitle, image, link }, i) => (
-              <NextLink key={i} href={link} style={{ textDecoration: "none" }}>
-                <Box
-                    h="150px"
-                    bg={`linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%), url(${image})`}
-                    bgSize="cover"
-                    bgPos="center"
-                    borderRadius="14px"
-                    p={4}
-                    display="flex"
-                    flexDirection="column"
-                    justifyContent="flex-end"
-                    border="1px solid rgba(255, 255, 255, 0.15)"
-                    cursor="pointer"
-                    transition="all 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
-                    _hover={{
-                      transform: "translateY(-4px)",
-                      borderColor: "accent.500",
-                      boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
-                    }}>
-                    <Text fontSize="11px" fontWeight="semibold" color="accent.500" textTransform="uppercase">
-                      {subtitle}
-                    </Text>
-                    <Text fontSize="16px" fontWeight="bold" color="white" mt={0.5}>
-                      {title}
-                    </Text>
-                  </Box>
-                </NextLink>
-              ))}
-          </SimpleGrid>
-        </Box>
-      </Box>
+      description="Experience luxury, faith-centered serenity, and rich hospitality in Igbo-Ora, Oyo State. Choose between GAR Elysian luxury suites and GAR Village rustic thatched huts."
+      jsonLd={generateHotelJsonLd()}>
+      {/* 1. Hero Section with Video & 5s Auto-Rotating Gems */}
+      <HeroVideo />
 
       {/* 2. Welcome & Christian Retreat Philosophy */}
       <PageSection
@@ -604,89 +489,8 @@ export default function Home() {
         </Box>
       </Box>
 
-      {/* 7. Location & Map Section (SRS 3.1 Item 6) */}
-      <Box py={{ base: 16, md: 20 }} px={{ base: 4, md: 8, xl: 12 }} bg="white" color="#0F172A">
-        <Box maxW="80rem" mx="auto">
-          <SimpleGrid columns={{ base: 1, lg: 2 }} gap={{ base: 8, lg: 12 }} alignItems="center">
-            <Stack gap={4}>
-              <Text fontSize="13px" fontWeight="bold" color="accent.600" letterSpacing="3px" textTransform="uppercase">
-                Finding Serenity
-              </Text>
-              <Text fontSize={{ base: "26px", md: "36px" }} fontWeight="bold" lineHeight="shorter">
-                Located in Igbo-Ora — The Land of Twins
-              </Text>
-              <Text fontSize="15px" color="#475569" lineHeight="tall">
-                Grace Arena Resorts is situated in the peaceful, scenic town of Igbo-Ora, Oyo State, famous globally
-                for having the world&apos;s highest rate of twin births and surrounded by refreshing agrarian serenity.
-              </Text>
-
-              <Stack gap={3} pt={2}>
-                <HStack gap={3} align="flex-start">
-                  <Icon as={FaLocationDot} color="accent.500" boxSize={5} mt={1} />
-                  <Box>
-                    <Text fontSize="14px" fontWeight="bold">
-                      Resort Campus Address
-                    </Text>
-                    <Text fontSize="13px" color="#64748B">
-                      Grace Arena Resorts, Igbo-Ora, Ibarapa Central Local Government, Oyo State, Nigeria
-                    </Text>
-                  </Box>
-                </HStack>
-              </Stack>
-
-              <HStack gap={4} pt={4} flexWrap="wrap">
-                <a
-                  href="https://maps.google.com/?q=Igbo-Ora+Oyo+State+Nigeria"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ textDecoration: "none" }}>
-                  <Button variant="primary" size="md">
-                    Get Driving Directions
-                  </Button>
-                </a>
-                <a
-                  href="https://wa.me/2348123456789?text=Hello%20Grace%20Arena,%20I%20need%20directions%20to%20the%20resort."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ textDecoration: "none" }}>
-                  <HStack
-                    px={5}
-                    py={3}
-                    borderRadius="8px"
-                    border="1px solid #25D366"
-                    color="#16a34a"
-                    _hover={{ bg: "rgba(37, 211, 102, 0.08)" }}
-                    cursor="pointer">
-                    <Icon as={FaWhatsapp} boxSize={4} />
-                    <Text fontSize="14px" fontWeight="bold">
-                      WhatsApp Dispatch Assistance
-                    </Text>
-                  </HStack>
-                </a>
-              </HStack>
-            </Stack>
-
-            {/* Map Frame / Card */}
-            <Box
-              h={{ base: "320px", md: "380px" }}
-              borderRadius="20px"
-              overflow="hidden"
-              boxShadow="0 10px 30px rgba(0,0,0,0.1)"
-              border="1px solid #CBD5E1"
-              position="relative">
-              <iframe
-                title="Grace Arena Resorts Location Map"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126435.53982449757!2d3.20815185!3d7.433333!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x10398bb2c2b3c299%3A0x6b63d91cf97ceea7!2sIgbo-Ora%2C%20Oyo!5e0!3m2!1sen!2sng!4v1700000000000"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </Box>
-          </SimpleGrid>
-        </Box>
-      </Box>
+      {/* 7. Location & Map Section with OpenStreetMap/Google Maps and Static Fallback */}
+      <MapSection />
 
       {/* Lightbox Modal */}
       <Lightbox

@@ -29,11 +29,36 @@ import Button from "../ui/button";
 export const Footer = () => {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterError, setNewsletterError] = useState<string | null>(null);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newsletterEmail) return;
-    setSubscribed(true);
+
+    setNewsletterLoading(true);
+    setNewsletterError(null);
+
+    try {
+      const res = await fetch("/api/v1/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newsletterEmail }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error?.message || "Failed to join newsletter.");
+      }
+
+      setSubscribed(true);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to join newsletter. Please try again.";
+      setNewsletterError(message);
+    } finally {
+      setNewsletterLoading(false);
+    }
   };
 
   const handleOpenCookieSettings = () => {
@@ -112,11 +137,17 @@ export const Footer = () => {
                 <Button
                   type="submit"
                   size="sm"
-                  style={{ padding: "10px 24px", whiteSpace: "nowrap" }}
+                  disabled={newsletterLoading}
+                  style={{ padding: "10px 24px", whiteSpace: "nowrap", opacity: newsletterLoading ? 0.7 : 1 }}
                 >
-                  Join Newsletter
+                  {newsletterLoading ? "Joining..." : "Join Newsletter"}
                 </Button>
               </Flex>
+              {newsletterError && (
+                <Text fontSize="12px" color="red.400" mt={1.5}>
+                  {newsletterError}
+                </Text>
+              )}
               <Text fontSize="11px" color="gray.400" mt={1.5}>
                 We honor your privacy under NDPR. Unsubscribe anytime.
               </Text>

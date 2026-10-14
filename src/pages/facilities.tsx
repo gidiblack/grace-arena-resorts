@@ -11,6 +11,7 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
+import { generateLocalBusinessJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
 import { ROUTES } from "@/constants/ROUTES";
 import Link from "next/link";
@@ -175,7 +176,8 @@ export default function FacilitiesPage() {
   return (
     <PageWrapper
       title="Resort Facilities — Grace Arena Resorts"
-      description="Explore the world-class facilities at Grace Arena Resorts, from the serene Prayer Hut to the Modern Mall, Spa, Pool, and Recreation Park.">
+      description="Explore the world-class facilities at Grace Arena Resorts, from the serene Prayer Hut to the Modern Mall, Spa, Pool, and Recreation Park."
+      jsonLd={generateLocalBusinessJsonLd()}>
       {/* Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"

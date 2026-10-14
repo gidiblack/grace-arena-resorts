@@ -13,6 +13,7 @@ import { Box } from "@chakra-ui/react";
 interface PageWrapperProps {
   title?: string;
   description?: string;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   children: React.ReactNode;
 }
 
@@ -28,12 +29,13 @@ const roboto = Roboto({
 
 export const PageWrapper: React.FC<PageWrapperProps> = ({
   title = "Grace Arena Resorts",
-  description = "A Sanctuary of Peace, Luxury, and Christian Hospitality in Abuja, Nigeria",
+  description = "A Sanctuary of Peace, Luxury, and Christian Hospitality in Igbo-Ora, Oyo State, Nigeria",
+  jsonLd,
   children,
 }) => {
   return (
     <>
-      <HeadComponent title={title} description={description} />
+      <HeadComponent title={title} description={description} jsonLd={jsonLd} />
       <PageTransitionIndicator />
       <GlobalNetworkStatus />
 

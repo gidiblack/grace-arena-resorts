@@ -4,7 +4,6 @@ import {
   Flex,
   HStack,
   Icon,
-  Image,
   Input,
   SimpleGrid,
   Stack,
@@ -13,29 +12,60 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
+import { generateEventJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
-import { ROUTES } from "@/constants/ROUTES";
 import elysian from "@/assets/gar-elysian.jpg";
 import village from "@/assets/gar-village.jpg";
 import hut from "@/assets/hut.jpg";
 import dining from "@/assets/dining.jpg";
-import pool from "@/assets/pool.jpg";
-import { FaChurch, FaRing, FaUsers, FaCamera, FaCheckCircle, FaWhatsapp } from "react-icons/fa";
+import { FaChurch, FaRing, FaUsers, FaCamera, FaCheckCircle } from "react-icons/fa";
 
 export default function EventsPage() {
   const [eventType, setEventType] = useState("Church / Leadership Retreat");
   const [guestCount, setGuestCount] = useState("50");
   const [eventDate, setEventDate] = useState("");
-  const [budget, setBudget] = useState("₦500k – ₦1M");
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("+234");
   const [specialNeeds, setSpecialNeeds] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const parsedGuestCount = parseInt(guestCount, 10);
+      const res = await fetch("/api/v1/events/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: contactName,
+          email: contactEmail,
+          phoneNumber: contactPhone,
+          eventType,
+          estimatedGuests: isNaN(parsedGuestCount) ? undefined : parsedGuestCount,
+          preferredDate: eventDate || undefined,
+          notes: specialNeeds || undefined,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error?.message || "Failed to submit event inquiry. Please try again.");
+      }
+
+      setSubmitted(true);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred. Please try again later.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const EVENT_PACKAGES = [
@@ -72,7 +102,11 @@ export default function EventsPage() {
   return (
     <PageWrapper
       title="Events & Retreats — Grace Arena Resorts"
-      description="Host your church retreats, Christian weddings, family reunions, and executive conferences at Grace Arena Resorts.">
+      description="Host your church retreats, Christian weddings, family reunions, and executive conferences at Grace Arena Resorts."
+      jsonLd={generateEventJsonLd(
+        "Christian Retreats & Special Events",
+        "Host your church retreats, Christian weddings, family reunions, and executive conferences at Grace Arena Resorts."
+      )}>
       {/* Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"
@@ -300,12 +334,21 @@ export default function EventsPage() {
                     />
                   </Box>
 
+                  {error && (
+                    <Box bg="red.900" border="1px solid red" p={3} borderRadius="8px">
+                      <Text fontSize="13px" color="red.200">
+                        {error}
+                      </Text>
+                    </Box>
+                  )}
+
                   <Button
                     type="submit"
                     variant="primary"
                     size="md"
-                    style={{ width: "100%", marginTop: "12px", padding: "12px" }}>
-                    Submit Event Inquiry
+                    disabled={loading}
+                    style={{ width: "100%", marginTop: "12px", padding: "12px", opacity: loading ? 0.7 : 1 }}>
+                    {loading ? "Submitting Inquiry..." : "Submit Event Inquiry"}
                   </Button>
                 </Stack>
               </form>
