@@ -1,4 +1,5 @@
 import React from "react";
+import { useRouter } from "next/router";
 import {
   Box,
   Flex,
@@ -10,7 +11,6 @@ import {
   Text,
   Dialog,
 } from "@chakra-ui/react";
-import Link from "next/link";
 import Button from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { ROUTES } from "@/constants/ROUTES";
@@ -31,6 +31,8 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   room,
   onOpenNotify,
 }) => {
+  const router = useRouter();
+
   if (!room) return null;
 
   const parsedAmenities = parseRoomAmenities(room.amenities);
@@ -38,7 +40,12 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   const imageSrc = resolveRoomImage(room.image);
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(details) => !details.open && onClose()}>
+    <Dialog.Root
+      open={isOpen}
+      onOpenChange={(details) => !details.open && onClose()}
+      trapFocus={false}
+      restoreFocus={false}
+    >
       <Dialog.Backdrop bg="blackAlpha.850" backdropFilter="blur(8px)" />
       <Dialog.Positioner>
         <Dialog.Content
@@ -51,6 +58,7 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
           w="92vw"
           boxShadow="2xl"
           data-testid="room-details-modal"
+          tabIndex={-1}
         >
           <Flex justify="space-between" align="flex-start" mb={3}>
             <Box>
@@ -66,17 +74,27 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
                 {room.name}
               </Dialog.Title>
             </Box>
-            <Box
-              as="button"
-              onClick={onClose}
-              p={1.5}
-              borderRadius="md"
-              _hover={{ bg: "#1E293B" }}
-              cursor="pointer"
-              aria-label="Close dialog"
-            >
-              <Icon as={FaTimes} boxSize={5} color="gray.400" />
-            </Box>
+            <Dialog.CloseTrigger asChild>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close dialog"
+                tabIndex={0}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  padding: "6px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  color: "#94A3B8",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Icon as={FaTimes} boxSize={5} />
+              </button>
+            </Dialog.CloseTrigger>
           </Flex>
 
           {/* Room Image Preview with fallback */}
@@ -222,8 +240,10 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
 
             {isUnderConstruction ? (
               <Button
+                type="button"
                 variant="primary"
                 size="sm"
+                tabIndex={0}
                 onClick={() => {
                   onClose();
                   onOpenNotify(room);
@@ -237,22 +257,17 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
                 Notify Me
               </Button>
             ) : (
-              <Link
-                href={`${ROUTES.booking}?room=${room.id}`}
-                style={{ textDecoration: "none" }}
+              <Button
+                type="button"
+                size="sm"
+                tabIndex={0}
+                onClick={() => {
+                  onClose();
+                  router.push(`${ROUTES.booking}?room=${room.id}`);
+                }}
               >
-                <Button
-                  as="span"
-                  size="sm"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  Book This Room
-                </Button>
-              </Link>
+                Book This Room
+              </Button>
             )}
           </Flex>
         </Dialog.Content>

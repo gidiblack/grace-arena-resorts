@@ -71,7 +71,12 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
   };
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(details) => !details.open && handleResetAndClose()}>
+    <Dialog.Root
+      open={isOpen}
+      onOpenChange={(details) => !details.open && handleResetAndClose()}
+      trapFocus={false}
+      restoreFocus={false}
+    >
       <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(8px)" />
       <Dialog.Positioner>
         <Dialog.Content
@@ -83,6 +88,7 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
           maxW="480px"
           w="92vw"
           boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.75)"
+          tabIndex={-1}
         >
           <Flex justify="space-between" align="center" mb={4}>
             <HStack gap={2}>
@@ -104,16 +110,27 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
                 </Dialog.Title>
               </Box>
             </HStack>
-            <Box
-              as="button"
-              onClick={handleResetAndClose}
-              p={1.5}
-              borderRadius="md"
-              _hover={{ bg: "#1E293B" }}
-              cursor="pointer"
-            >
-              <Icon as={FaTimes} boxSize={4} color="gray.400" />
-            </Box>
+            <Dialog.CloseTrigger asChild>
+              <button
+                type="button"
+                onClick={handleResetAndClose}
+                aria-label="Close dialog"
+                tabIndex={0}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  padding: "6px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  color: "#94A3B8",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Icon as={FaTimes} boxSize={4} />
+              </button>
+            </Dialog.CloseTrigger>
           </Flex>
 
           {submitted ? (

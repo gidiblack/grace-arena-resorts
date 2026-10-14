@@ -177,8 +177,13 @@ export const CookieConsentBanner: React.FC = () => {
       )}
 
       {/* Preferences Dialog: Persistently mounted in DOM so open/close transitions cleanly release scroll locks */}
-      <Dialog.Root open={modalOpen} onOpenChange={(details) => setModalOpen(details.open)}>
-        <Dialog.Backdrop bg="blackAlpha.800" backdropFilter="blur(6px)" />
+      <Dialog.Root
+        open={modalOpen}
+        onOpenChange={(details) => setModalOpen(details.open)}
+        trapFocus={false}
+        restoreFocus={false}
+      >
+        <Dialog.Backdrop bg="blackAlpha.850" backdropFilter="blur(6px)" />
         <Dialog.Positioner>
           <Dialog.Content
             bg="#111827"
@@ -189,6 +194,7 @@ export const CookieConsentBanner: React.FC = () => {
             maxW="540px"
             w="90vw"
             boxShadow="2xl"
+            tabIndex={-1}
           >
             <Flex justify="space-between" align="center" mb={4}>
               <HStack gap={2}>
@@ -197,17 +203,27 @@ export const CookieConsentBanner: React.FC = () => {
                   Cookie &amp; Privacy Preferences
                 </Dialog.Title>
               </HStack>
-              <Box
-                as="button"
-                p={1.5}
-                borderRadius="md"
-                _hover={{ bg: "#1f2937" }}
-                onClick={() => setModalOpen(false)}
-                cursor="pointer"
-                aria-label="Close preferences"
-              >
-                <Icon as={FaTimes} boxSize={4} color="gray.400" />
-              </Box>
+              <Dialog.CloseTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  aria-label="Close preferences"
+                  tabIndex={0}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    padding: "6px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    color: "#94A3B8",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Icon as={FaTimes} boxSize={4} />
+                </button>
+              </Dialog.CloseTrigger>
             </Flex>
 
             <Stack gap={4} my={3}>
