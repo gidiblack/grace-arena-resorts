@@ -1,0 +1,45 @@
+import { z } from "zod";
+
+const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
+
+  // Supabase (M1 mock mode fallback; live keys required in M2)
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional().default("http://127.0.0.1:54321"),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional().default("local-anon-key-placeholder"),
+  SUPABASE_SERVICE_ROLE_KEY: z
+    .string()
+    .min(1)
+    .optional()
+    .default("local-service-role-key-placeholder"),
+
+  // Paystack (M2 Booking Engine)
+  PAYSTACK_SECRET_KEY: z.string().min(1).optional().default("sk_test_placeholder_key_for_dev"),
+  PAYSTACK_WEBHOOK_SECRET: z.string().min(1).optional().default("whsec_placeholder_key_for_dev"),
+
+  // SendGrid Email Service
+  SENDGRID_API_KEY: z.string().min(1),
+  SENDGRID_FROM_EMAIL: z.string().email(),
+
+  // Anti-spam (Optional in M1; revisit or use Cloudflare Turnstile before production forms)
+  RECAPTCHA_SECRET_KEY: z.string().optional().default(""),
+  NEXT_PUBLIC_RECAPTCHA_SITE_KEY: z.string().optional().default(""),
+
+  // WhatsApp
+  NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().regex(/^\d{10,15}$/, "Must be between 10 and 15 digits"),
+
+  // Optional rate limiting & analytics
+  VERCEL_KV_REST_API_URL: z.string().url().optional(),
+  VERCEL_KV_REST_API_TOKEN: z.string().min(1).optional(),
+  NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
+});
+
+const parsed = envSchema.safeParse(process.env);
+
+if (!parsed.success) {
+  const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("\n");
+  throw new Error(`Invalid environment configuration:\n${issues}`);
+}
+
+export const env = parsed.data;
+export type Env = z.infer<typeof envSchema>;

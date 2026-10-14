@@ -1,0 +1,81 @@
+{
+  "brand": {
+    "name": "Grace Arena Resorts",
+    "tagline": "A Sanctuary of Peace, Luxury, and Faith",
+    "location": "Abuja, Nigeria"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "rooms": "Rooms & Suites",
+    "facilities": "Facilities",
+    "restaurants": "Dining",
+    "gems": "Off-Beat Gems",
+    "events": "Events",
+    "deals": "Special Offers",
+    "contact": "Contact",
+    "bookNow": "Book Now"
+  },
+  "common": {
+    "loading": "Loading...",
+    "errorTitle": "Something went wrong",
+    "errorMessage": "We encountered an issue loading this information. Please refresh or contact us.",
+    "tryAgain": "Try Again",
+    "contactWhatsApp": "Chat with Concierge on WhatsApp",
+    "offlineNotice": "You appear to be offline. Some features may be unavailable.",
+    "viewDetails": "View Details",
+    "learnMore": "Learn More",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit"
+  },
+  "consent": {
+    "bannerTitle": "We value your privacy",
+    "bannerDescription": "We use cookies to improve your browsing experience, provide personalized content, and analyze site traffic in compliance with NDPR regulations.",
+    "acceptAll": "Accept All",
+    "rejectNonEssential": "Reject Non-Essential",
+    "managePreferences": "Manage Preferences",
+    "cookieSettings": "Cookie Settings",
+    "modalTitle": "Cookie Preferences",
+    "essentialCategory": "Essential Cookies",
+    "essentialDescription": "Necessary for the website to function properly. Cannot be disabled.",
+    "analyticsCategory": "Analytics Cookies",
+    "analyticsDescription": "Help us understand how guests interact with our site anonymously.",
+    "marketingCategory": "Marketing Cookies",
+    "marketingDescription": "Used to deliver relevant offers and faith-aligned updates."
+  },
+  "rooms": {
+    "catalogTitle": "Rooms & Thatched Huts",
+    "catalogSubtitle": "Discover serenity tailored for your comfort across our Elysian and Village campuses.",
+    "allCampuses": "All Campuses",
+    "elysianCampus": "Elysian Campus",
+    "villageCampus": "Village Campus",
+    "underConstructionBadge": "Under Construction",
+    "priceTbd": "Price TBD",
+    "notifyMe": "Notify Me",
+    "bookThisRoom": "Book This Room",
+    "perNight": "per night",
+    "subjectToAvailability": "Subject to availability",
+    "inRoomAmenities": "In-Room Amenities",
+    "resortAmenities": "Resort Amenities"
+  },
+  "notifyMe": {
+    "modalTitle": "Be Notified on Launch",
+    "modalDescription": "Leave your email to receive early access notification when {roomName} becomes available for reservations.",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "you@example.com",
+    "submitButton": "Notify Me",
+    "successMessage": "Thank you! We will notify you as soon as reservations open.",
+    "alreadyRegistered": "You are already registered for notifications on this room."
+  },
+  "footer": {
+    "description": "Grace Arena Resorts offers an oasis of rejuvenation, combining Christian hospitality, luxury accommodations, and natural serenity.",
+    "quickLinks": "Quick Links",
+    "campuses": "Our Campuses",
+    "contactUs": "Contact Us",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "rightsReserved": "All rights reserved."
+  }
+}
