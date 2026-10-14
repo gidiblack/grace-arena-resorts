@@ -1,9 +1,11 @@
 # Grace Arena Resorts SRS v1.2 Implementation Runbook
 
 ## Title
+
 Grace Arena Resorts SRS v1.2 Full-Stack Implementation Runbook
 
 ## Goal
+
 Implement the authoritative requirements in `docs/GAR-SRS.md` based on `plans/gar-srs-implementation/plan-v1.2-corrected.md` across **three shippable delivery milestones** and commit-sized, testable steps for Next.js 16 Pages Router and TypeScript. This runbook provides deterministic execution steps, concrete CLI commands, explicit file paths, and hard verification gates.
 
 ## Delivery Branches & Milestones
@@ -20,17 +22,19 @@ Each step is developed with its own commit and verification gate, merging to `ma
 ## Delivery Milestones Overview
 
 ### Milestone 1: Marketing Site (Target: 4–6 weeks · 16–24 dev-days)
+
 **Delivers:** Public pages with content, room browsing, WhatsApp CTAs. No booking yet.
 
-| Step | Scope | Estimated Effort |
-|------|-------|-----------------|
-| Step 1 | Foundation, env contract, shared libs, i18n, email, currency | 2–3 days |
-| Step 5 | Global shell, consent, accessibility, page transitions | 3–4 days |
-| Step 6 | Public content pages (Home, About, Facilities, Restaurants, Gems, Events, Deals, Contact, Privacy) | 8–12 days |
-| Step 7 | Rooms catalog, Under Construction, Notify Me (read-only) | 3–5 days |
-| | **M1 subtotal** | **16–24 dev-days** |
+| Step   | Scope                                                                                              | Estimated Effort   |
+| ------ | -------------------------------------------------------------------------------------------------- | ------------------ |
+| Step 1 | Foundation, env contract, shared libs, i18n, email, currency                                       | 2–3 days           |
+| Step 5 | Global shell, consent, accessibility, page transitions                                             | 3–4 days           |
+| Step 6 | Public content pages (Home, About, Facilities, Restaurants, Gems, Events, Deals, Contact, Privacy) | 8–12 days          |
+| Step 7 | Rooms catalog, Under Construction, Notify Me (read-only)                                           | 3–5 days           |
+|        | **M1 subtotal**                                                                                    | **16–24 dev-days** |
 
 **Exit Criteria:**
+
 - All public pages render with real content and media
 - Room browsing works with resort toggle and tier filtering
 - WhatsApp CTAs functional across all pages
@@ -38,20 +42,22 @@ Each step is developed with its own commit and verification gate, merging to `ma
 - Deployed to production domain via Vercel
 
 ### Milestone 2: Booking Engine (Target: 6–10 weeks after M1 · 31–42 dev-days)
+
 **Delivers:** Full guest booking flow with payment, accounts, and room management.
 
-| Step | Scope | Estimated Effort |
-|------|-------|-----------------|
-| Step 2 | Supabase schema, migrations, seeds, RLS, storage, pg_cron | 3–5 days |
-| Step 3 | API middleware stack, auth context, security | 2–3 days |
-| Step 4 | Auth pages and endpoints (register, login, verify, reset, change password) | 4–5 days |
-| Step 8 | Booking engine backend (availability, pricing, lifecycle, admin booking API) | 8–10 days |
-| Step 9 | Payment integration, Paystack webhook security, refunds, downtime fallback | 4–6 days |
-| Step 10 | Booking wizard frontend (4-step, responsive summary, confirmation) | 6–8 days |
-| Step 11 | Guest account and booking management (bookings list, cancel, receipts, profile) | 4–5 days |
-| | **M2 subtotal** | **31–42 dev-days** |
+| Step    | Scope                                                                           | Estimated Effort   |
+| ------- | ------------------------------------------------------------------------------- | ------------------ |
+| Step 2  | Supabase schema, migrations, seeds, RLS, storage, pg_cron                       | 3–5 days           |
+| Step 3  | API middleware stack, auth context, security                                    | 2–3 days           |
+| Step 4  | Auth pages and endpoints (register, login, verify, reset, change password)      | 4–5 days           |
+| Step 8  | Booking engine backend (availability, pricing, lifecycle, admin booking API)    | 8–10 days          |
+| Step 9  | Payment integration, Paystack webhook security, refunds, downtime fallback      | 4–6 days           |
+| Step 10 | Booking wizard frontend (4-step, responsive summary, confirmation)              | 6–8 days           |
+| Step 11 | Guest account and booking management (bookings list, cancel, receipts, profile) | 4–5 days           |
+|         | **M2 subtotal**                                                                 | **31–42 dev-days** |
 
 **Exit Criteria:**
+
 - Guests can register, log in, browse rooms, and complete a booking with Paystack payment
 - Booking confirmation PDF generated and emailed
 - Guest account shows booking history with cancellation and refund flows
@@ -59,16 +65,18 @@ Each step is developed with its own commit and verification gate, merging to `ma
 - Payment webhook security verified in Paystack sandbox
 
 ### Milestone 3: Admin & Operations (Target: 3–5 weeks after M2 · 11–17 dev-days)
+
 **Delivers:** Admin dashboard, bookings management, operational tooling, quality gates.
 
-| Step | Scope | Estimated Effort |
-|------|-------|-----------------|
-| Step 12 | Admin portal foundation, RBAC, dashboard KPIs, bookings management, room status | 5–7 days |
-| Step 13 | Observability (Sentry), SEO finalization, background jobs, runbook | 3–5 days |
-| Step 14 | Quality gate, CI/CD, documentation, CWV, manual a11y audit checklist | 3–5 days |
-| | **M3 subtotal** | **11–17 dev-days** |
+| Step    | Scope                                                                           | Estimated Effort   |
+| ------- | ------------------------------------------------------------------------------- | ------------------ |
+| Step 12 | Admin portal foundation, RBAC, dashboard KPIs, bookings management, room status | 5–7 days           |
+| Step 13 | Observability (Sentry), SEO finalization, background jobs, runbook              | 3–5 days           |
+| Step 14 | Quality gate, CI/CD, documentation, CWV, manual a11y audit checklist            | 3–5 days           |
+|         | **M3 subtotal**                                                                 | **11–17 dev-days** |
 
 **Exit Criteria:**
+
 - Admin dashboard with KPIs and bookings chart
 - Admin bookings management with status transitions, cancellation, refund processing
 - Background jobs running (pending booking expiry, failed email retry, deal deactivation)
@@ -82,24 +90,25 @@ Each step is developed with its own commit and verification gate, merging to `ma
 
 ## Pre-Flight Checklist (Complete Before Step 1)
 
-| Service | Action Needed | Owner | Due By |
-|---------|---------------|-------|--------|
-| **Supabase** | Create project, get anon key + service role key, enable pg_cron + pgcrypto extensions | Engineering | Before Step 1 |
-| **Vercel** | Connect repository, configure environment variables, enable preview deployments | Engineering | Before Step 1 |
-| **SendGrid** | Create account, verify sender domain and email, get API key | Engineering | Before Step 4 |
-| **Google reCAPTCHA v3** | Register site, get site key + secret key | Engineering | Before Step 3 |
-| **Google Maps** | Create API key, enable Maps Embed API + Places API | Engineering | Before Step 6 |
-| **Paystack** | Apply for merchant account, obtain test public + secret keys | Business/Finance | Before Step 9 |
-| **Google Analytics 4** | Create property, get measurement ID, set up GTM container | Marketing | Before Step 5 |
-| **Sentry** | Create project, get DSN | Engineering | Before Step 13 |
-| **Domain + SSL** | Purchase domain, point DNS to Vercel, provision SSL | Business/IT | Before M1 launch |
-| **Supabase Evaluation** | Confirm RLS learning curve manageable, test connection pooling, verify edge function limits | Engineering | Before Step 2 |
+| Service                 | Action Needed                                                                               | Owner            | Due By           |
+| ----------------------- | ------------------------------------------------------------------------------------------- | ---------------- | ---------------- |
+| **Supabase**            | Create project, get anon key + service role key, enable pg_cron + pgcrypto extensions       | Engineering      | Before Step 1    |
+| **Vercel**              | Connect repository, configure environment variables, enable preview deployments             | Engineering      | Before Step 1    |
+| **SendGrid**            | Create account, verify sender domain and email, get API key                                 | Engineering      | Before Step 4    |
+| **Google reCAPTCHA v3** | Register site, get site key + secret key                                                    | Engineering      | Before Step 3    |
+| **Google Maps**         | Create API key, enable Maps Embed API + Places API                                          | Engineering      | Before Step 6    |
+| **Paystack**            | Apply for merchant account, obtain test public + secret keys                                | Business/Finance | Before Step 9    |
+| **Google Analytics 4**  | Create property, get measurement ID, set up GTM container                                   | Marketing        | Before Step 5    |
+| **Sentry**              | Create project, get DSN                                                                     | Engineering      | Before Step 13   |
+| **Domain + SSL**        | Purchase domain, point DNS to Vercel, provision SSL                                         | Business/IT      | Before M1 launch |
+| **Supabase Evaluation** | Confirm RLS learning curve manageable, test connection pooling, verify edge function limits | Engineering      | Before Step 2    |
 
 ---
 
 ## Content Workstream & Seeding Strategy (Parallel to Code)
 
 ### Content Deliverables (Required for M1 Launch)
+
 - [ ] Professional resort photography — rooms, facilities, campuses, dining, exterior (Marketing / Photography team)
 - [ ] Hero video production — 30–60 second resort overview, muted autoplay (Marketing / Video team)
 - [ ] Copy for all 10 public pages — brand-approved, faith-aligned (Product / Copywriter)
@@ -112,6 +121,7 @@ Each step is developed with its own commit and verification gate, merging to `ma
 - [ ] Google Maps coordinates and branded map pin (Engineering / Marketing)
 
 ### Content Seeding Strategy ("Data Days")
+
 - **Before M1 Launch (Data Day 1):** Room inventory verified, media uploaded to `media-public`, menus entered, facility hours confirmed, system settings configured.
 - **Before M2 Launch (Data Day 2):** Seasonal pricing entered, active deals created, tax rate confirmed (7.5%), check-in/out times verified (14:00/11:00), pending booking expiry set (30 mins), admin staff accounts created, Paystack live keys configured, SendGrid production sender verified.
 - **Before M3 Launch (Data Day 3):** Sentry DSN configured, GA4 measurement ID verified, alerting thresholds set, background job schedules confirmed.
@@ -127,6 +137,7 @@ Each step is developed with its own commit and verification gate, merging to `ma
 ---
 
 ## Prerequisites & Tooling
+
 - [ ] Node.js 20.x installed
 - [ ] npm 10+ installed
 - [ ] Supabase CLI available through npx
@@ -134,6 +145,7 @@ Each step is developed with its own commit and verification gate, merging to `ma
 - [ ] Target branch checked out (`feature/gar-m1-marketing-site` for Milestone 1)
 
 ### Prerequisite Commands
+
 ```powershell
 node -v
 npm -v
@@ -148,6 +160,7 @@ npx supabase --version
 **Milestone:** M1 · **Estimated Effort:** 2–3 days · **Branch:** `feature/gar-m1-marketing-site` · **PR:** Step 1 PR merged to `main`
 
 ### Step Checklist
+
 - [x] Install all runtime/test/build dependencies required by the corrected plan
 - [x] Create typed environment parser with strict startup validation
 - [x] Create shared logger with redaction for sensitive fields
@@ -159,6 +172,7 @@ npx supabase --version
 - [x] Update README with environment contract and commands
 
 ### Explicit File Paths
+
 - [x] package.json
 - [x] .env.example
 - [x] .prettierrc
@@ -177,6 +191,7 @@ npx supabase --version
 - [x] README.md
 
 ### Commands
+
 ```powershell
 npm install @supabase/supabase-js @supabase/ssr react-hook-form zod @hookform/resolvers dayjs @sendgrid/mail @react-pdf/renderer recharts @vercel/kv cookie nanoid axios
 npm install -D prettier eslint-config-prettier vitest @vitest/coverage-v8 @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom msw supertest playwright @playwright/test @axe-core/playwright dotenv-cli
@@ -190,6 +205,7 @@ npm pkg set scripts.ci="npm run lint; npm run format:check; npm run typecheck; n
 ```
 
 ### Critical Code Block: env parser
+
 ```ts
 // src/config/env.ts
 import { z } from "zod";
@@ -219,9 +235,7 @@ const envSchema = z.object({
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  const issues = parsed.error.issues
-    .map((i) => `${i.path.join(".")}: ${i.message}`)
-    .join("\n");
+  const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("\n");
   throw new Error(`Invalid environment configuration:\n${issues}`);
 }
 
@@ -229,6 +243,7 @@ export const env = parsed.data;
 ```
 
 ### Critical Code Block: API response envelope
+
 ```ts
 // src/lib/http/response.ts
 import type { NextApiResponse } from "next";
@@ -262,6 +277,7 @@ export function fail(
 ```
 
 ### Verification Checklist
+
 - [x] `npm run lint` passes
 - [x] `npm run typecheck` passes
 - [x] `npm run format:check` passes
@@ -271,6 +287,7 @@ export function fail(
 - [x] Currency formatter produces correct `₦` formatting for edge cases (zero, decimals, large numbers)
 
 ### STOP & COMMIT
+
 ```powershell
 git add package.json .env.example .prettierrc .prettierignore README.md src/config/env.ts src/lib src/types src/services/email
 git commit -m "chore: foundation, env contract, shared libs, i18n, email service, formatters"
@@ -283,6 +300,7 @@ git commit -m "chore: foundation, env contract, shared libs, i18n, email service
 **Milestone:** M2 · **Estimated Effort:** 3–5 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 2 PR merged to `main`
 
 ### Step Checklist
+
 - [ ] Initialize Supabase project config
 - [ ] Implement schema migrations 0001–0006 exactly per SRS and corrected plan:
   - `0001_init_schema.sql` (all core entities, enums, indexes, constraints, `FailedEmail` table)
@@ -300,6 +318,7 @@ git commit -m "chore: foundation, env contract, shared libs, i18n, email service
 - [ ] Create deterministic seed data for demo/QA
 
 ### Explicit File Paths
+
 - [ ] supabase/config.toml
 - [ ] supabase/migrations/0001_init_schema.sql
 - [ ] supabase/migrations/0002_rls_policies.sql
@@ -311,6 +330,7 @@ git commit -m "chore: foundation, env contract, shared libs, i18n, email service
 - [ ] src/types/db.ts
 
 ### Commands
+
 ```powershell
 npx supabase init
 npx supabase start
@@ -325,6 +345,7 @@ npx supabase gen types typescript --local > src/types/db.ts
 ```
 
 ### Verification Checklist
+
 - [ ] `npx supabase db reset` completes cleanly
 - [ ] All required tables, enums, indexes, constraints exist
 - [ ] RLS denies guest read/write on admin-only datasets
@@ -333,6 +354,7 @@ npx supabase gen types typescript --local > src/types/db.ts
 - [ ] pg_cron extension enabled with required schedules
 
 ### STOP & COMMIT
+
 ```powershell
 git add supabase src/types/db.ts
 git commit -m "feat: schema, migrations, seeds, RLS, storage buckets, pg_cron setup"
@@ -345,6 +367,7 @@ git commit -m "feat: schema, migrations, seeds, RLS, storage buckets, pg_cron se
 **Milestone:** M2 · **Estimated Effort:** 2–3 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 3 PR merged to `main`
 
 ### Step Checklist
+
 - [ ] Build composable API handler pipeline with method guards and schema validation
 - [ ] Add auth session extraction and role claim parsing for Supabase auth
 - [ ] Add Vercel KV rate limiting adapter with in-memory local development fallback
@@ -353,6 +376,7 @@ git commit -m "feat: schema, migrations, seeds, RLS, storage buckets, pg_cron se
 - [ ] Add pagination helper with `?page=1&limit=20` and `X-Total-Count`, `X-Total-Pages` headers
 
 ### Explicit File Paths
+
 - [ ] src/pages/api/v1/_shared/handler.ts
 - [ ] src/pages/api/v1/_shared/auth.ts
 - [ ] src/pages/api/v1/_shared/rate-limit.ts
@@ -365,6 +389,7 @@ git commit -m "feat: schema, migrations, seeds, RLS, storage buckets, pg_cron se
 - [ ] src/lib/security/headers.ts
 
 ### Critical Code Block: middleware wrappers
+
 ```ts
 // src/pages/api/v1/_shared/handler.ts
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
@@ -375,16 +400,9 @@ export type ApiCtx = {
   user?: { id: string; role: "guest" | "content_manager" | "resort_admin" | "super_admin" };
 };
 
-type Middleware = (
-  req: NextApiRequest,
-  res: NextApiResponse,
-  ctx: ApiCtx
-) => Promise<void>;
+type Middleware = (req: NextApiRequest, res: NextApiResponse, ctx: ApiCtx) => Promise<void>;
 
-export function withApi(
-  handler: NextApiHandler,
-  middleware: Middleware[] = []
-): NextApiHandler {
+export function withApi(handler: NextApiHandler, middleware: Middleware[] = []): NextApiHandler {
   return async (req, res) => {
     const ctx: ApiCtx = { requestId: crypto.randomUUID() };
     try {
@@ -403,6 +421,7 @@ export function withApi(
 ```
 
 ### Commands
+
 ```powershell
 npm run lint
 npm run typecheck
@@ -410,6 +429,7 @@ npm run test
 ```
 
 ### Verification Checklist
+
 - [ ] Wrapper enforces method guards and schema validation
 - [ ] Role guard blocks unauthorized roles
 - [ ] Rate limiter throttles auth/contact/events/newsletter/notify endpoints
@@ -418,6 +438,7 @@ npm run test
 - [ ] Pagination headers present on paginated list endpoints
 
 ### STOP & COMMIT
+
 ```powershell
 git add src/pages/api/v1/_shared src/lib/supabase src/lib/security
 git commit -m "feat: API middleware stack, auth context, security primitives"
@@ -430,6 +451,7 @@ git commit -m "feat: API middleware stack, auth context, security primitives"
 **Milestone:** M2 · **Estimated Effort:** 4–5 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 4 PR merged to `main`
 
 ### Step Checklist
+
 - [ ] Build auth pages (`/register`, `/login`, `/forgot-password`, `/reset-password`, `/verify-email`)
 - [ ] Implement email verification interstitial page (`/verify-email`) with resend link
 - [ ] Implement login `?redirect={url}` query parameter support
@@ -442,6 +464,7 @@ git commit -m "feat: API middleware stack, auth context, security primitives"
 - [ ] Exclude social login from v1.0 (email/password only)
 
 ### Explicit File Paths
+
 - [ ] src/pages/register.tsx
 - [ ] src/pages/login.tsx
 - [ ] src/pages/forgot-password.tsx
@@ -460,6 +483,7 @@ git commit -m "feat: API middleware stack, auth context, security primitives"
 - [ ] src/features/auth/components/*
 
 ### Critical Code Block: auth schema
+
 ```ts
 // src/features/auth/schemas.ts
 import { z } from "zod";
@@ -471,31 +495,36 @@ export const passwordPolicy = z
   .regex(/[a-z]/, "Must include at least one lowercase letter")
   .regex(/[0-9]/, "Must include at least one number");
 
-export const registerSchema = z.object({
-  fullName: z.string().min(2).max(120),
-  email: z.string().email(),
-  phone: z.string().regex(/^\+234\d{10}$/),
-  password: passwordPolicy,
-  confirmPassword: z.string(),
-  consentAccepted: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the privacy policy" }),
-  }),
-}).refine((d) => d.password === d.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+export const registerSchema = z
+  .object({
+    fullName: z.string().min(2).max(120),
+    email: z.string().email(),
+    phone: z.string().regex(/^\+234\d{10}$/),
+    password: passwordPolicy,
+    confirmPassword: z.string(),
+    consentAccepted: z.literal(true, {
+      errorMap: () => ({ message: "You must accept the privacy policy" }),
+    }),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
-export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1),
-  newPassword: passwordPolicy,
-  confirmNewPassword: z.string(),
-}).refine((d) => d.newPassword === d.confirmNewPassword, {
-  message: "Passwords do not match",
-  path: ["confirmNewPassword"],
-});
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1),
+    newPassword: passwordPolicy,
+    confirmNewPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmNewPassword, {
+    message: "Passwords do not match",
+    path: ["confirmNewPassword"],
+  });
 ```
 
 ### Commands
+
 ```powershell
 npm run test -- --runInBand
 npm run lint
@@ -503,6 +532,7 @@ npm run typecheck
 ```
 
 ### Verification Checklist
+
 - [ ] Register flow creates account and sends verification email via SendGrid
 - [ ] `/verify-email` page displays expected interstitial and resend action
 - [ ] Login supports `?redirect=` and returns user to target route
@@ -511,6 +541,7 @@ npm run typecheck
 - [ ] Resend verification rate limit enforced (1 per 60s)
 
 ### STOP & COMMIT
+
 ```powershell
 git add src/pages/register.tsx src/pages/login.tsx src/pages/forgot-password.tsx src/pages/reset-password.tsx src/pages/verify-email.tsx src/pages/api/v1/auth src/features/auth
 git commit -m "feat: auth pages, auth endpoints, change-password endpoint"
@@ -523,6 +554,7 @@ git commit -m "feat: auth pages, auth endpoints, change-password endpoint"
 **Milestone:** M1 · **Estimated Effort:** 3–4 days · **Branch:** `feature/gar-m1-marketing-site` · **PR:** Step 5 PR merged to `main`
 
 ### Step Checklist
+
 - [x] Build global shell (sticky nav, footer, WhatsApp FAB, page transition indicator)
 - [x] Implement cookie consent banner per SRS Section 3:
   - Fixed bottom bar, 3 categories: Essential (always-on), Analytics (opt-in), Marketing (opt-in)
@@ -537,6 +569,7 @@ git commit -m "feat: auth pages, auth endpoints, change-password endpoint"
 - [x] Add reusable loading/error/empty state components with WhatsApp fallback link
 
 ### Explicit File Paths
+
 - [x] src/components/layout/Navbar.tsx
 - [x] src/components/layout/Footer.tsx
 - [x] src/components/layout/PageWrapper.tsx
@@ -554,6 +587,7 @@ git commit -m "feat: auth pages, auth endpoints, change-password endpoint"
 - [x] src/lib/seo/meta.ts
 
 ### Critical Code Block: cookie consent data shape
+
 ```ts
 // src/components/common/cookie-consent.types.ts
 export type ConsentCategory = "essential" | "analytics" | "marketing";
@@ -571,6 +605,7 @@ export const COOKIE_CONSENT_MAX_AGE_SECONDS = 60 * 60 * 24 * 365; // 12 months
 ```
 
 ### Commands
+
 ```powershell
 npm run dev
 npm run lint
@@ -578,6 +613,7 @@ npm run test
 ```
 
 ### Verification Checklist
+
 - [x] Consent cookie `gar_cookie_consent` persists for 12 months with per-category state
 - [x] Essential cookies are always enabled and cannot be unchecked
 - [x] Analytics scripts do not load when analytics consent is false
@@ -587,6 +623,7 @@ npm run test
 - [x] Page transition indicator animates during Next.js router events
 
 ### STOP & COMMIT
+
 ```powershell
 git add src/components/layout src/components/common src/components/states src/styles/globals.css src/lib/seo/meta.ts
 git commit -m "feat: global shell, consent, accessibility baseline, page transitions"
@@ -599,6 +636,7 @@ git commit -m "feat: global shell, consent, accessibility baseline, page transit
 **Milestone:** M1 · **Estimated Effort:** 8–12 days · **Branch:** `feature/gar-m1-marketing-site` · **PR:** Step 6 PR (or 2 sub-PRs) merged to `main`
 
 ### Step Checklist
+
 - [x] Implement all public pages per SRS Section 3: Home, About, Facilities, Restaurants, Gems, Events, Deals, Contact, Privacy
 - [x] **Home Page:** Hero video with mobile poster fallback, 4 Off-Beat Gems cards with 5s auto-rotate, Resort Categories cards, Amenities Snapshot (`GET /api/v1/amenities`), Facilities Carousel, Photo Gallery (`GET /api/v1/media?category=gallery&page=home`), MapSection with Google Maps embed
 - [x] Implement accessible Lightbox component (`src/components/common/Lightbox.tsx`) with arrow navigation, Escape to close, focus trap, and screen reader alt announcements
@@ -614,6 +652,7 @@ git commit -m "feat: global shell, consent, accessibility baseline, page transit
 - [x] Implement JSON-LD structured data for every page type (`Hotel`, `Organization`, `TouristAttraction`, `Restaurant`, `Event`, `Offer`, `ContactPage`, `LocalBusiness`)
 
 ### Explicit File Paths
+
 - [x] src/pages/index.tsx
 - [x] src/pages/about.tsx
 - [x] src/pages/facilities.tsx
@@ -646,6 +685,7 @@ git commit -m "feat: global shell, consent, accessibility baseline, page transit
 - [x] src/features/content/*
 
 ### Commands
+
 ```powershell
 npm run lint
 npm run typecheck
@@ -654,6 +694,7 @@ npm run dev
 ```
 
 ### Verification Checklist
+
 - [x] Hero video falls back to poster image on mobile (<768px) and `prefers-reduced-motion`
 - [x] Lightbox keyboard navigation (Left/Right/Esc) and focus trap work correctly
 - [x] Google Maps fallback image and link render when embed fails
@@ -662,6 +703,7 @@ npm run dev
 - [x] JSON-LD valid and present on every public page
 
 ### STOP & COMMIT
+
 ```powershell
 git add src/pages src/components/common/Lightbox.tsx src/components/common/MapSection.tsx src/components/home/HeroVideo.tsx src/features/content
 git commit -m "feat: public pages, APIs, amenities/media, newsletter double opt-in, lightbox"
@@ -674,6 +716,7 @@ git commit -m "feat: public pages, APIs, amenities/media, newsletter double opt-
 **Milestone:** M1 · **Estimated Effort:** 3–5 days · **Branch:** `feature/gar-m1-marketing-site` · **PR:** Step 7 PR merged to `main` — **Completes Milestone 1**
 
 ### Step Checklist
+
 - [x] Implement room listing with resort toggle (Elysian vs Village) and tier filtering
 - [x] Implement `GET /api/v1/buildings` public endpoint to list buildings with campus association
 - [x] Enforce under-construction behavior for Presidential and Royal room types:
@@ -687,6 +730,7 @@ git commit -m "feat: public pages, APIs, amenities/media, newsletter double opt-
 - [x] Responsive room cards: 1 column mobile, 2 columns tablet, 3 columns desktop; resort tabs full width on mobile
 
 ### Explicit File Paths
+
 - [x] src/pages/rooms.tsx
 - [x] src/pages/api/v1/rooms/index.ts
 - [x] src/pages/api/v1/rooms/[id].ts
@@ -695,6 +739,7 @@ git commit -m "feat: public pages, APIs, amenities/media, newsletter double opt-
 - [x] src/features/rooms/*
 
 ### Commands
+
 ```powershell
 npm run lint
 npm run typecheck
@@ -702,6 +747,7 @@ npm run test
 ```
 
 ### Verification Checklist
+
 - [x] Presidential and Royal huts display Under Construction badge, Price TBD, and Notify Me CTA
 - [x] Notify Me duplicate submissions return 200 without creating duplicate rows
 - [x] RoomType amenity JSON parses into In-Room vs Resort Amenities sections
@@ -710,6 +756,7 @@ npm run test
 - [x] M1 Exit Criteria verified: all public pages, room browsing, WhatsApp CTAs, consent, SEO baseline operational
 
 ### STOP & COMMIT
+
 ```powershell
 git add src/pages/rooms.tsx src/pages/api/v1/rooms src/pages/api/v1/buildings src/pages/api/v1/notify-me.ts src/features/rooms
 git commit -m "feat: rooms catalog, buildings endpoint, notify-me"
@@ -722,6 +769,7 @@ git commit -m "feat: rooms catalog, buildings endpoint, notify-me"
 **Milestone:** M2 · **Estimated Effort:** 8–10 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 8 PR merged to `main`
 
 ### Step Checklist
+
 - [ ] Implement availability checks and calendar availability endpoint (`/api/v1/availability/calendar`)
 - [ ] Implement full pricing engine per SRS 4.3:
   - Check SeasonalPrice records per night (latest takes precedence if overlapping), fallback to basePrice
@@ -739,6 +787,7 @@ git commit -m "feat: rooms catalog, buildings endpoint, notify-me"
 - [ ] Automatically trigger booking confirmation email with attached PDF on status change to Confirmed
 
 ### Explicit File Paths
+
 - [ ] src/pages/api/v1/availability/index.ts
 - [ ] src/pages/api/v1/availability/calendar.ts
 - [ ] src/pages/api/v1/bookings/index.ts
@@ -753,15 +802,11 @@ git commit -m "feat: rooms catalog, buildings endpoint, notify-me"
 - [ ] src/services/pricing/*
 
 ### Critical Code Block: booking state machine
+
 ```ts
 // src/domain/booking/state-machine.ts
 export type BookingStatus =
-  | "pending"
-  | "confirmed"
-  | "checked_in"
-  | "checked_out"
-  | "cancelled"
-  | "no_show";
+  "pending" | "confirmed" | "checked_in" | "checked_out" | "cancelled" | "no_show";
 
 const transitions: Record<BookingStatus, BookingStatus[]> = {
   pending: ["confirmed", "cancelled"],
@@ -789,6 +834,7 @@ export function canMarkNoShow(now: Date, checkInAt: Date): boolean {
 ```
 
 ### Commands
+
 ```powershell
 npm run test
 npm run lint
@@ -796,6 +842,7 @@ npm run typecheck
 ```
 
 ### Verification Checklist
+
 - [ ] Pricing formula produces correct deterministic totals for seasonal and multi-room bookings
 - [ ] Deal percentage discount applies only to applicable room subset
 - [ ] Deal fixed discount subtracts from full subtotal
@@ -805,6 +852,7 @@ npm run typecheck
 - [ ] Confirmation email sent with generated PDF attachment
 
 ### STOP & COMMIT
+
 ```powershell
 git add src/pages/api/v1/availability src/pages/api/v1/bookings src/pages/api/v1/deals/validate src/domain/booking src/services/pricing
 git commit -m "feat: booking APIs, pricing engine, state machine, no-show, admin booking API"
@@ -817,6 +865,7 @@ git commit -m "feat: booking APIs, pricing engine, state machine, no-show, admin
 **Milestone:** M2 · **Estimated Effort:** 4–6 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 9 PR merged to `main`
 
 ### Step Checklist
+
 - [ ] Implement Paystack payment initiation and verification
 - [ ] Implement Paystack webhook endpoint with raw-body HMAC-SHA512 verification (`bodyParser: false`)
 - [ ] Add idempotency and replay protection for webhook processing
@@ -826,6 +875,7 @@ git commit -m "feat: booking APIs, pricing engine, state machine, no-show, admin
 - [ ] Implement gateway downtime graceful degradation: display WhatsApp fallback message and extend booking hold window to 2 hours (instead of 30 mins)
 
 ### Explicit File Paths
+
 - [ ] src/pages/api/v1/payments/initiate.ts
 - [ ] src/pages/api/v1/payments/verify.ts
 - [ ] src/pages/api/v1/payments/webhook.ts
@@ -836,6 +886,7 @@ git commit -m "feat: booking APIs, pricing engine, state machine, no-show, admin
 - [ ] src/domain/payment/*
 
 ### Critical Code Block: webhook raw-body config
+
 ```ts
 // src/pages/api/v1/payments/webhook.ts
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -853,9 +904,9 @@ function isValidSignature(raw: Buffer, signature: string | string[] | undefined)
     .update(raw)
     .digest("hex");
 
-  return typeof signature === "string" && crypto.timingSafeEqual(
-    Buffer.from(computed),
-    Buffer.from(signature)
+  return (
+    typeof signature === "string" &&
+    crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(signature))
   );
 }
 
@@ -863,7 +914,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== "POST") return res.status(405).end();
   const raw = await getRawBody(req);
   if (!isValidSignature(raw, req.headers["x-paystack-signature"])) {
-    return res.status(401).json({ success: false, error: { code: "INVALID_SIGNATURE", message: "Unauthorized" } });
+    return res
+      .status(401)
+      .json({ success: false, error: { code: "INVALID_SIGNATURE", message: "Unauthorized" } });
   }
 
   const event = JSON.parse(raw.toString("utf8"));
@@ -873,6 +926,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 ```
 
 ### Commands
+
 ```powershell
 npm install raw-body
 npm run test
@@ -881,6 +935,7 @@ npm run typecheck
 ```
 
 ### Verification Checklist
+
 - [ ] Webhook rejects tampered signatures with 401 Unauthorized
 - [ ] `bodyParser: false` set on webhook route
 - [ ] Expired pending booking with late payment triggers automatic refund via Paystack Refunds API
@@ -888,6 +943,7 @@ npm run typecheck
 - [ ] Gateway downtime activates WhatsApp booking CTA and extends inventory hold to 2 hours
 
 ### STOP & COMMIT
+
 ```powershell
 git add src/pages/api/v1/payments src/services/payments src/domain/payment
 git commit -m "feat: payment integration, secure webhook, refunds, race handling, downtime fallback"
@@ -900,6 +956,7 @@ git commit -m "feat: payment integration, secure webhook, refunds, race handling
 **Milestone:** M2 · **Estimated Effort:** 6–8 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 10 PR merged to `main`
 
 ### Step Checklist
+
 - [ ] Implement 4-step booking wizard (`src/pages/booking.tsx`):
   - Step 1: Dates (past blocked, 1–30 nights) and guests (adults 1–10, children 0–10)
   - Step 2: Room selection with campus/tier filter, per-night seasonal rates, multi-room support (under-construction rooms excluded)
@@ -911,6 +968,7 @@ git commit -m "feat: payment integration, secure webhook, refunds, race handling
 - [ ] Implement payment gateway downtime fallback UI ("Online payment temporarily unavailable. Please contact us on WhatsApp")
 
 ### Explicit File Paths
+
 - [ ] src/pages/booking.tsx
 - [ ] src/features/booking/context/BookingWizardContext.tsx
 - [ ] src/features/booking/components/*
@@ -918,6 +976,7 @@ git commit -m "feat: payment integration, secure webhook, refunds, race handling
 - [ ] src/features/booking/hooks/*
 
 ### Commands
+
 ```powershell
 npm run dev
 npm run lint
@@ -925,6 +984,7 @@ npm run test
 ```
 
 ### Verification Checklist
+
 - [ ] Step indicator shows "Step X of 4" across mobile and desktop
 - [ ] Query preselection works for `?room=` and `?deal=`
 - [ ] Nigerian phone number validation (+234 format) strictly enforced
@@ -933,6 +993,7 @@ npm run test
 - [ ] Gateway outage correctly displays fallback messaging
 
 ### STOP & COMMIT
+
 ```powershell
 git add src/pages/booking.tsx src/features/booking
 git commit -m "feat: booking wizard UI, confirmation UX, payment fallback handling"
@@ -945,6 +1006,7 @@ git commit -m "feat: booking wizard UI, confirmation UX, payment fallback handli
 **Milestone:** M2 · **Estimated Effort:** 4–5 days · **Branch:** `feature/gar-m2-booking-engine` · **PR:** Step 11 PR merged to `main` — **Completes Milestone 2**
 
 ### Step Checklist
+
 - [ ] Build authenticated guest account pages (`/account`, `/account/bookings`, `/account/profile`) with unauthenticated redirect to `/login?redirect=/account`
 - [ ] Implement booking list with color-coded status badges: Confirmed (green), Pending (yellow), Cancelled (red), Checked-In (blue), Checked-Out (grey)
 - [ ] Implement actions per booking state:
@@ -956,6 +1018,7 @@ git commit -m "feat: booking wizard UI, confirmation UX, payment fallback handli
 - [ ] Implement Profile Settings: edit name and phone, read-only email with change notice, and Change Password section calling `PUT /api/v1/auth/me/password`
 
 ### Explicit File Paths
+
 - [ ] src/pages/account/index.tsx
 - [ ] src/pages/account/bookings.tsx
 - [ ] src/pages/account/profile.tsx
@@ -965,6 +1028,7 @@ git commit -m "feat: booking wizard UI, confirmation UX, payment fallback handli
 - [ ] src/pages/api/v1/auth/me/password.ts
 
 ### Commands
+
 ```powershell
 npm run test
 npm run lint
@@ -972,6 +1036,7 @@ npm run typecheck
 ```
 
 ### Verification Checklist
+
 - [ ] Unauthenticated requests redirect to `/login?redirect=/account`
 - [ ] Status badges match required color specifications
 - [ ] Cancellation modal shows preview of refund amount (100% / 50% / 0%) before confirmation
@@ -980,6 +1045,7 @@ npm run typecheck
 - [ ] M2 Exit Criteria verified: full booking lifecycle, Paystack sandbox payment, PDF confirmation, guest account management working
 
 ### STOP & COMMIT
+
 ```powershell
 git add src/pages/account src/features/account src/pages/api/v1/bookings/index.ts src/pages/api/v1/auth/me.ts src/pages/api/v1/auth/me/password.ts
 git commit -m "feat: guest account, booking management, profile and password change UI"
@@ -992,6 +1058,7 @@ git commit -m "feat: guest account, booking management, profile and password cha
 **Milestone:** M3 · **Estimated Effort:** 5–7 days · **Branch:** `feature/gar-m3-admin-ops` · **PR:** Step 12 PR merged to `main`
 
 > **Simplified Admin Rationale (PM Recommendation):** The SRS specifies a full CMS with 14 sidebar modules, Recharts dashboards, occupancy heatmaps, and broad CRUD. For v1.0, the admin panel will have 2–3 users. To accelerate time-to-launch, Step 12 builds:
+>
 > 1. Protected admin shell, RBAC, and dashboard KPIs/charts
 > 2. **Bookings Management (`/admin/bookings`)** — operationally critical module with paginated list, filters, booking detail (`/admin/bookings/{ref}`), check-in/out, no-show, cancel with refund calculator, and admin-initiated booking creation form (cash/POS)
 > 3. **Room Status Management (`/admin/rooms`)** — ability to toggle unit status (available/occupied/maintenance)
@@ -999,6 +1066,7 @@ git commit -m "feat: guest account, booking management, profile and password cha
 > All other broad CRUD modules (content, restaurants, facilities, gems, events, deals, contact, newsletter, media, users, settings) remain deferred to Step 15. Staff can use Supabase Dashboard for quick raw edits.
 
 ### Step Checklist
+
 - [ ] Build protected admin shell (`AdminLayout`, `AdminSidebar`, `AdminTopbar`, `AdminBreadcrumb`)
 - [ ] Sidebar links all 14 modules per SRS 3.14.1; unbuilt modules show greyed out with "Coming Soon" tooltip
 - [ ] AdminTopbar includes: admin user name, role badge, "View Site" link, logout button, notification bell placeholder
@@ -1015,6 +1083,7 @@ git commit -m "feat: guest account, booking management, profile and password cha
 - [ ] Unauthenticated or unauthorized users redirect to `/login?redirect=/admin`
 
 ### Explicit File Paths
+
 - [ ] src/pages/admin/index.tsx
 - [ ] src/pages/admin/_middleware.ts (or page-level guard wrapper)
 - [ ] src/components/admin/AdminLayout.tsx
@@ -1029,6 +1098,7 @@ git commit -m "feat: guest account, booking management, profile and password cha
 - [ ] src/pages/api/v1/analytics/occupancy.ts
 
 ### Commands
+
 ```powershell
 npm run dev
 npm run lint
@@ -1036,6 +1106,7 @@ npm run test
 ```
 
 ### Verification Checklist
+
 - [ ] Admin shell renders desktop-first without public navbar/footer
 - [ ] Content Manager is blocked from financial analytics endpoints
 - [ ] Resort Admin and Super Admin can view revenue and occupancy charts
@@ -1045,6 +1116,7 @@ npm run test
 - [ ] Admin booking creation creates Confirmed booking without online payment
 
 ### STOP & COMMIT
+
 ```powershell
 git add src/pages/admin src/components/admin src/pages/api/v1/analytics
 git commit -m "feat: admin shell, RBAC guards, analytics dashboard, bookings management, room status"
@@ -1057,6 +1129,7 @@ git commit -m "feat: admin shell, RBAC guards, analytics dashboard, bookings man
 **Milestone:** M3 · **Estimated Effort:** 3–5 days · **Branch:** `feature/gar-m3-admin-ops` · **PR:** Step 13 PR merged to `main`
 
 ### Step Checklist
+
 - [ ] Generate dynamic `sitemap.xml` (includes public pages, excludes auth/booking/account) and `robots.txt`
 - [ ] Complete structured-data schemas across all page types
 - [ ] Initialize Sentry client and server error/performance monitoring hooks
@@ -1068,6 +1141,7 @@ git commit -m "feat: admin shell, RBAC guards, analytics dashboard, bookings man
 - [ ] Produce operational incident response runbook (`docs/operations/runbook.md`)
 
 ### Explicit File Paths
+
 - [ ] src/pages/sitemap.xml.ts
 - [ ] src/pages/robots.txt.ts
 - [ ] src/lib/seo/structured-data/*
@@ -1079,6 +1153,7 @@ git commit -m "feat: admin shell, RBAC guards, analytics dashboard, bookings man
 - [ ] docs/operations/runbook.md
 
 ### Commands
+
 ```powershell
 npx supabase functions serve expire-pending-bookings --no-verify-jwt
 npx supabase functions serve retry-failed-emails --no-verify-jwt
@@ -1089,6 +1164,7 @@ npm run test
 ```
 
 ### Verification Checklist
+
 - [ ] `sitemap.xml` lists all public routes and excludes private routes
 - [ ] Expired pending bookings release unit inventory after 30 minutes
 - [ ] Failed email retry handles transient SendGrid errors up to 3 attempts
@@ -1096,6 +1172,7 @@ npm run test
 - [ ] Notify-me emails fire when under-construction room becomes available
 
 ### STOP & COMMIT
+
 ```powershell
 git add src/pages/sitemap.xml.ts src/pages/robots.txt.ts src/lib/seo src/lib/monitoring supabase/functions docs/operations/runbook.md
 git commit -m "feat: observability, SEO completion, background jobs, operational runbook"
@@ -1108,6 +1185,7 @@ git commit -m "feat: observability, SEO completion, background jobs, operational
 **Milestone:** M3 · **Estimated Effort:** 3–5 days · **Branch:** `feature/gar-m3-admin-ops` · **PR:** Step 14 PR merged to `main` — **Completes Milestone 3 & Core Scope**
 
 ### Step Checklist
+
 - [ ] Configure GitHub Actions CI pipeline covering lint, Prettier check, typecheck, unit/integration tests, e2e smoke tests, and build
 - [ ] Enforce test coverage thresholds (≥ 70% on API routes per SRS 5.5)
 - [ ] Produce OpenAPI contract specification (`docs/api/openapi.yaml`) aligned to implemented endpoints
@@ -1118,6 +1196,7 @@ git commit -m "feat: observability, SEO completion, background jobs, operational
 - [ ] Verify i18n readiness: audit that all user-facing strings use translation helpers and no hard-coded strings remain
 
 ### Explicit File Paths
+
 - [ ] vitest.config.ts
 - [ ] playwright.config.ts
 - [ ] tests/unit/**/*.test.ts
@@ -1132,6 +1211,7 @@ git commit -m "feat: observability, SEO completion, background jobs, operational
 - [ ] docs/accessibility/manual-audit-checklist.md
 
 ### Critical Code Block: CI workflow
+
 ```yaml
 # .github/workflows/ci.yml
 name: CI
@@ -1140,7 +1220,8 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, feature/gar-m1-marketing-site, feature/gar-m2-booking-engine, feature/gar-m3-admin-ops]
+    branches:
+      [main, feature/gar-m1-marketing-site, feature/gar-m2-booking-engine, feature/gar-m3-admin-ops]
 
 jobs:
   build-test:
@@ -1180,6 +1261,7 @@ jobs:
 ```
 
 ### Commands
+
 ```powershell
 npm run ci
 npm run test:e2e -- --grep @smoke
@@ -1187,6 +1269,7 @@ npm run build
 ```
 
 ### Verification Checklist
+
 - [ ] CI pipeline passes on `main` and milestone branches
 - [ ] Unit and integration test coverage meets ≥ 70% on API routes
 - [ ] Critical guest and admin smoke journeys pass in Playwright
@@ -1196,6 +1279,7 @@ npm run build
 - [ ] M3 Exit Criteria satisfied; core implementation ready for production deployment
 
 ### STOP & COMMIT
+
 ```powershell
 git add vitest.config.ts playwright.config.ts tests .github/workflows/ci.yml docs/testing/strategy.md docs/api/openapi.yaml docs/release/checklist.md docs/accessibility/manual-audit-checklist.md
 git commit -m "chore: test matrix, CI baseline, docs, performance and accessibility gates"
@@ -1206,11 +1290,13 @@ git commit -m "chore: test matrix, CI baseline, docs, performance and accessibil
 ## 15. Follow-up PR Plan - Admin CRUD Breadth (Deferred to Phase 2)
 
 ### Status
+
 - [ ] Deferred intentionally to keep core delivery milestones reviewable and minimize risk
 - [ ] Operational Bookings Management (`/admin/bookings`) and Room Unit Status (`/admin/rooms`) are already delivered in Step 12
 - [ ] Full CRUD breadth for CMS content, seasonal pricing, media uploads, and super-admin modules will be implemented on branch `feature/gar-admin-crud-phase-2`
 
 ### Explicit Deferred File Paths
+
 - [ ] src/pages/admin/rooms/new.tsx, [id].tsx (seasonal pricing, full room type CRUD)
 - [ ] src/pages/admin/content/*.tsx
 - [ ] src/pages/admin/restaurants/*.tsx
@@ -1229,16 +1315,19 @@ git commit -m "chore: test matrix, CI baseline, docs, performance and accessibil
 - [ ] src/pages/api/v1/events/inquiries/*.ts
 
 ### Commands
+
 ```powershell
 git checkout -b feature/gar-admin-crud-phase-2
 ```
 
 ### Verification Checklist
+
 - [ ] Release checklist and PR documentation explicitly record Step 15 deferred scope
 - [ ] No incomplete CRUD modules merged into core delivery milestones
 - [ ] Resort staff instructed on using Supabase Dashboard for temporary direct content edits if needed
 
 ### STOP & COMMIT
+
 ```powershell
 git add docs/release/checklist.md plans/gar-srs-implementation/implementation.md
 git commit -m "docs: mark admin CRUD breadth as deferred to phase-2 branch"

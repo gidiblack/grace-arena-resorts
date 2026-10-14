@@ -46,14 +46,12 @@ export function cleanupModalLocks(): void {
     });
 
     // 6. Clean any residual elements with inert or data-inerted
-    document
-      .querySelectorAll("[data-inerted], [data-aria-hidden], [inert]")
-      .forEach((el) => {
-        el.removeAttribute("inert");
-        el.removeAttribute("aria-hidden");
-        el.removeAttribute("data-inerted");
-        el.removeAttribute("data-aria-hidden");
-      });
+    document.querySelectorAll("[data-inerted], [data-aria-hidden], [inert]").forEach((el) => {
+      el.removeAttribute("inert");
+      el.removeAttribute("aria-hidden");
+      el.removeAttribute("data-inerted");
+      el.removeAttribute("data-aria-hidden");
+    });
   };
 
   // Immediate purge

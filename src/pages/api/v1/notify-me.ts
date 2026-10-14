@@ -47,7 +47,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const parsed = notifyMeSchema.safeParse(req.body);
   if (!parsed.success) {
-    return fail(res, "VALIDATION_ERROR", "Invalid notification request", 400, parsed.error.format());
+    return fail(
+      res,
+      "VALIDATION_ERROR",
+      "Invalid notification request",
+      400,
+      parsed.error.format()
+    );
   }
 
   const { email, roomTypeId, roomTitle, phone } = parsed.data;

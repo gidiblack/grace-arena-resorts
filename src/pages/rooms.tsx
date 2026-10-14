@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import {
-  Box,
-  HStack,
-  Icon,
-  SimpleGrid,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import { Box, HStack, Icon, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 import NextLink from "next/link";
 import PageWrapper from "@/components/layout/PageWrapper";
 import Button from "@/components/ui/button";
@@ -15,12 +8,7 @@ import NotifyMeModal from "@/components/common/NotifyMeModal";
 import { ROUTES } from "@/constants/ROUTES";
 import { generateRoomsPageJsonLd } from "@/lib/seo/meta";
 import { MOCK_ROOMS } from "@/data/mock/resort-data";
-import {
-  RoomType,
-  RoomCard,
-  RoomFilterBar,
-  RoomDetailsModal,
-} from "@/features/rooms";
+import { RoomType, RoomCard, RoomFilterBar, RoomDetailsModal } from "@/features/rooms";
 import { cleanupModalLocks } from "@/helpers/modal-cleanup";
 import { FaWhatsapp } from "react-icons/fa";
 

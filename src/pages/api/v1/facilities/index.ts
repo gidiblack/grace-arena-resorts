@@ -11,9 +11,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   let facilities = MOCK_FACILITIES;
   if (campus && typeof campus === "string") {
-    facilities = facilities.filter(
-      (f) => f.campus === campus || f.campus === "central"
-    );
+    facilities = facilities.filter((f) => f.campus === campus || f.campus === "central");
   }
 
   return ok(res, facilities, 200, { total: facilities.length });

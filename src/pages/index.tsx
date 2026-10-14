@@ -105,14 +105,54 @@ const FACILITIES = [
 ];
 
 const GALLERY_PHOTOS: LightboxImage[] = [
-  { src: dining.src, alt: "Resort Dining Area", title: "The Olive Branch Dining Hall", category: "Dining" },
-  { src: pool.src, alt: "Swimming Pool", title: "Resort Swimming Pool & Sundeck", category: "Recreation" },
-  { src: hut.src, alt: "Rustic Thatched Hut", title: "The Executive Thatched Hut", category: "GAR Village" },
-  { src: elysian.src, alt: "GAR Elysian Campus", title: "GAR Elysian Courtyard", category: "GAR Elysian" },
-  { src: village.src, alt: "GAR Village Campus", title: "GAR Village Grounds", category: "GAR Village" },
-  { src: suite.src, alt: "Luxury Suite Interior", title: "Deluxe Suite Living Room", category: "Accommodations" },
-  { src: suite2.src, alt: "Premium Bed Setup", title: "The Oasis Villa Bedroom", category: "Accommodations" },
-  { src: HeroBg.src, alt: "Sunset Aerial View", title: "Resort Sunset Horizon", category: "Landscape" },
+  {
+    src: dining.src,
+    alt: "Resort Dining Area",
+    title: "The Olive Branch Dining Hall",
+    category: "Dining",
+  },
+  {
+    src: pool.src,
+    alt: "Swimming Pool",
+    title: "Resort Swimming Pool & Sundeck",
+    category: "Recreation",
+  },
+  {
+    src: hut.src,
+    alt: "Rustic Thatched Hut",
+    title: "The Executive Thatched Hut",
+    category: "GAR Village",
+  },
+  {
+    src: elysian.src,
+    alt: "GAR Elysian Campus",
+    title: "GAR Elysian Courtyard",
+    category: "GAR Elysian",
+  },
+  {
+    src: village.src,
+    alt: "GAR Village Campus",
+    title: "GAR Village Grounds",
+    category: "GAR Village",
+  },
+  {
+    src: suite.src,
+    alt: "Luxury Suite Interior",
+    title: "Deluxe Suite Living Room",
+    category: "Accommodations",
+  },
+  {
+    src: suite2.src,
+    alt: "Premium Bed Setup",
+    title: "The Oasis Villa Bedroom",
+    category: "Accommodations",
+  },
+  {
+    src: HeroBg.src,
+    alt: "Sunset Aerial View",
+    title: "Resort Sunset Horizon",
+    category: "Landscape",
+  },
 ];
 
 export default function Home() {
@@ -137,7 +177,8 @@ export default function Home() {
     <PageWrapper
       title="Grace Arena Resorts — Serene Christian Retreat in Igbo-Ora"
       description="Experience luxury, faith-centered serenity, and rich hospitality in Igbo-Ora, Oyo State. Choose between GAR Elysian luxury suites and GAR Village rustic thatched huts."
-      jsonLd={generateHotelJsonLd()}>
+      jsonLd={generateHotelJsonLd()}
+    >
       {/* 1. Hero Section with Video & 5s Auto-Rotating Gems */}
       <HeroVideo />
 
@@ -147,24 +188,33 @@ export default function Home() {
         bgSize="cover"
         bgRepeat="no-repeat"
         bgPos="center"
-        py={{ base: 16, md: 20 }}>
+        py={{ base: 16, md: 20 }}
+      >
         <Stack maxW="52rem" mx="auto" textAlign="center" align="center" gap={4}>
-          <Text fontSize="13px" fontWeight="bold" color="accent.600" letterSpacing="3px" textTransform="uppercase">
+          <Text
+            fontSize="13px"
+            fontWeight="bold"
+            color="accent.600"
+            letterSpacing="3px"
+            textTransform="uppercase"
+          >
             Welcome to Grace Arena
           </Text>
           <Text
             fontSize={{ base: "22px", sm: "28px", md: "34px" }}
             fontWeight="semibold"
             color="dark.500"
-            lineHeight="shorter">
-            &ldquo;Nestled in the heart of Igbo-Ora, the world capital of twins, Grace Arena is a serene Christian
-            resort offering a tranquil sanctuary for spiritual renewal, family fellowship, and rest.&rdquo;
+            lineHeight="shorter"
+          >
+            &ldquo;Nestled in the heart of Igbo-Ora, the world capital of twins, Grace Arena is a
+            serene Christian resort offering a tranquil sanctuary for spiritual renewal, family
+            fellowship, and rest.&rdquo;
           </Text>
           <Box w="80px" h="3px" bg="accent.500" my={2} borderRadius="full" />
           <Text fontSize="15px" color="gray.700" lineHeight="tall">
-            Here, every detail is consecrated to wholesome relaxation. Experience private spiritual communion in our
-            dedicated <strong>Prayer Hut</strong>, enjoy world-class amenities, and savor peaceful moments surrounded by
-            nature.
+            Here, every detail is consecrated to wholesome relaxation. Experience private spiritual
+            communion in our dedicated <strong>Prayer Hut</strong>, enjoy world-class amenities, and
+            savor peaceful moments surrounded by nature.
           </Text>
         </Stack>
       </PageSection>
@@ -173,15 +223,21 @@ export default function Home() {
       <Box py={{ base: 14, md: 20 }} px={{ base: 4, md: 8, xl: 12 }} bg="#070707" color="white">
         <Box maxW="80rem" mx="auto">
           <Stack align="center" textAlign="center" mb={{ base: 10, md: 14 }} gap={2}>
-            <Text fontSize="13px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+            <Text
+              fontSize="13px"
+              fontWeight="bold"
+              color="accent.500"
+              letterSpacing="3px"
+              textTransform="uppercase"
+            >
               Two Distinct Campuses, One Sacred Destination
             </Text>
             <Text fontSize={{ base: "26px", md: "36px" }} fontWeight="bold">
               Choose Your Retreat Ambience
             </Text>
             <Text fontSize="15px" color="gray.400" maxW="38rem">
-              Whether you prefer modern luxury suites or authentic thatched village huts, each campus delivers
-              uncompromising comfort.
+              Whether you prefer modern luxury suites or authentic thatched village huts, each
+              campus delivers uncompromising comfort.
             </Text>
           </Stack>
 
@@ -195,7 +251,8 @@ export default function Home() {
                 border="1px solid #1F2937"
                 overflow="hidden"
                 transition="all 0.3s"
-                _hover={{ borderColor: "accent.500", transform: "translateY(-4px)" }}>
+                _hover={{ borderColor: "accent.500", transform: "translateY(-4px)" }}
+              >
                 <Box
                   h={{ base: "240px", md: "300px" }}
                   bg={`linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(17, 24, 39, 0.9)), url(${image})`}
@@ -203,7 +260,8 @@ export default function Home() {
                   bgPos="center"
                   p={6}
                   display="flex"
-                  alignItems="flex-start">
+                  alignItems="flex-start"
+                >
                   <Text
                     bg="rgba(0, 0, 0, 0.7)"
                     color="accent.500"
@@ -212,7 +270,8 @@ export default function Home() {
                     borderRadius="full"
                     fontSize="12px"
                     fontWeight="bold"
-                    backdropFilter="blur(4px)">
+                    backdropFilter="blur(4px)"
+                  >
                     {title === "GAR Elysian" ? "Luxury Tier" : "Rustic Experience"}
                   </Text>
                 </Box>
@@ -241,7 +300,8 @@ export default function Home() {
                         fontSize="14px"
                         letterSpacing="wider"
                         textTransform="uppercase"
-                        _hover={{ color: "white" }}>
+                        _hover={{ color: "white" }}
+                      >
                         <Text>View {title} Rooms</Text>
                         <Icon as={FaArrowRightLong} />
                       </HStack>
@@ -266,15 +326,21 @@ export default function Home() {
                   fontWeight="bold"
                   color="accent.500"
                   letterSpacing="3px"
-                  textTransform="uppercase">
+                  textTransform="uppercase"
+                >
                   Elevated Hospitality
                 </Text>
-                <Text fontSize={{ base: "26px", md: "34px" }} fontWeight="bold" lineHeight="shorter">
+                <Text
+                  fontSize={{ base: "26px", md: "34px" }}
+                  fontWeight="bold"
+                  lineHeight="shorter"
+                >
                   Thoughtfully Curated Amenities for Body, Soul, &amp; Spirit
                 </Text>
                 <Text fontSize="15px" color="gray.300" lineHeight="tall">
-                  At Grace Arena Resorts, we prioritize your peace of mind. Every room package grants you seamless
-                  access to recreational spaces, wellness centers, and our distinguished <strong>Prayer Hut</strong>.
+                  At Grace Arena Resorts, we prioritize your peace of mind. Every room package
+                  grants you seamless access to recreational spaces, wellness centers, and our
+                  distinguished <strong>Prayer Hut</strong>.
                 </Text>
 
                 <Box pt={3}>
@@ -304,9 +370,19 @@ export default function Home() {
                     borderRadius="14px"
                     textAlign="center"
                     transition="all 0.2s"
-                    _hover={{ bg: "rgba(255, 255, 255, 0.1)", transform: "translateY(-3px)" }}>
-                    <Icon as={icon} boxSize={7} color={highlight ? "accent.500" : "#E2E8F0"} mb={2.5} />
-                    <Text fontSize="13px" fontWeight="semibold" color={highlight ? "accent.500" : "white"}>
+                    _hover={{ bg: "rgba(255, 255, 255, 0.1)", transform: "translateY(-3px)" }}
+                  >
+                    <Icon
+                      as={icon}
+                      boxSize={7}
+                      color={highlight ? "accent.500" : "#E2E8F0"}
+                      mb={2.5}
+                    />
+                    <Text
+                      fontSize="13px"
+                      fontWeight="semibold"
+                      color={highlight ? "accent.500" : "white"}
+                    >
                       {title}
                     </Text>
                   </Flex>
@@ -325,9 +401,16 @@ export default function Home() {
             align={{ base: "flex-start", sm: "flex-end" }}
             mb={{ base: 8, md: 10 }}
             flexDir={{ base: "column", sm: "row" }}
-            gap={4}>
+            gap={4}
+          >
             <Stack gap={1}>
-              <Text fontSize="13px" fontWeight="bold" color="accent.600" letterSpacing="3px" textTransform="uppercase">
+              <Text
+                fontSize="13px"
+                fontWeight="bold"
+                color="accent.600"
+                letterSpacing="3px"
+                textTransform="uppercase"
+              >
                 Recreation &amp; Gathering
               </Text>
               <Text fontSize={{ base: "26px", md: "34px" }} fontWeight="bold" color="#0F172A">
@@ -349,7 +432,8 @@ export default function Home() {
                 color="#0F172A"
                 cursor="pointer"
                 _hover={{ bg: "accent.500", borderColor: "accent.500" }}
-                aria-label="Previous facility">
+                aria-label="Previous facility"
+              >
                 <Icon as={FaArrowLeft} boxSize={3.5} />
               </Box>
               <Box
@@ -365,7 +449,8 @@ export default function Home() {
                 color="#0F172A"
                 cursor="pointer"
                 _hover={{ bg: "accent.500", borderColor: "accent.500" }}
-                aria-label="Next facility">
+                aria-label="Next facility"
+              >
                 <Icon as={FaArrowRight} boxSize={3.5} />
               </Box>
             </HStack>
@@ -385,8 +470,15 @@ export default function Home() {
                 boxShadow="0 4px 20px rgba(0,0,0,0.06)"
                 border="1px solid #E2E8F0"
                 display="flex"
-                flexDirection="column">
-                <Box h="220px" bg={`url(${facility.image})`} bgSize="cover" bgPos="center" position="relative">
+                flexDirection="column"
+              >
+                <Box
+                  h="220px"
+                  bg={`url(${facility.image})`}
+                  bgSize="cover"
+                  bgPos="center"
+                  position="relative"
+                >
                   <Text
                     position="absolute"
                     top={4}
@@ -397,7 +489,8 @@ export default function Home() {
                     py={1}
                     borderRadius="full"
                     fontSize="11px"
-                    fontWeight="bold">
+                    fontWeight="bold"
+                  >
                     {facility.category}
                   </Text>
                 </Box>
@@ -411,7 +504,12 @@ export default function Home() {
                     </Text>
                   </Stack>
                   <Link href={ROUTES.facilities} pt={2}>
-                    <Text fontSize="13px" fontWeight="bold" color="accent.600" _hover={{ textDecoration: "underline" }}>
+                    <Text
+                      fontSize="13px"
+                      fontWeight="bold"
+                      color="accent.600"
+                      _hover={{ textDecoration: "underline" }}
+                    >
                       Learn More &rarr;
                     </Text>
                   </Link>
@@ -426,14 +524,21 @@ export default function Home() {
       <Box py={{ base: 16, md: 20 }} px={{ base: 4, md: 8, xl: 12 }} bg="#070707" color="white">
         <Box maxW="80rem" mx="auto">
           <Stack align="center" textAlign="center" mb={{ base: 10, md: 12 }} gap={2}>
-            <Text fontSize="13px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+            <Text
+              fontSize="13px"
+              fontWeight="bold"
+              color="accent.500"
+              letterSpacing="3px"
+              textTransform="uppercase"
+            >
               Visual Journey
             </Text>
             <Text fontSize={{ base: "26px", md: "36px" }} fontWeight="bold">
               Resort Photo Gallery
             </Text>
             <Text fontSize="14px" color="gray.400">
-              Click any photo to explore our serene grounds, luxury interiors, and lush surroundings.
+              Click any photo to explore our serene grounds, luxury interiors, and lush
+              surroundings.
             </Text>
           </Stack>
 
@@ -455,7 +560,8 @@ export default function Home() {
                     e.preventDefault();
                     openLightbox(i);
                   }
-                }}>
+                }}
+              >
                 <Image
                   src={photo.src}
                   alt={photo.alt}
@@ -475,8 +581,14 @@ export default function Home() {
                   justifyContent="flex-end"
                   opacity={{ base: 1, md: 0 }}
                   _hover={{ opacity: 1 }}
-                  transition="opacity 0.2s">
-                  <Text fontSize="11px" fontWeight="bold" color="accent.500" textTransform="uppercase">
+                  transition="opacity 0.2s"
+                >
+                  <Text
+                    fontSize="11px"
+                    fontWeight="bold"
+                    color="accent.500"
+                    textTransform="uppercase"
+                  >
                     {photo.category}
                   </Text>
                   <Text fontSize="14px" fontWeight="semibold" color="white">

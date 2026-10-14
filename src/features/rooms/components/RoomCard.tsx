@@ -1,14 +1,5 @@
 import React from "react";
-import {
-  Box,
-  Flex,
-  HStack,
-  Icon,
-  Image,
-  Stack,
-  Text,
-  Badge,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, Image, Stack, Text, Badge } from "@chakra-ui/react";
 import Link from "next/link";
 import Button from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -23,11 +14,7 @@ interface RoomCardProps {
   onOpenNotify: (room: RoomType) => void;
 }
 
-export const RoomCard: React.FC<RoomCardProps> = ({
-  room,
-  onOpenDetails,
-  onOpenNotify,
-}) => {
+export const RoomCard: React.FC<RoomCardProps> = ({ room, onOpenDetails, onOpenNotify }) => {
   const isUnderConstruction = room.isUnderConstruction;
   const imageSrc = resolveRoomImage(room.image);
 
@@ -65,14 +52,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
         />
 
         {/* Badges Overlay */}
-        <Flex
-          position="absolute"
-          top={3}
-          left={3}
-          right={3}
-          justify="space-between"
-          align="center"
-        >
+        <Flex position="absolute" top={3} left={3} right={3} justify="space-between" align="center">
           <Badge
             bg={room.tierColor}
             color="white"
@@ -102,14 +82,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
               </Text>
             </HStack>
           ) : (
-            <HStack
-              bg="blackAlpha.700"
-              color="white"
-              px={2.5}
-              py={1}
-              borderRadius="full"
-              gap={1}
-            >
+            <HStack bg="blackAlpha.700" color="white" px={2.5} py={1} borderRadius="full" gap={1}>
               <Icon as={FaUsers} boxSize={3} color="accent.500" />
               <Text fontSize="11px" fontWeight="medium">
                 Up to {room.maxGuests} Guests
@@ -122,12 +95,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
       {/* Content Details */}
       <Stack p={6} gap={4} flex="1" justify="space-between">
         <Stack gap={2}>
-          <Text
-            fontSize="11px"
-            fontWeight="bold"
-            color="accent.500"
-            textTransform="uppercase"
-          >
+          <Text fontSize="11px" fontWeight="bold" color="accent.500" textTransform="uppercase">
             {room.campusTitle} • {room.buildingName}
           </Text>
           <Text fontSize="20px" fontWeight="bold" color="white">
@@ -151,8 +119,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
             <Stack gap={1.5}>
               {room.keyAmenities.map((amenity, i) => {
                 const isPrayerHut =
-                  amenity.toLowerCase().includes("prayer") ||
-                  amenity.toLowerCase().includes("hut");
+                  amenity.toLowerCase().includes("prayer") || amenity.toLowerCase().includes("hut");
                 const isSharedAmenity =
                   isPrayerHut ||
                   amenity.toLowerCase().includes("pool") ||
@@ -189,11 +156,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
 
                 if (isSharedAmenity) {
                   return (
-                    <Tooltip
-                      key={i}
-                      content="Subject to availability"
-                      showArrow
-                    >
+                    <Tooltip key={i} content="Subject to availability" showArrow>
                       {amenityRow}
                     </Tooltip>
                   );
@@ -217,9 +180,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
               color={isUnderConstruction ? "#F59E0B" : "accent.500"}
               data-testid="room-price"
             >
-              {isUnderConstruction
-                ? "Price TBD"
-                : `₦${room.basePriceNgn?.toLocaleString()}`}
+              {isUnderConstruction ? "Price TBD" : `₦${room.basePriceNgn?.toLocaleString()}`}
             </Text>
           </Flex>
 

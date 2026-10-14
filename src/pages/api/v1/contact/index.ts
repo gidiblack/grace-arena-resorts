@@ -62,7 +62,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res,
     {
       ticketId: `TKT-${Date.now().toString(36).toUpperCase()}`,
-      message: "Thank you for reaching out. We have received your message and will respond shortly.",
+      message:
+        "Thank you for reaching out. We have received your message and will respond shortly.",
     },
     201
   );

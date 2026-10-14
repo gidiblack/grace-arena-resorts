@@ -58,7 +58,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res,
     {
       inquiryId: `EVT-${Date.now().toString(36).toUpperCase()}`,
-      message: "Your event inquiry has been received. Our event coordinator will contact you within 24 hours.",
+      message:
+        "Your event inquiry has been received. Our event coordinator will contact you within 24 hours.",
     },
     201
   );

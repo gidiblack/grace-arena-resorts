@@ -201,141 +201,141 @@ export const CookieConsentBanner: React.FC = () => {
               boxShadow="2xl"
               tabIndex={-1}
             >
-            <Flex justify="space-between" align="center" mb={4}>
-              <HStack gap={2}>
-                <Icon as={FaShieldAlt} color="accent.500" boxSize={5} />
-                <Dialog.Title fontSize="18px" fontWeight="bold">
-                  Cookie &amp; Privacy Preferences
-                </Dialog.Title>
-              </HStack>
-              <Dialog.CloseTrigger asChild>
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  aria-label="Close preferences"
-                  tabIndex={0}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    padding: "6px",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    color: "#94A3B8",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Icon as={FaTimes} boxSize={4} />
-                </button>
-              </Dialog.CloseTrigger>
-            </Flex>
+              <Flex justify="space-between" align="center" mb={4}>
+                <HStack gap={2}>
+                  <Icon as={FaShieldAlt} color="accent.500" boxSize={5} />
+                  <Dialog.Title fontSize="18px" fontWeight="bold">
+                    Cookie &amp; Privacy Preferences
+                  </Dialog.Title>
+                </HStack>
+                <Dialog.CloseTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    aria-label="Close preferences"
+                    tabIndex={0}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      padding: "6px",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      color: "#94A3B8",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Icon as={FaTimes} boxSize={4} />
+                  </button>
+                </Dialog.CloseTrigger>
+              </Flex>
 
-            <Stack gap={4} my={3}>
-              {/* Essential */}
-              <Box p={3.5} borderRadius="10px" bg="#1f2937" border="1px solid #374151">
-                <Flex justify="space-between" align="center">
-                  <HStack gap={2}>
-                    <Icon as={FaLock} color="accent.500" boxSize={3.5} />
-                    <Text fontSize="14px" fontWeight="bold">
-                      Essential Cookies
+              <Stack gap={4} my={3}>
+                {/* Essential */}
+                <Box p={3.5} borderRadius="10px" bg="#1f2937" border="1px solid #374151">
+                  <Flex justify="space-between" align="center">
+                    <HStack gap={2}>
+                      <Icon as={FaLock} color="accent.500" boxSize={3.5} />
+                      <Text fontSize="14px" fontWeight="bold">
+                        Essential Cookies
+                      </Text>
+                    </HStack>
+                    <Text
+                      fontSize="11px"
+                      fontWeight="bold"
+                      color="green.400"
+                      bg="green.950"
+                      px={2}
+                      py={0.5}
+                      borderRadius="full"
+                    >
+                      ALWAYS ACTIVE
                     </Text>
-                  </HStack>
-                  <Text
-                    fontSize="11px"
-                    fontWeight="bold"
-                    color="green.400"
-                    bg="green.950"
-                    px={2}
-                    py={0.5}
-                    borderRadius="full"
-                  >
-                    ALWAYS ACTIVE
+                  </Flex>
+                  <Text fontSize="12px" color="gray.300" mt={1.5} lineHeight="shorter">
+                    Required for core site security, booking sessions, user authentication, and NDPR
+                    verification.
                   </Text>
-                </Flex>
-                <Text fontSize="12px" color="gray.300" mt={1.5} lineHeight="shorter">
-                  Required for core site security, booking sessions, user authentication, and NDPR
-                  verification.
-                </Text>
-              </Box>
+                </Box>
 
-              {/* Analytics */}
-              <Box p={3.5} borderRadius="10px" bg="#1f2937" border="1px solid #374151">
-                <Flex justify="space-between" align="center">
-                  <Text fontSize="14px" fontWeight="bold">
-                    Analytics &amp; Performance
+                {/* Analytics */}
+                <Box p={3.5} borderRadius="10px" bg="#1f2937" border="1px solid #374151">
+                  <Flex justify="space-between" align="center">
+                    <Text fontSize="14px" fontWeight="bold">
+                      Analytics &amp; Performance
+                    </Text>
+                    <Box
+                      as="button"
+                      px={3}
+                      py={1}
+                      borderRadius="full"
+                      fontSize="12px"
+                      fontWeight="semibold"
+                      bg={analyticsAllowed ? "accent.500" : "#374151"}
+                      color={analyticsAllowed ? "dark.500" : "gray.300"}
+                      onClick={() => setAnalyticsAllowed(!analyticsAllowed)}
+                      cursor="pointer"
+                      aria-label={`Toggle Analytics cookies, currently ${analyticsAllowed ? "enabled" : "disabled"}`}
+                    >
+                      {analyticsAllowed ? "Enabled" : "Disabled"}
+                    </Box>
+                  </Flex>
+                  <Text fontSize="12px" color="gray.300" mt={1.5} lineHeight="shorter">
+                    Allows us to measure traffic and feature usage anonymously to refine resort
+                    amenities and navigation.
                   </Text>
-                  <Box
-                    as="button"
-                    px={3}
-                    py={1}
-                    borderRadius="full"
-                    fontSize="12px"
-                    fontWeight="semibold"
-                    bg={analyticsAllowed ? "accent.500" : "#374151"}
-                    color={analyticsAllowed ? "dark.500" : "gray.300"}
-                    onClick={() => setAnalyticsAllowed(!analyticsAllowed)}
-                    cursor="pointer"
-                    aria-label={`Toggle Analytics cookies, currently ${analyticsAllowed ? "enabled" : "disabled"}`}
-                  >
-                    {analyticsAllowed ? "Enabled" : "Disabled"}
-                  </Box>
-                </Flex>
-                <Text fontSize="12px" color="gray.300" mt={1.5} lineHeight="shorter">
-                  Allows us to measure traffic and feature usage anonymously to refine resort
-                  amenities and navigation.
-                </Text>
-              </Box>
+                </Box>
 
-              {/* Marketing */}
-              <Box p={3.5} borderRadius="10px" bg="#1f2937" border="1px solid #374151">
-                <Flex justify="space-between" align="center">
-                  <Text fontSize="14px" fontWeight="bold">
-                    Personalized Offers
+                {/* Marketing */}
+                <Box p={3.5} borderRadius="10px" bg="#1f2937" border="1px solid #374151">
+                  <Flex justify="space-between" align="center">
+                    <Text fontSize="14px" fontWeight="bold">
+                      Personalized Offers
+                    </Text>
+                    <Box
+                      as="button"
+                      px={3}
+                      py={1}
+                      borderRadius="full"
+                      fontSize="12px"
+                      fontWeight="semibold"
+                      bg={marketingAllowed ? "accent.500" : "#374151"}
+                      color={marketingAllowed ? "dark.500" : "gray.300"}
+                      onClick={() => setMarketingAllowed(!marketingAllowed)}
+                      cursor="pointer"
+                      aria-label={`Toggle Marketing cookies, currently ${marketingAllowed ? "enabled" : "disabled"}`}
+                    >
+                      {marketingAllowed ? "Enabled" : "Disabled"}
+                    </Box>
+                  </Flex>
+                  <Text fontSize="12px" color="gray.300" mt={1.5} lineHeight="shorter">
+                    Enables seasonal deals and retreat package notifications tailored to your
+                    booking interests.
                   </Text>
-                  <Box
-                    as="button"
-                    px={3}
-                    py={1}
-                    borderRadius="full"
-                    fontSize="12px"
-                    fontWeight="semibold"
-                    bg={marketingAllowed ? "accent.500" : "#374151"}
-                    color={marketingAllowed ? "dark.500" : "gray.300"}
-                    onClick={() => setMarketingAllowed(!marketingAllowed)}
-                    cursor="pointer"
-                    aria-label={`Toggle Marketing cookies, currently ${marketingAllowed ? "enabled" : "disabled"}`}
-                  >
-                    {marketingAllowed ? "Enabled" : "Disabled"}
-                  </Box>
-                </Flex>
-                <Text fontSize="12px" color="gray.300" mt={1.5} lineHeight="shorter">
-                  Enables seasonal deals and retreat package notifications tailored to your booking
-                  interests.
-                </Text>
-              </Box>
-            </Stack>
+                </Box>
+              </Stack>
 
-            <Flex justify="flex-end" gap={3} mt={5}>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setModalOpen(false)}
-                style={{ fontSize: "12px", padding: "6px 16px" }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleSavePreferences}
-                style={{ fontSize: "12px", padding: "6px 18px" }}
-              >
-                <Icon as={FaCheck} mr={1} /> Save Preferences
-              </Button>
-            </Flex>
-          </Dialog.Content>
-        </Dialog.Positioner>
+              <Flex justify="flex-end" gap={3} mt={5}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setModalOpen(false)}
+                  style={{ fontSize: "12px", padding: "6px 16px" }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSavePreferences}
+                  style={{ fontSize: "12px", padding: "6px 18px" }}
+                >
+                  <Icon as={FaCheck} mr={1} /> Save Preferences
+                </Button>
+              </Flex>
+            </Dialog.Content>
+          </Dialog.Positioner>
         </Portal>
       </Dialog.Root>
     </>

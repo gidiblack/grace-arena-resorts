@@ -14,7 +14,14 @@ import PageWrapper from "@/components/layout/PageWrapper";
 import MapSection from "@/components/common/MapSection";
 import { generateContactPageJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
-import { FaPhoneAlt, FaEnvelope, FaWhatsapp, FaMapMarkerAlt, FaCheckCircle, FaClock } from "react-icons/fa";
+import {
+  FaPhoneAlt,
+  FaEnvelope,
+  FaWhatsapp,
+  FaMapMarkerAlt,
+  FaCheckCircle,
+  FaClock,
+} from "react-icons/fa";
 
 export default function ContactPage() {
   const [name, setName] = useState("");
@@ -52,7 +59,10 @@ export default function ContactPage() {
 
       setSubmitted(true);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "An unexpected error occurred. Please try again later.";
+      const message =
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred. Please try again later.";
       setError(message);
     } finally {
       setLoading(false);
@@ -63,7 +73,8 @@ export default function ContactPage() {
     <PageWrapper
       title="Contact Us — Grace Arena Resorts"
       description="Get in touch with Grace Arena Resorts in Igbo-Ora, Oyo State, Nigeria. Bookings, directions, and WhatsApp inquiries."
-      jsonLd={generateContactPageJsonLd()}>
+      jsonLd={generateContactPageJsonLd()}
+    >
       {/* Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"
@@ -71,29 +82,47 @@ export default function ContactPage() {
         pb={{ base: 10, md: 14 }}
         px={{ base: 4, md: 8 }}
         color="white"
-        textAlign="center">
+        textAlign="center"
+      >
         <Stack maxW="46rem" mx="auto" gap={3} align="center">
-          <Text fontSize="12px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+          <Text
+            fontSize="12px"
+            fontWeight="bold"
+            color="accent.500"
+            letterSpacing="3px"
+            textTransform="uppercase"
+          >
             We Are Here to Serve You
           </Text>
           <Text as="h1" fontSize={{ base: "30px", md: "46px" }} fontWeight="bold">
             Contact Grace Arena Resorts
           </Text>
           <Text fontSize="15px" color="gray.300">
-            Have questions about room rates, campus directions, church retreat dates, or special dietary arrangements?
-            Reach out to our hospitality team.
+            Have questions about room rates, campus directions, church retreat dates, or special
+            dietary arrangements? Reach out to our hospitality team.
           </Text>
         </Stack>
       </Box>
 
       {/* Main Content Grid */}
-      <Box py={{ base: 12, md: 16 }} px={{ base: 4, md: 8, xl: 12 }} bg="#070707" color="white" minH="70vh">
+      <Box
+        py={{ base: 12, md: 16 }}
+        px={{ base: 4, md: 8, xl: 12 }}
+        bg="#070707"
+        color="white"
+        minH="70vh"
+      >
         <Box maxW="82rem" mx="auto">
           <SimpleGrid columns={{ base: 1, lg: 12 }} gap={{ base: 8, lg: 12 }}>
             {/* Left Column: Direct Contact Info (5 cols) */}
             <Box gridColumn={{ base: "span 1", lg: "span 5" }}>
               <Stack gap={6}>
-                <Box bg="#0F172A" p={{ base: 6, md: 8 }} borderRadius="20px" border="1px solid #1E293B">
+                <Box
+                  bg="#0F172A"
+                  p={{ base: 6, md: 8 }}
+                  borderRadius="20px"
+                  border="1px solid #1E293B"
+                >
                   <Text fontSize="18px" fontWeight="bold" mb={4} color="white">
                     Resort Contact Details
                   </Text>
@@ -106,7 +135,8 @@ export default function ContactPage() {
                           Address
                         </Text>
                         <Text fontSize="13px" color="gray.300">
-                          Grace Arena Resorts, Igbo-Ora, Ibarapa Central Local Government, Oyo State, Nigeria
+                          Grace Arena Resorts, Igbo-Ora, Ibarapa Central Local Government, Oyo
+                          State, Nigeria
                         </Text>
                       </Box>
                     </HStack>
@@ -161,7 +191,8 @@ export default function ContactPage() {
                   p={{ base: 6, md: 8 }}
                   borderRadius="20px"
                   border="1px solid #22c55e"
-                  boxShadow="0 10px 30px rgba(34, 197, 94, 0.15)">
+                  boxShadow="0 10px 30px rgba(34, 197, 94, 0.15)"
+                >
                   <HStack gap={3} mb={3}>
                     <Icon as={FaWhatsapp} color="#25D366" boxSize={6} />
                     <Text fontSize="18px" fontWeight="bold" color="white">
@@ -169,14 +200,15 @@ export default function ContactPage() {
                     </Text>
                   </HStack>
                   <Text fontSize="13px" color="gray.300" mb={4}>
-                    Get immediate responses for booking inquiries, road directions, or custom food preferences directly
-                    with the manager on duty.
+                    Get immediate responses for booking inquiries, road directions, or custom food
+                    preferences directly with the manager on duty.
                   </Text>
                   <a
                     href="https://wa.me/2348123456789?text=Hello%20Grace%20Arena%20Resorts,%20I%20have%20an%20inquiry."
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ textDecoration: "none", display: "inline-block" }}>
+                    style={{ textDecoration: "none", display: "inline-block" }}
+                  >
                     <Flex
                       align="center"
                       gap={2}
@@ -186,7 +218,8 @@ export default function ContactPage() {
                       bg="#25D366"
                       color="white"
                       fontWeight="bold"
-                      fontSize="14px">
+                      fontSize="14px"
+                    >
                       <Icon as={FaWhatsapp} /> Chat on WhatsApp Now
                     </Flex>
                   </a>
@@ -196,7 +229,12 @@ export default function ContactPage() {
 
             {/* Right Column: Contact Message Form (7 cols) */}
             <Box gridColumn={{ base: "span 1", lg: "span 7" }}>
-              <Box bg="#0F172A" p={{ base: 6, md: 8 }} borderRadius="20px" border="1px solid #1E293B">
+              <Box
+                bg="#0F172A"
+                p={{ base: 6, md: 8 }}
+                borderRadius="20px"
+                border="1px solid #1E293B"
+              >
                 <Text fontSize="20px" fontWeight="bold" mb={2}>
                   Send Us a Direct Message
                 </Text>
@@ -211,8 +249,8 @@ export default function ContactPage() {
                       Message Sent Successfully!
                     </Text>
                     <Text fontSize="14px" color="gray.300" maxW="380px">
-                      Thank you, <strong>{name}</strong>. Our front desk team has received your message and will reply to{" "}
-                      <strong>{email}</strong> within a few hours.
+                      Thank you, <strong>{name}</strong>. Our front desk team has received your
+                      message and will reply to <strong>{email}</strong> within a few hours.
                     </Text>
                     <Button variant="primary" size="sm" onClick={() => setSubmitted(false)}>
                       Send Another Message
@@ -329,7 +367,13 @@ export default function ContactPage() {
                         variant="primary"
                         size="md"
                         disabled={loading}
-                        style={{ width: "100%", marginTop: "8px", padding: "12px", opacity: loading ? 0.7 : 1 }}>
+                        style={{
+                          width: "100%",
+                          marginTop: "8px",
+                          padding: "12px",
+                          opacity: loading ? 0.7 : 1,
+                        }}
+                      >
                         {loading ? "Sending Message..." : "Send Message"}
                       </Button>
                     </Stack>

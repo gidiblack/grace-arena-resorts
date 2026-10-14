@@ -170,7 +170,12 @@ export const MOCK_FACILITIES: FacilityItem[] = [
     location: "Quiet Grove, South Wing",
     description:
       "A serene thatched hexagonal sanctuary constructed with natural acoustic bamboo and timber, created specifically for personal prayer, quiet fasting, and meditation.",
-    features: ["Private prayer alcoves", "Natural ventilation", "Spiritual library", "Continuous peace"],
+    features: [
+      "Private prayer alcoves",
+      "Natural ventilation",
+      "Spiritual library",
+      "Continuous peace",
+    ],
     image: "/assets/hut.jpg",
   },
   {
@@ -183,7 +188,12 @@ export const MOCK_FACILITIES: FacilityItem[] = [
     location: "Elysian Central Terrace",
     description:
       "A crystal-clear outdoor swimming pool framed by royal palms and plush sun cabanas. Poolside beverage service available.",
-    features: ["Heated shallow pool for children", "Sun loungers", "Poolside juice bar", "Lifeguard on duty"],
+    features: [
+      "Heated shallow pool for children",
+      "Sun loungers",
+      "Poolside juice bar",
+      "Lifeguard on duty",
+    ],
     image: "/assets/pool.jpg",
   },
   {
@@ -196,7 +206,12 @@ export const MOCK_FACILITIES: FacilityItem[] = [
     location: "Level 1, East Annex",
     description:
       "High-tech executive conference and summit facility accommodating up to 250 delegates with dual HD presentation screens and acoustic treatment.",
-    features: ["4K Projectors", "Video conferencing hardware", "Breakout meeting rooms", "Dedicated banquet staging"],
+    features: [
+      "4K Projectors",
+      "Video conferencing hardware",
+      "Breakout meeting rooms",
+      "Dedicated banquet staging",
+    ],
     image: "/assets/hero-bg.jpg",
   },
   {
@@ -209,7 +224,12 @@ export const MOCK_FACILITIES: FacilityItem[] = [
     location: "Village Green",
     description:
       "Expansive manicured lawns ideal for Christian weddings, family reunions, and church fellowship retreats of up to 600 attendees.",
-    features: ["Open-air marquee capabilities", "Evening mood illumination", "Dedicated caterer access", "Ample parking"],
+    features: [
+      "Open-air marquee capabilities",
+      "Evening mood illumination",
+      "Dedicated caterer access",
+      "Ample parking",
+    ],
     image: "/assets/gar-village.jpg",
   },
 ];
@@ -230,7 +250,8 @@ export const MOCK_RESTAURANTS: RestaurantItem[] = [
       {
         id: "gp-m-1",
         name: "Grilled Jumbo Prawns in Herb Butter",
-        description: "Charcoal-grilled Atlantic jumbo prawns served with seasoned jollof risotto and seasonal asparagus.",
+        description:
+          "Charcoal-grilled Atlantic jumbo prawns served with seasoned jollof risotto and seasonal asparagus.",
         priceNgn: 18500,
         category: "grill",
         isChefSpecial: true,
@@ -238,14 +259,16 @@ export const MOCK_RESTAURANTS: RestaurantItem[] = [
       {
         id: "gp-m-2",
         name: "Pan-Seared Salmon Fillet",
-        description: "Norwegian salmon with lemon hollandaise, garlic mashed potatoes, and sautéed garden beans.",
+        description:
+          "Norwegian salmon with lemon hollandaise, garlic mashed potatoes, and sautéed garden beans.",
         priceNgn: 24000,
         category: "main",
       },
       {
         id: "gp-m-3",
         name: "Slow-Braised Oxtail Stew",
-        description: "Tender oxtail simmered in rich aromatic spices, served with steamed basmati rice or traditional yam.",
+        description:
+          "Tender oxtail simmered in rich aromatic spices, served with steamed basmati rice or traditional yam.",
         priceNgn: 16500,
         category: "main",
         isChefSpecial: true,
@@ -253,7 +276,8 @@ export const MOCK_RESTAURANTS: RestaurantItem[] = [
       {
         id: "gp-m-4",
         name: "Classic Crème Brûlée",
-        description: "Madagascan vanilla bean custard with caramelized sugar crust and fresh tropical berries.",
+        description:
+          "Madagascan vanilla bean custard with caramelized sugar crust and fresh tropical berries.",
         priceNgn: 6500,
         category: "dessert",
       },
@@ -273,7 +297,8 @@ export const MOCK_RESTAURANTS: RestaurantItem[] = [
       {
         id: "vk-m-1",
         name: "Igbo-Ora Special Goat Meat Peppersoup",
-        description: "Infused with indigenous African herbs, hot spices, and tender mountain goat cuts.",
+        description:
+          "Infused with indigenous African herbs, hot spices, and tender mountain goat cuts.",
         priceNgn: 9500,
         category: "starter",
         isChefSpecial: true,
@@ -281,7 +306,8 @@ export const MOCK_RESTAURANTS: RestaurantItem[] = [
       {
         id: "vk-m-2",
         name: "Village Fisherman Seafood Stew",
-        description: "Tilapia, crab, and tiger prawns simmered in native palm soup served with pounded yam.",
+        description:
+          "Tilapia, crab, and tiger prawns simmered in native palm soup served with pounded yam.",
         priceNgn: 17500,
         category: "main",
         isChefSpecial: true,
@@ -289,7 +315,8 @@ export const MOCK_RESTAURANTS: RestaurantItem[] = [
       {
         id: "vk-m-3",
         name: "Charcoal Suya Platter",
-        description: "Finely spiced beef and chicken skewers with red onions, ripe tomatoes, and spicy yaji.",
+        description:
+          "Finely spiced beef and chicken skewers with red onions, ripe tomatoes, and spicy yaji.",
         priceNgn: 8500,
         category: "grill",
       },
@@ -309,14 +336,16 @@ export const MOCK_RESTAURANTS: RestaurantItem[] = [
       {
         id: "gb-m-1",
         name: "Avocado & Smoked Turkey Panini",
-        description: "Artisan sourdough toast with guacamole, smoked turkey breast, and melted mozzarella.",
+        description:
+          "Artisan sourdough toast with guacamole, smoked turkey breast, and melted mozzarella.",
         priceNgn: 7500,
         category: "main",
       },
       {
         id: "gb-m-2",
         name: "Handcrafted Iced Caramel Macchiato",
-        description: "Double espresso shot poured over chilled milk, ice, and golden Madagascar caramel drizzle.",
+        description:
+          "Double espresso shot poured over chilled milk, ice, and golden Madagascar caramel drizzle.",
         priceNgn: 3800,
         category: "beverage",
       },
@@ -336,7 +365,8 @@ export const MOCK_RESTAURANTS: RestaurantItem[] = [
       {
         id: "sl-m-1",
         name: "Hibiscus Mint Sparkler (Zobo Fizz)",
-        description: "Brewed roselle extract with fresh garden mint, crushed ginger, and sparkling spring water.",
+        description:
+          "Brewed roselle extract with fresh garden mint, crushed ginger, and sparkling spring water.",
         priceNgn: 3500,
         category: "beverage",
         isChefSpecial: true,
@@ -360,7 +390,12 @@ export const MOCK_GEMS: GemItem[] = [
     subtitle: "Suites & Thatched Huts",
     description:
       "Experience architectural balance where traditional African thatched craftsmanship meets 5-star hotel luxury and air-conditioned tranquility.",
-    highlights: ["Hand-thatched cooling roofs", "Modern walk-in showers", "King-size beds", "Private balconies"],
+    highlights: [
+      "Hand-thatched cooling roofs",
+      "Modern walk-in showers",
+      "King-size beds",
+      "Private balconies",
+    ],
     image: "/assets/suite.jpg",
     location: "Across Both Campuses",
     link: "/rooms",
@@ -371,7 +406,12 @@ export const MOCK_GEMS: GemItem[] = [
     subtitle: "Local & Continental",
     description:
       "Four signature culinary outlets presenting garden-fresh farm produce, authentic charcoal delicacies, and refined international classics.",
-    highlights: ["Farm-to-table vegetables", "Woodfire clay hearth", "Poolside mocktail bar", "Breakfast included"],
+    highlights: [
+      "Farm-to-table vegetables",
+      "Woodfire clay hearth",
+      "Poolside mocktail bar",
+      "Breakfast included",
+    ],
     image: "/assets/dining.jpg",
     location: "Dining Plaza",
     link: "/restaurants",
@@ -382,7 +422,12 @@ export const MOCK_GEMS: GemItem[] = [
     subtitle: "Spiritual Tranquility",
     description:
       "A dedicated, peaceful prayer sanctuary surrounded by whispering palms and fountains for deep meditation, communion, and spiritual renewal.",
-    highlights: ["24/7 private access", "Natural acoustic silence", "Comfortable kneeling stations", "Open bible alcoves"],
+    highlights: [
+      "24/7 private access",
+      "Natural acoustic silence",
+      "Comfortable kneeling stations",
+      "Open bible alcoves",
+    ],
     image: "/assets/hut.jpg",
     location: "Quiet South Wing",
     link: "/facilities",
@@ -393,7 +438,12 @@ export const MOCK_GEMS: GemItem[] = [
     subtitle: "Land of Twins",
     description:
       "Explore the cultural richness of the world twin capital with guided resort walks, lush vegetation, and family blessings.",
-    highlights: ["Cultural walking trails", "Twin monument visits", "Scenic mountain views", "Family heritage photography"],
+    highlights: [
+      "Cultural walking trails",
+      "Twin monument visits",
+      "Scenic mountain views",
+      "Family heritage photography",
+    ],
     image: "/assets/hero-placeholder.jpg",
     location: "Igbo-Ora Valley",
     link: "/about",
@@ -409,7 +459,12 @@ export const MOCK_EVENT_CATEGORIES: EventCategoryItem[] = [
     description:
       "Equipped with dedicated indoor sanctuaries, open-air prayer grounds, and breakout rooms for leadership summits, church retreats, and fasting gatherings.",
     capacity: "Up to 500 Participants",
-    features: ["Acoustically tuned sound systems", "Prayer Hut reservation", "Full board meal plans", "Lodging packages"],
+    features: [
+      "Acoustically tuned sound systems",
+      "Prayer Hut reservation",
+      "Full board meal plans",
+      "Lodging packages",
+    ],
     image: "/assets/hut.jpg",
   },
   {
@@ -419,7 +474,12 @@ export const MOCK_EVENT_CATEGORIES: EventCategoryItem[] = [
     description:
       "Picturesque lawn settings and elegant banquet venues offering faith-aligned ceremonial spaces, exquisite decor, and gourmet feast catering.",
     capacity: "Up to 600 Guests",
-    features: ["Bridal suite preparation", "Manicured photo garden", "Executive guest suites", "Personal event coordinator"],
+    features: [
+      "Bridal suite preparation",
+      "Manicured photo garden",
+      "Executive guest suites",
+      "Personal event coordinator",
+    ],
     image: "/assets/paper-bg.png",
   },
   {
@@ -429,7 +489,12 @@ export const MOCK_EVENT_CATEGORIES: EventCategoryItem[] = [
     description:
       "Escape boardroom fatigue and inspire innovation. Seamless audio-visual connectivity and private executive villas allow teams to focus and recharge.",
     capacity: "Up to 250 Delegates",
-    features: ["High-speed fiber WiFi", "Hybrid video summit support", "Breakout coffee lounges", "Team-building activities"],
+    features: [
+      "High-speed fiber WiFi",
+      "Hybrid video summit support",
+      "Breakout coffee lounges",
+      "Team-building activities",
+    ],
     image: "/assets/hero-bg.jpg",
   },
 ];
@@ -449,7 +514,11 @@ export const MOCK_DEALS: DealItem[] = [
     applicableRooms: ["executive-hut", "elysian-standard", "elysian-deluxe"],
     validFrom: "2026-01-01",
     validTo: "2026-12-31",
-    terms: ["Requires 2 nights minimum stay", "Valid for weekend check-ins (Friday - Sunday)", "Subject to room availability"],
+    terms: [
+      "Requires 2 nights minimum stay",
+      "Valid for weekend check-ins (Friday - Sunday)",
+      "Subject to room availability",
+    ],
     image: "/assets/suite2.jpg",
     badgeText: "15% OFF",
   },
@@ -466,7 +535,11 @@ export const MOCK_DEALS: DealItem[] = [
     applicableRooms: ["elysian-deluxe", "fountain-suite", "oasis-villa"],
     validFrom: "2026-01-01",
     validTo: "2026-12-31",
-    terms: ["Applies when booking 2 or more rooms", "Non-refundable deposit of 30%", "Advance reservation required"],
+    terms: [
+      "Applies when booking 2 or more rooms",
+      "Non-refundable deposit of 30%",
+      "Advance reservation required",
+    ],
     image: "/assets/pool.jpg",
     badgeText: "POPULAR",
   },
@@ -563,7 +636,8 @@ export const MOCK_BUILDINGS: BuildingItem[] = [
     name: "The Fountain Haven",
     campus: "elysian",
     campusTitle: "GAR Elysian",
-    description: "Centrally positioned suites surrounding the tranquil courtyard fountain and private gardens.",
+    description:
+      "Centrally positioned suites surrounding the tranquil courtyard fountain and private gardens.",
     totalRooms: 12,
   },
   {
@@ -571,7 +645,8 @@ export const MOCK_BUILDINGS: BuildingItem[] = [
     name: "The Oasis Villa",
     campus: "elysian",
     campusTitle: "GAR Elysian",
-    description: "Self-contained luxury apartment suites with private kitchenettes, balconies, and quiet living spaces.",
+    description:
+      "Self-contained luxury apartment suites with private kitchenettes, balconies, and quiet living spaces.",
     totalRooms: 8,
   },
   {
@@ -579,7 +654,8 @@ export const MOCK_BUILDINGS: BuildingItem[] = [
     name: "The Cabana",
     campus: "elysian",
     campusTitle: "GAR Elysian",
-    description: "Elevated suites boasting panoramic resort views, sun terraces, and VIP concierge privileges.",
+    description:
+      "Elevated suites boasting panoramic resort views, sun terraces, and VIP concierge privileges.",
     totalRooms: 6,
   },
   {
@@ -587,7 +663,8 @@ export const MOCK_BUILDINGS: BuildingItem[] = [
     name: "Executive Huts",
     campus: "village",
     campusTitle: "GAR Village",
-    description: "Handcrafted authentic thatched huts combining Yoruba heritage architecture with air-conditioned modern comfort.",
+    description:
+      "Handcrafted authentic thatched huts combining Yoruba heritage architecture with air-conditioned modern comfort.",
     totalRooms: 10,
   },
   {
@@ -595,7 +672,8 @@ export const MOCK_BUILDINGS: BuildingItem[] = [
     name: "Presidential Huts",
     campus: "village",
     campusTitle: "GAR Village",
-    description: "Exclusive thatched pavilions with private plunge pools, currently undergoing architectural finishing.",
+    description:
+      "Exclusive thatched pavilions with private plunge pools, currently undergoing architectural finishing.",
     totalRooms: 4,
   },
   {
@@ -603,7 +681,8 @@ export const MOCK_BUILDINGS: BuildingItem[] = [
     name: "Royal Huts",
     campus: "village",
     campusTitle: "GAR Village",
-    description: "Imperial thatched heritage lodges designed for dignitaries, state guests, and royal retreats.",
+    description:
+      "Imperial thatched heritage lodges designed for dignitaries, state guests, and royal retreats.",
     totalRooms: 2,
   },
 ];
@@ -695,7 +774,8 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
     image: "/assets/suite.jpg",
     images: ["/assets/suite.jpg", "/assets/suite2.jpg"],
     isUnderConstruction: false,
-    shortDesc: "Spacious deluxe comfort featuring relaxation chairs, upgraded vanity, and lush garden vistas.",
+    shortDesc:
+      "Spacious deluxe comfort featuring relaxation chairs, upgraded vanity, and lush garden vistas.",
     keyAmenities: [
       "King Bed",
       "Relaxation Chairs",
@@ -740,7 +820,8 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
     image: "/assets/suite2.jpg",
     images: ["/assets/suite2.jpg", "/assets/suite.jpg"],
     isUnderConstruction: false,
-    shortDesc: "Downstairs private apartment featuring dedicated kitchenette, microwave, and living area.",
+    shortDesc:
+      "Downstairs private apartment featuring dedicated kitchenette, microwave, and living area.",
     keyAmenities: [
       "Private Kitchenette",
       "Microwave & Cooktop",
@@ -761,11 +842,7 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
         "Intercom phone",
         "Welcome drink",
       ],
-      resort: [
-        "Prayer Hut reservation",
-        "Pool & Fitness Center",
-        "Laundry & Ironing services",
-      ],
+      resort: ["Prayer Hut reservation", "Pool & Fitness Center", "Laundry & Ironing services"],
     },
   },
   {
@@ -783,7 +860,8 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
     image: "/assets/suite.jpg",
     images: ["/assets/suite.jpg", "/assets/pool.jpg"],
     isUnderConstruction: false,
-    shortDesc: "Elevated apartment with independent living room, private kitchenette, and scenic balcony view.",
+    shortDesc:
+      "Elevated apartment with independent living room, private kitchenette, and scenic balcony view.",
     keyAmenities: [
       "Separate Living Room",
       "Kitchenette",
@@ -801,12 +879,7 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
         "Complimentary breakfast for one",
         "Premium bath products",
       ],
-      resort: [
-        "The Prayer Hut",
-        "Modern Mall access",
-        "Recreation Park tennis",
-        "Swimming pool",
-      ],
+      resort: ["The Prayer Hut", "Modern Mall access", "Recreation Park tennis", "Swimming pool"],
     },
   },
   {
@@ -824,7 +897,8 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
     image: "/assets/gar-elysian.jpg",
     images: ["/assets/gar-elysian.jpg", "/assets/suite.jpg"],
     isUnderConstruction: false,
-    shortDesc: "Our flagship luxury cabana suite offering panoramic resort views and bespoke interior styling.",
+    shortDesc:
+      "Our flagship luxury cabana suite offering panoramic resort views and bespoke interior styling.",
     keyAmenities: [
       "Cabana Terrace",
       "VIP Lounge Access",
@@ -842,11 +916,7 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
         "Luxury bathrobes and slippers",
         "Smart 55-inch TV",
       ],
-      resort: [
-        "VIP Prayer Hut slots",
-        "Pool cabana reservation",
-        "Concierge dining support",
-      ],
+      resort: ["VIP Prayer Hut slots", "Pool cabana reservation", "Concierge dining support"],
     },
   },
   {
@@ -864,7 +934,8 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
     image: "/assets/suite.jpg",
     images: ["/assets/suite.jpg", "/assets/suite2.jpg"],
     isUnderConstruction: false,
-    shortDesc: "Grand twin suite ideal for families or retreat leaders. Accommodates up to 4 guests with luxury amenities.",
+    shortDesc:
+      "Grand twin suite ideal for families or retreat leaders. Accommodates up to 4 guests with luxury amenities.",
     keyAmenities: [
       "Sleeps 4 Guests",
       "Twin Bedrooms",
@@ -881,12 +952,7 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
         "Air conditioning throughout",
         "Complimentary breakfast for guests",
       ],
-      resort: [
-        "Prayer Hut access",
-        "Love Garden access",
-        "Spa priority bookings",
-        "Pool deck",
-      ],
+      resort: ["Prayer Hut access", "Love Garden access", "Spa priority bookings", "Pool deck"],
     },
   },
   {
@@ -904,7 +970,8 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
     image: "/assets/hut.jpg",
     images: ["/assets/hut.jpg", "/assets/gar-village.jpg"],
     isUnderConstruction: false,
-    shortDesc: "Handcrafted traditional thatched hut equipped with ultra-modern interior luxuries and serene privacy.",
+    shortDesc:
+      "Handcrafted traditional thatched hut equipped with ultra-modern interior luxuries and serene privacy.",
     keyAmenities: [
       "Authentic Thatched Roof",
       "King Bed",
@@ -946,7 +1013,8 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
     image: "/assets/gar-village.jpg",
     images: ["/assets/gar-village.jpg", "/assets/hut.jpg"],
     isUnderConstruction: true,
-    shortDesc: "Grand presidential pavilion featuring dual master bedrooms, private dipping pool, and butler pantry.",
+    shortDesc:
+      "Grand presidential pavilion featuring dual master bedrooms, private dipping pool, and butler pantry.",
     keyAmenities: [
       "Private Dipping Pool",
       "Dual Master Suites",
@@ -960,10 +1028,7 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
         "Chef preparation pantry",
         "Walk-in dressing rooms and marble tubs",
       ],
-      resort: [
-        "Priority access to all GAR facilities",
-        "Dedicated Prayer Hut reservation",
-      ],
+      resort: ["Priority access to all GAR facilities", "Dedicated Prayer Hut reservation"],
     },
   },
   {
@@ -981,7 +1046,8 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
     image: "/assets/hut.jpg",
     images: ["/assets/hut.jpg", "/assets/gar-village.jpg"],
     isUnderConstruction: true,
-    shortDesc: "The pinnacle of African royal heritage. Designed for dignitaries, executive retreats, and family royalty.",
+    shortDesc:
+      "The pinnacle of African royal heritage. Designed for dignitaries, executive retreats, and family royalty.",
     keyAmenities: [
       "Royal Courtyard",
       "Grand Throne Lounge",
@@ -994,10 +1060,7 @@ export const MOCK_ROOMS: RoomTypeItem[] = [
         "Private meeting salon and dining hall",
         "Full security quarter connectivity",
       ],
-      resort: [
-        "All-inclusive resort access",
-        "Private Prayer Hut sanctuary",
-      ],
+      resort: ["All-inclusive resort access", "Private Prayer Hut sanctuary"],
     },
   },
 ];

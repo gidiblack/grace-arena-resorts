@@ -11,15 +11,7 @@ interface RoomFilterBarProps {
   villageCount: number;
 }
 
-const TIERS = [
-  "all",
-  "Standard",
-  "Deluxe",
-  "Premium",
-  "Executive",
-  "Presidential",
-  "Royal",
-];
+const TIERS = ["all", "Standard", "Deluxe", "Premium", "Executive", "Presidential", "Royal"];
 
 export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({
   selectedCampus,

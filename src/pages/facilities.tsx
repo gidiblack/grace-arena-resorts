@@ -1,15 +1,5 @@
 import React, { useState } from "react";
-import {
-  Box,
-  Flex,
-  HStack,
-  Icon,
-  Image,
-  SimpleGrid,
-  Stack,
-  Text,
-  Badge,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, Image, SimpleGrid, Stack, Text, Badge } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
 import { generateLocalBusinessJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
@@ -60,7 +50,12 @@ const FACILITIES_DATA: FacilityItem[] = [
     image: hut.src,
     hours: "Open 24/7 for Registered Guests",
     location: "GAR Village & Elysian Garden Trail",
-    highlights: ["Private Solitude", "Personal & Group Intercession", "Bibles & Spiritual Books", "Tranquil Garden Backdrop"],
+    highlights: [
+      "Private Solitude",
+      "Personal & Group Intercession",
+      "Bibles & Spiritual Books",
+      "Tranquil Garden Backdrop",
+    ],
     description:
       "A sacred cornerstone of Grace Arena Resorts. Nestled away from foot traffic, the Prayer Hut provides an anointed, quiet retreat space for guests seeking communion with God, reflection, and spiritual refreshment.",
     isSpecial: true,
@@ -73,7 +68,13 @@ const FACILITIES_DATA: FacilityItem[] = [
     image: elysian.src,
     hours: "8:00 AM – 10:00 PM Daily",
     location: "GAR Elysian Central Courtyard",
-    highlights: ["Luxury Spa & Sauna", "E-Learning Library", "Indoor Arcade", "Human Glass Cantilever Facade", "Mini Mart"],
+    highlights: [
+      "Luxury Spa & Sauna",
+      "E-Learning Library",
+      "Indoor Arcade",
+      "Human Glass Cantilever Facade",
+      "Mini Mart",
+    ],
     description:
       "Our multi-tier lifestyle hub features therapeutic spa body treatments, modern sauna rooms, an e-learning research library, and an arcade with spectacular glass cantilever architecture.",
   },
@@ -85,7 +86,12 @@ const FACILITIES_DATA: FacilityItem[] = [
     image: pool.src,
     hours: "7:00 AM – 8:00 PM Daily",
     location: "Central Leisure Deck",
-    highlights: ["Crystal Clear Waters", "Sunbathing Loungers", "Kids Splash Zone", "Poolside Refreshments"],
+    highlights: [
+      "Crystal Clear Waters",
+      "Sunbathing Loungers",
+      "Kids Splash Zone",
+      "Poolside Refreshments",
+    ],
     description:
       "A serene turquoise outdoor pool framed by palms and comfortable sun loungers. Perfect for morning laps, peaceful family afternoons, or poolside evening drinks under the stars.",
   },
@@ -121,7 +127,11 @@ const FACILITIES_DATA: FacilityItem[] = [
     image: gem1.src,
     hours: "Screenings at 4:00 PM & 7:30 PM",
     location: "Modern Mall Floor 2",
-    highlights: ["Inspiring Faith & Heritage Films", "Comfortable Plush Seating", "Dolby Surround Audio"],
+    highlights: [
+      "Inspiring Faith & Heritage Films",
+      "Comfortable Plush Seating",
+      "Dolby Surround Audio",
+    ],
     description:
       "Experience faith-affirming, family-friendly cinema and inspirational documentaries in our private acoustic screening room equipped with 4K projection.",
   },
@@ -133,7 +143,12 @@ const FACILITIES_DATA: FacilityItem[] = [
     image: gem1.src,
     hours: "9:00 AM – 11:00 PM",
     location: "Community Center",
-    highlights: ["Table Tennis", "Billiards & Snooker", "Foosball", "Board Games (Scrabble, Chess, Monopoly)"],
+    highlights: [
+      "Table Tennis",
+      "Billiards & Snooker",
+      "Foosball",
+      "Board Games (Scrabble, Chess, Monopoly)",
+    ],
     description:
       "A lively, interactive recreational space for children, youth, and families to bond over classic table sports and intellectual board games.",
   },
@@ -145,7 +160,12 @@ const FACILITIES_DATA: FacilityItem[] = [
     image: hut.src,
     hours: "7:00 PM – 11:00 PM (Evenings)",
     location: "GAR Village Central Green",
-    highlights: ["Evening Bonfires", "Acoustic Worship", "Starlight Storytelling", "Warm Roasted Snacks"],
+    highlights: [
+      "Evening Bonfires",
+      "Acoustic Worship",
+      "Starlight Storytelling",
+      "Warm Roasted Snacks",
+    ],
     description:
       "Gather under the night sky for uplifting fellowship, acoustic worship songs, and peaceful conversation around our stone fire pit.",
   },
@@ -157,7 +177,11 @@ const FACILITIES_DATA: FacilityItem[] = [
     image: dining.src,
     hours: "7:00 AM – 10:30 PM",
     location: "GAR Village Entrance",
-    highlights: ["Authentic Local Yoruba Delicacies", "Continental Favorites", "Local Handicrafts & Souvenirs"],
+    highlights: [
+      "Authentic Local Yoruba Delicacies",
+      "Continental Favorites",
+      "Local Handicrafts & Souvenirs",
+    ],
     description:
       "A vibrant cultural dining and retail space celebrated for classic architectural patterns and freshly cooked dishes made with organic produce from Ibarapa farmers.",
   },
@@ -166,7 +190,14 @@ const FACILITIES_DATA: FacilityItem[] = [
 export default function FacilitiesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
-  const categories = ["All", "Spiritual", "Wellness", "Recreation", "Dining & Retail", "Entertainment"];
+  const categories = [
+    "All",
+    "Spiritual",
+    "Wellness",
+    "Recreation",
+    "Dining & Retail",
+    "Entertainment",
+  ];
 
   const filtered = FACILITIES_DATA.filter((item) => {
     if (selectedCategory === "All") return true;
@@ -177,7 +208,8 @@ export default function FacilitiesPage() {
     <PageWrapper
       title="Resort Facilities — Grace Arena Resorts"
       description="Explore the world-class facilities at Grace Arena Resorts, from the serene Prayer Hut to the Modern Mall, Spa, Pool, and Recreation Park."
-      jsonLd={generateLocalBusinessJsonLd()}>
+      jsonLd={generateLocalBusinessJsonLd()}
+    >
       {/* Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"
@@ -185,17 +217,25 @@ export default function FacilitiesPage() {
         pb={{ base: 10, md: 14 }}
         px={{ base: 4, md: 8 }}
         color="white"
-        textAlign="center">
+        textAlign="center"
+      >
         <Stack maxW="48rem" mx="auto" gap={3} align="center">
-          <Text fontSize="12px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+          <Text
+            fontSize="12px"
+            fontWeight="bold"
+            color="accent.500"
+            letterSpacing="3px"
+            textTransform="uppercase"
+          >
             Wholesome Experiences
           </Text>
           <Text as="h1" fontSize={{ base: "30px", md: "46px" }} fontWeight="bold">
             World-Class Resort Facilities
           </Text>
           <Text fontSize="15px" color="gray.300" maxW="38rem">
-            From the spiritual serenity of the <strong>Prayer Hut</strong> to modern wellness, recreation, and family
-            entertainment, every space is built to nourish your mind, body, and spirit.
+            From the spiritual serenity of the <strong>Prayer Hut</strong> to modern wellness,
+            recreation, and family entertainment, every space is built to nourish your mind, body,
+            and spirit.
           </Text>
         </Stack>
 
@@ -216,7 +256,8 @@ export default function FacilitiesPage() {
               border="1px solid"
               borderColor={selectedCategory === cat ? "accent.500" : "#334155"}
               cursor="pointer"
-              transition="all 0.2s">
+              transition="all 0.2s"
+            >
               {cat}
             </Box>
           ))}
@@ -239,7 +280,8 @@ export default function FacilitiesPage() {
                 display="flex"
                 flexDirection="column"
                 transition="all 0.3s"
-                _hover={{ transform: "translateY(-4px)", borderColor: "accent.500" }}>
+                _hover={{ transform: "translateY(-4px)", borderColor: "accent.500" }}
+              >
                 {/* Image */}
                 <Box h="220px" position="relative" bg="#1E293B">
                   <Image src={item.image} alt={item.name} w="full" h="full" objectFit="cover" />
@@ -251,7 +293,8 @@ export default function FacilitiesPage() {
                       py={1}
                       borderRadius="full"
                       fontSize="11px"
-                      fontWeight="bold">
+                      fontWeight="bold"
+                    >
                       {item.category}
                     </Badge>
                     {item.isSpecial && (
@@ -297,7 +340,8 @@ export default function FacilitiesPage() {
                             color="gray.300"
                             px={2}
                             py={0.5}
-                            borderRadius="6px">
+                            borderRadius="6px"
+                          >
                             {h}
                           </Text>
                         ))}

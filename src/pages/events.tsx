@@ -61,7 +61,10 @@ export default function EventsPage() {
 
       setSubmitted(true);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "An unexpected error occurred. Please try again later.";
+      const message =
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred. Please try again later.";
       setError(message);
     } finally {
       setLoading(false);
@@ -106,7 +109,8 @@ export default function EventsPage() {
       jsonLd={generateEventJsonLd(
         "Christian Retreats & Special Events",
         "Host your church retreats, Christian weddings, family reunions, and executive conferences at Grace Arena Resorts."
-      )}>
+      )}
+    >
       {/* Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"
@@ -114,17 +118,24 @@ export default function EventsPage() {
         pb={{ base: 10, md: 14 }}
         px={{ base: 4, md: 8 }}
         color="white"
-        textAlign="center">
+        textAlign="center"
+      >
         <Stack maxW="46rem" mx="auto" gap={3} align="center">
-          <Text fontSize="12px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+          <Text
+            fontSize="12px"
+            fontWeight="bold"
+            color="accent.500"
+            letterSpacing="3px"
+            textTransform="uppercase"
+          >
             Sacred Celebrations &amp; Fellowships
           </Text>
           <Text as="h1" fontSize={{ base: "30px", md: "46px" }} fontWeight="bold">
             Events &amp; Retreat Experiences
           </Text>
           <Text fontSize="15px" color="gray.300">
-            Whether gathering for profound spiritual renewal or celebrating holy matrimony, our resort pavilions provide
-            unmatched serenity, catering, and audio-visual support.
+            Whether gathering for profound spiritual renewal or celebrating holy matrimony, our
+            resort pavilions provide unmatched serenity, catering, and audio-visual support.
           </Text>
         </Stack>
       </Box>
@@ -141,7 +152,8 @@ export default function EventsPage() {
                 bg="#0F172A"
                 border="1px solid #1E293B"
                 overflow="hidden"
-                boxShadow="0 10px 30px rgba(0,0,0,0.4)">
+                boxShadow="0 10px 30px rgba(0,0,0,0.4)"
+              >
                 <Box h="220px" bg={`url(${pkg.image})`} bgSize="cover" bgPos="center" p={4}>
                   <Badge bg="accent.500" color="black" px={3} py={1} borderRadius="full">
                     {pkg.capacity}
@@ -165,16 +177,30 @@ export default function EventsPage() {
           </SimpleGrid>
 
           {/* Event Inquiry Form (SRS 3.8 Item 3) */}
-          <Box maxW="46rem" mx="auto" bg="#0F172A" p={{ base: 6, md: 10 }} borderRadius="24px" border="1px solid #1E293B">
+          <Box
+            maxW="46rem"
+            mx="auto"
+            bg="#0F172A"
+            p={{ base: 6, md: 10 }}
+            borderRadius="24px"
+            border="1px solid #1E293B"
+          >
             <Stack gap={2} textAlign="center" mb={6}>
-              <Text fontSize="12px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+              <Text
+                fontSize="12px"
+                fontWeight="bold"
+                color="accent.500"
+                letterSpacing="3px"
+                textTransform="uppercase"
+              >
                 Plan Your Event
               </Text>
               <Text fontSize={{ base: "24px", md: "30px" }} fontWeight="bold">
                 Event &amp; Retreat Inquiry Form
               </Text>
               <Text fontSize="13px" color="gray.300">
-                Submit your proposed date and requirements. Our event coordinator will contact you within 24 hours.
+                Submit your proposed date and requirements. Our event coordinator will contact you
+                within 24 hours.
               </Text>
             </Stack>
 
@@ -185,8 +211,9 @@ export default function EventsPage() {
                   Inquiry Received with Gratitude!
                 </Text>
                 <Text fontSize="14px" color="gray.300" maxW="380px">
-                  Our event coordinator has received your details for <strong>{eventType}</strong> and will call you at{" "}
-                  <strong>{contactPhone}</strong> with a detailed itinerary and quote.
+                  Our event coordinator has received your details for <strong>{eventType}</strong>{" "}
+                  and will call you at <strong>{contactPhone}</strong> with a detailed itinerary and
+                  quote.
                 </Text>
                 <Button variant="primary" size="sm" onClick={() => setSubmitted(false)}>
                   Submit Another Inquiry
@@ -210,12 +237,21 @@ export default function EventsPage() {
                         color: "white",
                         borderRadius: "8px",
                         fontSize: "14px",
-                      }}>
-                      <option value="Church / Leadership Retreat">Church / Leadership Retreat</option>
-                      <option value="Christian Wedding / Reception">Christian Wedding / Reception</option>
+                      }}
+                    >
+                      <option value="Church / Leadership Retreat">
+                        Church / Leadership Retreat
+                      </option>
+                      <option value="Christian Wedding / Reception">
+                        Christian Wedding / Reception
+                      </option>
                       <option value="Family Reunion / Milestone">Family Reunion / Milestone</option>
-                      <option value="Film / Photo Shoot Production">Film / Photo Shoot Production</option>
-                      <option value="Corporate / Academic Seminar">Corporate / Academic Seminar</option>
+                      <option value="Film / Photo Shoot Production">
+                        Film / Photo Shoot Production
+                      </option>
+                      <option value="Corporate / Academic Seminar">
+                        Corporate / Academic Seminar
+                      </option>
                     </select>
                   </Box>
 
@@ -347,7 +383,13 @@ export default function EventsPage() {
                     variant="primary"
                     size="md"
                     disabled={loading}
-                    style={{ width: "100%", marginTop: "12px", padding: "12px", opacity: loading ? 0.7 : 1 }}>
+                    style={{
+                      width: "100%",
+                      marginTop: "12px",
+                      padding: "12px",
+                      opacity: loading ? 0.7 : 1,
+                    }}
+                  >
                     {loading ? "Submitting Inquiry..." : "Submit Event Inquiry"}
                   </Button>
                 </Stack>

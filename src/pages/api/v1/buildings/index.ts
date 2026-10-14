@@ -13,9 +13,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   let buildings = [...MOCK_BUILDINGS];
 
   if (campus && typeof campus === "string") {
-    buildings = buildings.filter(
-      (b) => b.campus.toLowerCase() === campus.toLowerCase()
-    );
+    buildings = buildings.filter((b) => b.campus.toLowerCase() === campus.toLowerCase());
   }
 
   return ok(res, buildings);

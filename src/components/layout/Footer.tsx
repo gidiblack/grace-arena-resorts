@@ -54,7 +54,8 @@ export const Footer = () => {
 
       setSubscribed(true);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to join newsletter. Please try again.";
+      const message =
+        err instanceof Error ? err.message : "Failed to join newsletter. Please try again.";
       setNewsletterError(message);
     } finally {
       setNewsletterLoading(false);
@@ -138,7 +139,11 @@ export const Footer = () => {
                   type="submit"
                   size="sm"
                   disabled={newsletterLoading}
-                  style={{ padding: "10px 24px", whiteSpace: "nowrap", opacity: newsletterLoading ? 0.7 : 1 }}
+                  style={{
+                    padding: "10px 24px",
+                    whiteSpace: "nowrap",
+                    opacity: newsletterLoading ? 0.7 : 1,
+                  }}
                 >
                   {newsletterLoading ? "Joining..." : "Join Newsletter"}
                 </Button>

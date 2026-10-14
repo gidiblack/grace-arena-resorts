@@ -1,15 +1,5 @@
 import React, { useState } from "react";
-import {
-  Box,
-  Flex,
-  HStack,
-  Icon,
-  Image,
-  SimpleGrid,
-  Stack,
-  Text,
-  Badge,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, Image, SimpleGrid, Stack, Text, Badge } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
 import { generateTouristAttractionJsonLd } from "@/lib/seo/meta";
 import hut from "@/assets/hut.jpg";
@@ -93,7 +83,8 @@ export default function GemsPage() {
       jsonLd={generateTouristAttractionJsonLd(
         "Igbo-Ora Attractions & Off-Beat Gems",
         "Discover local attractions in Igbo-Ora, hike Idere Hills, experience cultural tours, and enjoy prayer walks."
-      )}>
+      )}
+    >
       {/* Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"
@@ -101,17 +92,24 @@ export default function GemsPage() {
         pb={{ base: 10, md: 14 }}
         px={{ base: 4, md: 8 }}
         color="white"
-        textAlign="center">
+        textAlign="center"
+      >
         <Stack maxW="46rem" mx="auto" gap={3} align="center">
-          <Text fontSize="12px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+          <Text
+            fontSize="12px"
+            fontWeight="bold"
+            color="accent.500"
+            letterSpacing="3px"
+            textTransform="uppercase"
+          >
             Curated Local Experiences
           </Text>
           <Text as="h1" fontSize={{ base: "30px", md: "46px" }} fontWeight="bold">
             Off-Beat Gems of Igbo-Ora
           </Text>
           <Text fontSize="15px" color="gray.300">
-            Immerse yourself beyond the resort gates in the rich history of the Land of Twins, hiking expeditions,
-            sacred nature walks, and authentic Yoruba heritage.
+            Immerse yourself beyond the resort gates in the rich history of the Land of Twins,
+            hiking expeditions, sacred nature walks, and authentic Yoruba heritage.
           </Text>
         </Stack>
 
@@ -132,7 +130,8 @@ export default function GemsPage() {
               border="1px solid"
               borderColor={selectedCat === cat ? "accent.500" : "#334155"}
               cursor="pointer"
-              transition="all 0.2s">
+              transition="all 0.2s"
+            >
               {cat}
             </Box>
           ))}
@@ -140,7 +139,13 @@ export default function GemsPage() {
       </Box>
 
       {/* Grid */}
-      <Box py={{ base: 12, md: 16 }} px={{ base: 4, md: 8, xl: 12 }} bg="#070707" color="white" minH="60vh">
+      <Box
+        py={{ base: 12, md: 16 }}
+        px={{ base: 4, md: 8, xl: 12 }}
+        bg="#070707"
+        color="white"
+        minH="60vh"
+      >
         <Box maxW="80rem" mx="auto">
           <SimpleGrid columns={{ base: 1, md: 2 }} gap={8}>
             {filtered.map((gem) => (
@@ -154,10 +159,20 @@ export default function GemsPage() {
                 display="flex"
                 flexDirection="column"
                 transition="all 0.3s"
-                _hover={{ borderColor: "accent.500", transform: "translateY(-4px)" }}>
+                _hover={{ borderColor: "accent.500", transform: "translateY(-4px)" }}
+              >
                 <Box h="250px" position="relative" bg="#1E293B">
                   <Image src={gem.image} alt={gem.title} w="full" h="full" objectFit="cover" />
-                  <Badge position="absolute" top={4} left={4} bg="accent.500" color="black" px={3} py={1} borderRadius="full">
+                  <Badge
+                    position="absolute"
+                    top={4}
+                    left={4}
+                    bg="accent.500"
+                    color="black"
+                    px={3}
+                    py={1}
+                    borderRadius="full"
+                  >
                     {gem.category}
                   </Badge>
                 </Box>
@@ -185,7 +200,15 @@ export default function GemsPage() {
 
                     <HStack gap={2} pt={2} flexWrap="wrap">
                       {gem.highlights.map((h, i) => (
-                        <Text key={i} fontSize="11px" bg="#1E293B" color="accent.500" px={2.5} py={1} borderRadius="6px">
+                        <Text
+                          key={i}
+                          fontSize="11px"
+                          bg="#1E293B"
+                          color="accent.500"
+                          px={2.5}
+                          py={1}
+                          borderRadius="6px"
+                        >
                           • {h}
                         </Text>
                       ))}
@@ -199,7 +222,8 @@ export default function GemsPage() {
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ textDecoration: "none" }}>
+                      style={{ textDecoration: "none" }}
+                    >
                       <HStack
                         px={4}
                         py={2.5}
@@ -209,7 +233,8 @@ export default function GemsPage() {
                         fontWeight="bold"
                         fontSize="13px"
                         w="fit-content"
-                        cursor="pointer">
+                        cursor="pointer"
+                      >
                         <Icon as={FaWhatsapp} boxSize={4} />
                         <Text>Book This Experience via Concierge</Text>
                       </HStack>

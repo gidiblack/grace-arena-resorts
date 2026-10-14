@@ -64,7 +64,11 @@ export function generateHotelJsonLd() {
       { "@type": "LocationFeatureSpecification", name: "Modern Mall & Spa", value: true },
       { "@type": "LocationFeatureSpecification", name: "Fine Dining Restaurant", value: true },
       { "@type": "LocationFeatureSpecification", name: "High-Speed Wi-Fi", value: true },
-      { "@type": "LocationFeatureSpecification", name: "Alcohol-Free Christian Sanctuary", value: true },
+      {
+        "@type": "LocationFeatureSpecification",
+        name: "Alcohol-Free Christian Sanctuary",
+        value: true,
+      },
     ],
   };
 }
@@ -238,5 +242,3 @@ export function generateRoomsPageJsonLd(
     makesOffer: availableOffers,
   };
 }
-
-

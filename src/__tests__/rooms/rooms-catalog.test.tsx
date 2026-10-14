@@ -119,11 +119,7 @@ describe("Step 7 Rooms Catalog & Under-Construction Features", () => {
       const onOpenNotify = vi.fn();
 
       renderWithChakra(
-        <RoomCard
-          room={mockActiveRoom}
-          onOpenDetails={onOpenDetails}
-          onOpenNotify={onOpenNotify}
-        />
+        <RoomCard room={mockActiveRoom} onOpenDetails={onOpenDetails} onOpenNotify={onOpenNotify} />
       );
 
       expect(screen.getByText("Standard Room")).toBeInTheDocument();
@@ -145,7 +141,9 @@ describe("Step 7 Rooms Catalog & Under-Construction Features", () => {
       );
 
       expect(screen.getByText("Presidential Thatched Hut")).toBeInTheDocument();
-      expect(screen.getByTestId("under-construction-badge")).toHaveTextContent("Under Construction");
+      expect(screen.getByTestId("under-construction-badge")).toHaveTextContent(
+        "Under Construction"
+      );
       expect(screen.getByText("Price TBD")).toBeInTheDocument();
 
       const notifyButton = screen.getByTestId("notify-me-button");

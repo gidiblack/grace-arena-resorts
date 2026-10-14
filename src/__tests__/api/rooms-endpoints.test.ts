@@ -158,7 +158,12 @@ describe("Step 7 Rooms & Catalog API Endpoints", () => {
   describe("POST /api/v1/notify-me", () => {
     it("captures notification request and suppresses duplicate submissions", async () => {
       // 1st submission
-      const { req: req1, res: res1, getStatusCode: getCode1, getData: getData1 } = createMockReqRes({
+      const {
+        req: req1,
+        res: res1,
+        getStatusCode: getCode1,
+        getData: getData1,
+      } = createMockReqRes({
         method: "POST",
         body: {
           email: "retreat.leader@example.com",
@@ -174,7 +179,12 @@ describe("Step 7 Rooms & Catalog API Endpoints", () => {
       expect(notifyMeStore.length).toBe(1);
 
       // 2nd submission (duplicate with same email and roomTypeId)
-      const { req: req2, res: res2, getStatusCode: getCode2, getData: getData2 } = createMockReqRes({
+      const {
+        req: req2,
+        res: res2,
+        getStatusCode: getCode2,
+        getData: getData2,
+      } = createMockReqRes({
         method: "POST",
         body: {
           email: "retreat.leader@example.com",

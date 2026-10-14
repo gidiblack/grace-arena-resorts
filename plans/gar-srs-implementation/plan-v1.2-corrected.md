@@ -44,15 +44,16 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 
 **Delivers:** Public pages with content, room browsing, WhatsApp CTAs. No booking yet.
 
-| Step | Scope | Estimated Effort |
-|------|-------|-----------------|
-| Step 1 | Foundation, env contract, shared libs | 2–3 days |
-| Step 5 | Global shell, consent, accessibility | 3–4 days |
-| Step 6 | Public content pages (Home, About, Facilities, Restaurants, Gems, Events, Deals, Contact, Privacy) | 8–12 days |
-| Step 7 | Rooms catalog, Notify Me (read-only, no booking) | 3–5 days |
-| | **M1 subtotal** | **16–24 dev-days** |
+| Step   | Scope                                                                                              | Estimated Effort   |
+| ------ | -------------------------------------------------------------------------------------------------- | ------------------ |
+| Step 1 | Foundation, env contract, shared libs                                                              | 2–3 days           |
+| Step 5 | Global shell, consent, accessibility                                                               | 3–4 days           |
+| Step 6 | Public content pages (Home, About, Facilities, Restaurants, Gems, Events, Deals, Contact, Privacy) | 8–12 days          |
+| Step 7 | Rooms catalog, Notify Me (read-only, no booking)                                                   | 3–5 days           |
+|        | **M1 subtotal**                                                                                    | **16–24 dev-days** |
 
 **Exit Criteria:**
+
 - All public pages render with real content and media
 - Room browsing works with resort toggle and tier filtering
 - WhatsApp CTAs functional across all pages
@@ -63,18 +64,19 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 
 **Delivers:** Full guest booking flow with payment, accounts, and room management.
 
-| Step | Scope | Estimated Effort |
-|------|-------|-----------------|
-| Step 2 | Supabase schema, migrations, seeds, RLS | 3–5 days |
-| Step 3 | API middleware stack, auth context, security | 2–3 days |
-| Step 4 | Auth pages and endpoints | 4–5 days |
-| Step 8 | Booking engine backend (availability, pricing, lifecycle) | 8–10 days |
-| Step 9 | Payment integration, webhook security | 4–6 days |
-| Step 10 | Booking wizard frontend | 6–8 days |
-| Step 11 | Guest account and booking management | 4–5 days |
-| | **M2 subtotal** | **31–42 dev-days** |
+| Step    | Scope                                                     | Estimated Effort   |
+| ------- | --------------------------------------------------------- | ------------------ |
+| Step 2  | Supabase schema, migrations, seeds, RLS                   | 3–5 days           |
+| Step 3  | API middleware stack, auth context, security              | 2–3 days           |
+| Step 4  | Auth pages and endpoints                                  | 4–5 days           |
+| Step 8  | Booking engine backend (availability, pricing, lifecycle) | 8–10 days          |
+| Step 9  | Payment integration, webhook security                     | 4–6 days           |
+| Step 10 | Booking wizard frontend                                   | 6–8 days           |
+| Step 11 | Guest account and booking management                      | 4–5 days           |
+|         | **M2 subtotal**                                           | **31–42 dev-days** |
 
 **Exit Criteria:**
+
 - Guests can register, log in, browse rooms, and complete a booking with Paystack payment
 - Booking confirmation PDF generated and emailed
 - Guest account shows booking history with cancellation and refund flows
@@ -85,14 +87,15 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 
 **Delivers:** Admin dashboard, bookings management, operational tooling, quality gates.
 
-| Step | Scope | Estimated Effort |
-|------|-------|-----------------|
-| Step 12 | Admin portal foundation, RBAC, dashboard, bookings management | 5–7 days |
-| Step 13 | SEO finalization, background jobs, observability | 3–5 days |
-| Step 14 | Quality gate, CI/CD, documentation | 3–5 days |
-| | **M3 subtotal** | **11–17 dev-days** |
+| Step    | Scope                                                         | Estimated Effort   |
+| ------- | ------------------------------------------------------------- | ------------------ |
+| Step 12 | Admin portal foundation, RBAC, dashboard, bookings management | 5–7 days           |
+| Step 13 | SEO finalization, background jobs, observability              | 3–5 days           |
+| Step 14 | Quality gate, CI/CD, documentation                            | 3–5 days           |
+|         | **M3 subtotal**                                               | **11–17 dev-days** |
 
 **Exit Criteria:**
+
 - Admin dashboard with KPIs and bookings chart
 - Admin bookings management with status transitions, cancellation, refund processing
 - Background jobs running (pending booking expiry, failed email retry, deal deactivation)
@@ -108,18 +111,18 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 
 > **Rationale:** Third-party service provisioning delays can block end-to-end validation. All external accounts and credentials must be secured before development begins.
 
-| Service | Action Needed | Owner | Due By |
-|---------|---------------|-------|--------|
-| **Supabase** | Create project, get anon key + service role key, enable pg_cron + pgcrypto extensions | Engineering | Before Step 1 |
-| **Vercel** | Connect repository, configure environment variables, enable preview deployments | Engineering | Before Step 1 |
-| **SendGrid** | Create account, verify sender domain and email, get API key | Engineering | Before Step 4 |
-| **Google reCAPTCHA v3** | Register site, get site key + secret key | Engineering | Before Step 3 |
-| **Google Maps** | Create API key, enable Maps Embed API + Places API | Engineering | Before Step 6 |
-| **Paystack** | Apply for merchant account, obtain test public + secret keys | Business/Finance | Before Step 9 |
-| **Google Analytics 4** | Create property, get measurement ID, set up GTM container | Marketing | Before Step 5 |
-| **Sentry** | Create project, get DSN | Engineering | Before Step 13 |
-| **Domain + SSL** | Purchase domain, point DNS to Vercel, provision SSL | Business/IT | Before M1 launch |
-| **Supabase Evaluation** | Confirm RLS learning curve manageable for team, test connection pooling behavior, verify edge function limits are sufficient for background jobs | Engineering | Before Step 2 |
+| Service                 | Action Needed                                                                                                                                    | Owner            | Due By           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- | ---------------- |
+| **Supabase**            | Create project, get anon key + service role key, enable pg_cron + pgcrypto extensions                                                            | Engineering      | Before Step 1    |
+| **Vercel**              | Connect repository, configure environment variables, enable preview deployments                                                                  | Engineering      | Before Step 1    |
+| **SendGrid**            | Create account, verify sender domain and email, get API key                                                                                      | Engineering      | Before Step 4    |
+| **Google reCAPTCHA v3** | Register site, get site key + secret key                                                                                                         | Engineering      | Before Step 3    |
+| **Google Maps**         | Create API key, enable Maps Embed API + Places API                                                                                               | Engineering      | Before Step 6    |
+| **Paystack**            | Apply for merchant account, obtain test public + secret keys                                                                                     | Business/Finance | Before Step 9    |
+| **Google Analytics 4**  | Create property, get measurement ID, set up GTM container                                                                                        | Marketing        | Before Step 5    |
+| **Sentry**              | Create project, get DSN                                                                                                                          | Engineering      | Before Step 13   |
+| **Domain + SSL**        | Purchase domain, point DNS to Vercel, provision SSL                                                                                              | Business/IT      | Before M1 launch |
+| **Supabase Evaluation** | Confirm RLS learning curve manageable for team, test connection pooling behavior, verify edge function limits are sufficient for background jobs | Engineering      | Before Step 2    |
 
 ---
 
@@ -129,24 +132,25 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 
 ## Content Deliverables (Required for M1 Launch)
 
-| Deliverable | Owner | Due By | Status |
-|-------------|-------|--------|--------|
-| Professional resort photography — rooms, facilities, campuses, dining, exterior | Marketing / Photography team | 2 weeks before M1 launch | ❌ Not started |
-| Hero video production — 30–60 second resort overview, muted autoplay | Marketing / Video team | 2 weeks before M1 launch | ❌ Not started |
-| Copy for all 10 public pages — brand-approved, faith-aligned, reviewed for accuracy | Product / Copywriter | 3 weeks before M1 launch | ❌ Not started |
-| Menu data for all 4 restaurants with names, descriptions, prices (NGN) | Resort Operations | 2 weeks before M1 launch | ❌ Not started |
-| Facility descriptions, operating hours, and location-within-resort info | Resort Operations | 2 weeks before M1 launch | ❌ Not started |
-| "Our Story" / About content — founding story, mission, vision, values, milestones | Product / Founders | 3 weeks before M1 launch | ❌ Not started |
-| Privacy Policy legal text — NDPR/NDPA compliant, reviewed by compliance/legal | Compliance Owner / Legal | 3 weeks before M1 launch | ❌ Not started |
-| Social media handles and links (Facebook, Instagram, Twitter/X, YouTube, TikTok) | Marketing | 1 week before M1 launch | ❌ Not started |
-| Contact information — phone numbers, email addresses, physical address, operating hours | Resort Operations | 1 week before M1 launch | ❌ Not started |
-| Google Maps coordinates and branded map pin | Engineering / Marketing | 1 week before M1 launch | ❌ Not started |
+| Deliverable                                                                             | Owner                        | Due By                   | Status         |
+| --------------------------------------------------------------------------------------- | ---------------------------- | ------------------------ | -------------- |
+| Professional resort photography — rooms, facilities, campuses, dining, exterior         | Marketing / Photography team | 2 weeks before M1 launch | ❌ Not started |
+| Hero video production — 30–60 second resort overview, muted autoplay                    | Marketing / Video team       | 2 weeks before M1 launch | ❌ Not started |
+| Copy for all 10 public pages — brand-approved, faith-aligned, reviewed for accuracy     | Product / Copywriter         | 3 weeks before M1 launch | ❌ Not started |
+| Menu data for all 4 restaurants with names, descriptions, prices (NGN)                  | Resort Operations            | 2 weeks before M1 launch | ❌ Not started |
+| Facility descriptions, operating hours, and location-within-resort info                 | Resort Operations            | 2 weeks before M1 launch | ❌ Not started |
+| "Our Story" / About content — founding story, mission, vision, values, milestones       | Product / Founders           | 3 weeks before M1 launch | ❌ Not started |
+| Privacy Policy legal text — NDPR/NDPA compliant, reviewed by compliance/legal           | Compliance Owner / Legal     | 3 weeks before M1 launch | ❌ Not started |
+| Social media handles and links (Facebook, Instagram, Twitter/X, YouTube, TikTok)        | Marketing                    | 1 week before M1 launch  | ❌ Not started |
+| Contact information — phone numbers, email addresses, physical address, operating hours | Resort Operations            | 1 week before M1 launch  | ❌ Not started |
+| Google Maps coordinates and branded map pin                                             | Engineering / Marketing      | 1 week before M1 launch  | ❌ Not started |
 
 ## Content Seeding Strategy (Required Before Each Milestone Launch)
 
 > **Rationale:** The plan seeds realistic data in SQL migrations for development/QA. A separate "Data Day" is needed before each milestone launch to replace seed data with verified production data.
 
 **Before M1 Launch (Data Day 1):**
+
 - [ ] Room inventory verified with actual unit counts and current prices
 - [ ] All media assets uploaded to Supabase Storage `media-public` bucket
 - [ ] Restaurant menus digitized and entered
@@ -155,6 +159,7 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 - [ ] Content pages populated with approved copy
 
 **Before M2 Launch (Data Day 2):**
+
 - [ ] Seasonal pricing records entered for current and upcoming seasons
 - [ ] Active deals created with valid date ranges and promo codes
 - [ ] Tax rate verified (currently defaulting to 7.5% VAT)
@@ -165,6 +170,7 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 - [ ] SendGrid production sender verified
 
 **Before M3 Launch (Data Day 3):**
+
 - [ ] Sentry DSN configured for production
 - [ ] GA4 measurement ID configured
 - [ ] Error alerting thresholds reviewed and configured

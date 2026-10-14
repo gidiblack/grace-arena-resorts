@@ -1,14 +1,5 @@
 import React from "react";
-import {
-  Box,
-  Flex,
-  Icon,
-  Image,
-  SimpleGrid,
-  Stack,
-  Text,
-  Badge,
-} from "@chakra-ui/react";
+import { Box, Flex, Icon, Image, SimpleGrid, Stack, Text, Badge } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
 import { generateOrganizationJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
@@ -43,17 +34,34 @@ export default function AboutPage() {
   ];
 
   const MILESTONES = [
-    { year: "Phase I", title: "The Vision & Groundbreaking", desc: "Acquisition of pristine acreage in Ibarapa Central, consecrated for a faith-centered retreat sanctuary." },
-    { year: "Phase II", title: "GAR Village Launch", desc: "Completion of the authentic handcrafted Executive Thatched Huts, Fire Pit, and The Prayer Hut." },
-    { year: "Phase III", title: "GAR Elysian Unveiling", desc: "Introduction of luxury suites at Fountain Haven, Oasis Villa, and The Cabana, alongside the Modern Mall & Spa." },
-    { year: "Phase IV", title: "Presidential Expansion", desc: "Ongoing architectural finishing of the Presidential and Royal Thatched Suites." },
+    {
+      year: "Phase I",
+      title: "The Vision & Groundbreaking",
+      desc: "Acquisition of pristine acreage in Ibarapa Central, consecrated for a faith-centered retreat sanctuary.",
+    },
+    {
+      year: "Phase II",
+      title: "GAR Village Launch",
+      desc: "Completion of the authentic handcrafted Executive Thatched Huts, Fire Pit, and The Prayer Hut.",
+    },
+    {
+      year: "Phase III",
+      title: "GAR Elysian Unveiling",
+      desc: "Introduction of luxury suites at Fountain Haven, Oasis Villa, and The Cabana, alongside the Modern Mall & Spa.",
+    },
+    {
+      year: "Phase IV",
+      title: "Presidential Expansion",
+      desc: "Ongoing architectural finishing of the Presidential and Royal Thatched Suites.",
+    },
   ];
 
   return (
     <PageWrapper
       title="About Us — Grace Arena Resorts"
       description="Learn the vision, Christian foundations, and cultural story behind Grace Arena Resorts in Igbo-Ora, Oyo State, Nigeria."
-      jsonLd={generateOrganizationJsonLd()}>
+      jsonLd={generateOrganizationJsonLd()}
+    >
       {/* Hero */}
       <Box
         bg={`linear-gradient(rgba(7, 7, 7, 0.7), rgba(7, 7, 7, 0.9)), url(${HeroBg.src})`}
@@ -63,17 +71,25 @@ export default function AboutPage() {
         pb={{ base: 14, md: 18 }}
         px={{ base: 4, md: 8 }}
         color="white"
-        textAlign="center">
+        textAlign="center"
+      >
         <Stack maxW="50rem" mx="auto" gap={3} align="center">
-          <Text fontSize="12px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+          <Text
+            fontSize="12px"
+            fontWeight="bold"
+            color="accent.500"
+            letterSpacing="3px"
+            textTransform="uppercase"
+          >
             Our Heritage &amp; Calling
           </Text>
           <Text as="h1" fontSize={{ base: "32px", md: "50px" }} fontWeight="bold">
             A Christian Sanctuary in the Land of Twins
           </Text>
           <Text fontSize="16px" color="gray.200" maxW="40rem">
-            Grace Arena Resorts was birthed with a singular conviction: to create an unblemished oasis of peace where
-            people encounter genuine rest, spiritual renewal, and refined comfort.
+            Grace Arena Resorts was birthed with a singular conviction: to create an unblemished
+            oasis of peace where people encounter genuine rest, spiritual renewal, and refined
+            comfort.
           </Text>
         </Stack>
       </Box>
@@ -83,23 +99,30 @@ export default function AboutPage() {
         <Box maxW="80rem" mx="auto">
           <SimpleGrid columns={{ base: 1, lg: 2 }} gap={{ base: 8, lg: 12 }} alignItems="center">
             <Stack gap={5}>
-              <Text fontSize="13px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+              <Text
+                fontSize="13px"
+                fontWeight="bold"
+                color="accent.500"
+                letterSpacing="3px"
+                textTransform="uppercase"
+              >
                 Our Story
               </Text>
               <Text fontSize={{ base: "26px", md: "36px" }} fontWeight="bold" lineHeight="shorter">
                 Where Faith Meets Timeless Hospitality
               </Text>
               <Text fontSize="15px" color="gray.300" lineHeight="tall">
-                Situated in the legendary agrarian town of Igbo-Ora, Oyo State—celebrated globally for having the
-                highest rate of twin births in the world—Grace Arena Resorts stands as a testimony of wholesome
-                Christian hospitality.
+                Situated in the legendary agrarian town of Igbo-Ora, Oyo State—celebrated globally
+                for having the highest rate of twin births in the world—Grace Arena Resorts stands
+                as a testimony of wholesome Christian hospitality.
               </Text>
               <Text fontSize="15px" color="gray.300" lineHeight="tall">
-                In a busy world saturated with noisy distractions and secular leisure, GAR was designed as an intentional
-                counter-narrative: a family-first, alcohol-free haven anchored in spiritual devotion. From the consecrated
-                grounds of <strong>The Prayer Hut</strong> to our two distinct campuses—<strong>GAR Elysian</strong> and{" "}
-                <strong>GAR Village</strong>—every corner inspires quiet communion with God and refreshing connection with
-                loved ones.
+                In a busy world saturated with noisy distractions and secular leisure, GAR was
+                designed as an intentional counter-narrative: a family-first, alcohol-free haven
+                anchored in spiritual devotion. From the consecrated grounds of{" "}
+                <strong>The Prayer Hut</strong> to our two distinct campuses—
+                <strong>GAR Elysian</strong> and <strong>GAR Village</strong>—every corner inspires
+                quiet communion with God and refreshing connection with loved ones.
               </Text>
 
               <Box pt={2}>
@@ -117,8 +140,15 @@ export default function AboutPage() {
                 borderRadius="24px"
                 overflow="hidden"
                 border="1px solid #1E293B"
-                boxShadow="0 20px 50px rgba(0,0,0,0.6)">
-                <Image src={elysian.src} alt="GAR Elysian Campus" w="full" h="full" objectFit="cover" />
+                boxShadow="0 20px 50px rgba(0,0,0,0.6)"
+              >
+                <Image
+                  src={elysian.src}
+                  alt="GAR Elysian Campus"
+                  w="full"
+                  h="full"
+                  objectFit="cover"
+                />
               </Box>
             </Box>
           </SimpleGrid>
@@ -129,7 +159,13 @@ export default function AboutPage() {
       <Box py={{ base: 16, md: 20 }} px={{ base: 4, md: 8, xl: 12 }} bg="#0B132B" color="white">
         <Box maxW="80rem" mx="auto">
           <Stack textAlign="center" align="center" mb={{ base: 10, md: 14 }} gap={2}>
-            <Text fontSize="12px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+            <Text
+              fontSize="12px"
+              fontWeight="bold"
+              color="accent.500"
+              letterSpacing="3px"
+              textTransform="uppercase"
+            >
               Our Foundation
             </Text>
             <Text fontSize={{ base: "26px", md: "36px" }} fontWeight="bold">
@@ -146,7 +182,8 @@ export default function AboutPage() {
                 bg="#0F172A"
                 border="1px solid #1E293B"
                 transition="all 0.3s"
-                _hover={{ borderColor: "accent.500", transform: "translateY(-4px)" }}>
+                _hover={{ borderColor: "accent.500", transform: "translateY(-4px)" }}
+              >
                 <Icon as={val.icon} boxSize={8} color="accent.500" mb={4} />
                 <Text fontSize="18px" fontWeight="bold" mb={2}>
                   {val.title}
@@ -164,7 +201,13 @@ export default function AboutPage() {
       <Box py={{ base: 16, md: 20 }} px={{ base: 4, md: 8, xl: 12 }} bg="#070707" color="white">
         <Box maxW="60rem" mx="auto">
           <Stack textAlign="center" align="center" mb={{ base: 10, md: 14 }} gap={2}>
-            <Text fontSize="12px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+            <Text
+              fontSize="12px"
+              fontWeight="bold"
+              color="accent.500"
+              letterSpacing="3px"
+              textTransform="uppercase"
+            >
               The Journey
             </Text>
             <Text fontSize={{ base: "26px", md: "34px" }} fontWeight="bold">
@@ -182,8 +225,17 @@ export default function AboutPage() {
                 border="1px solid #1E293B"
                 align={{ base: "flex-start", sm: "center" }}
                 gap={5}
-                flexDir={{ base: "column", sm: "row" }}>
-                <Badge bg="accent.500" color="black" px={3} py={1} borderRadius="full" fontSize="12px" fontWeight="bold">
+                flexDir={{ base: "column", sm: "row" }}
+              >
+                <Badge
+                  bg="accent.500"
+                  color="black"
+                  px={3}
+                  py={1}
+                  borderRadius="full"
+                  fontSize="12px"
+                  fontWeight="bold"
+                >
                   {m.year}
                 </Badge>
                 <Box>

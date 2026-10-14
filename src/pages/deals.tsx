@@ -1,15 +1,5 @@
 import React, { useState } from "react";
-import {
-  Box,
-  Flex,
-  HStack,
-  Icon,
-  Image,
-  SimpleGrid,
-  Stack,
-  Text,
-  Badge,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, Image, SimpleGrid, Stack, Text, Badge } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
 import { generateOfferJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
@@ -42,8 +32,10 @@ const DEALS_DATA: DealItem[] = [
     promoCode: "GRACE20",
     validUntil: "November 30, 2026",
     image: elysian.src,
-    description: "Special retreat pricing for church leadership and ministry teams booking 5+ rooms for 2 nights or more.",
-    terms: "Includes private sessions at The Prayer Hut and complimentary audio-visual conference room setup.",
+    description:
+      "Special retreat pricing for church leadership and ministry teams booking 5+ rooms for 2 nights or more.",
+    terms:
+      "Includes private sessions at The Prayer Hut and complimentary audio-visual conference room setup.",
   },
   {
     id: "weekend-village-getaway",
@@ -53,7 +45,8 @@ const DEALS_DATA: DealItem[] = [
     promoCode: "VILLAGE15",
     validUntil: "December 15, 2026",
     image: hut.src,
-    description: "Unwind in the authentic thatched Executive Huts with complimentary continental breakfast and fire pit evening access.",
+    description:
+      "Unwind in the authentic thatched Executive Huts with complimentary continental breakfast and fire pit evening access.",
     terms: "Valid for Friday–Sunday weekend bookings. Non-refundable.",
   },
   {
@@ -64,7 +57,8 @@ const DEALS_DATA: DealItem[] = [
     promoCode: "ELYSIANLOVE",
     validUntil: "End of Year",
     image: dining.src,
-    description: "Book 2 nights in The Cabana or Deluxe Suite and receive a complimentary 3-course candlelit dinner for two.",
+    description:
+      "Book 2 nights in The Cabana or Deluxe Suite and receive a complimentary 3-course candlelit dinner for two.",
     terms: "Includes chef starter, prime main course, and dessert at GAR Elysian restaurant.",
   },
   {
@@ -75,7 +69,8 @@ const DEALS_DATA: DealItem[] = [
     promoCode: "TWINCITY",
     validUntil: "December 31, 2026",
     image: suite.src,
-    description: "Bring the whole family to experience the world capital of twins with guided Idere Hills hiking and farm harvest tour included.",
+    description:
+      "Bring the whole family to experience the world capital of twins with guided Idere Hills hiking and farm harvest tour included.",
     terms: "Voucher redeemable on dining, spa, and recreational arcade games.",
   },
 ];
@@ -100,7 +95,8 @@ export default function DealsPage() {
     <PageWrapper
       title="Deals & Offers — Grace Arena Resorts"
       description="Enjoy seasonal discounts, ministry retreat packages, and exclusive deals at Grace Arena Resorts."
-      jsonLd={DEALS_DATA.map((d) => generateOfferJsonLd(d.title, d.discountText, d.promoCode))}>
+      jsonLd={DEALS_DATA.map((d) => generateOfferJsonLd(d.title, d.discountText, d.promoCode))}
+    >
       {/* Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"
@@ -108,16 +104,24 @@ export default function DealsPage() {
         pb={{ base: 10, md: 14 }}
         px={{ base: 4, md: 8 }}
         color="white"
-        textAlign="center">
+        textAlign="center"
+      >
         <Stack maxW="46rem" mx="auto" gap={3} align="center">
-          <Text fontSize="12px" fontWeight="bold" color="accent.500" letterSpacing="3px" textTransform="uppercase">
+          <Text
+            fontSize="12px"
+            fontWeight="bold"
+            color="accent.500"
+            letterSpacing="3px"
+            textTransform="uppercase"
+          >
             Exclusive Value
           </Text>
           <Text as="h1" fontSize={{ base: "30px", md: "46px" }} fontWeight="bold">
             Special Retreat Deals &amp; Offers
           </Text>
           <Text fontSize="15px" color="gray.300">
-            Take advantage of curated retreat packages, family weekend specials, and complimentary dining additions.
+            Take advantage of curated retreat packages, family weekend specials, and complimentary
+            dining additions.
           </Text>
         </Stack>
 
@@ -138,7 +142,8 @@ export default function DealsPage() {
               border="1px solid"
               borderColor={selectedCat === cat ? "accent.500" : "#334155"}
               cursor="pointer"
-              transition="all 0.2s">
+              transition="all 0.2s"
+            >
               {cat}
             </Box>
           ))}
@@ -146,7 +151,13 @@ export default function DealsPage() {
       </Box>
 
       {/* Deals Grid */}
-      <Box py={{ base: 12, md: 16 }} px={{ base: 4, md: 8, xl: 12 }} bg="#070707" color="white" minH="60vh">
+      <Box
+        py={{ base: 12, md: 16 }}
+        px={{ base: 4, md: 8, xl: 12 }}
+        bg="#070707"
+        color="white"
+        minH="60vh"
+      >
         <Box maxW="80rem" mx="auto">
           <SimpleGrid columns={{ base: 1, md: 2 }} gap={8}>
             {filtered.map((deal) => (
@@ -157,10 +168,20 @@ export default function DealsPage() {
                 bg="#0F172A"
                 border="1px solid #1E293B"
                 overflow="hidden"
-                boxShadow="0 10px 30px rgba(0,0,0,0.4)">
+                boxShadow="0 10px 30px rgba(0,0,0,0.4)"
+              >
                 <Box h="220px" position="relative" bg="#1E293B">
                   <Image src={deal.image} alt={deal.title} w="full" h="full" objectFit="cover" />
-                  <Badge position="absolute" top={4} left={4} bg="accent.500" color="black" px={3} py={1} borderRadius="full">
+                  <Badge
+                    position="absolute"
+                    top={4}
+                    left={4}
+                    bg="accent.500"
+                    color="black"
+                    px={3}
+                    py={1}
+                    borderRadius="full"
+                  >
                     {deal.discountText}
                   </Badge>
                   <Text
@@ -172,14 +193,20 @@ export default function DealsPage() {
                     px={2.5}
                     py={1}
                     borderRadius="md"
-                    fontSize="11px">
+                    fontSize="11px"
+                  >
                     Valid until {deal.validUntil}
                   </Text>
                 </Box>
 
                 <Stack p={{ base: 6, md: 8 }} gap={3} flex="1" justify="space-between">
                   <Stack gap={2}>
-                    <Text fontSize="11px" fontWeight="bold" color="accent.500" textTransform="uppercase">
+                    <Text
+                      fontSize="11px"
+                      fontWeight="bold"
+                      color="accent.500"
+                      textTransform="uppercase"
+                    >
                       {deal.category}
                     </Text>
                     <Text fontSize="22px" fontWeight="bold">
@@ -197,7 +224,8 @@ export default function DealsPage() {
                       p={3}
                       borderRadius="10px"
                       border="1px dashed #FCCA46"
-                      mt={2}>
+                      mt={2}
+                    >
                       <HStack gap={2}>
                         <Icon as={FaTag} color="accent.500" boxSize={3.5} />
                         <Text fontSize="13px" fontWeight="bold" letterSpacing="wider">
@@ -211,7 +239,8 @@ export default function DealsPage() {
                         fontWeight="bold"
                         color="accent.500"
                         _hover={{ textDecoration: "underline" }}
-                        cursor="pointer">
+                        cursor="pointer"
+                      >
                         {copiedCode === deal.promoCode ? "Copied!" : "Copy Code"}
                       </Box>
                     </Flex>
@@ -223,7 +252,10 @@ export default function DealsPage() {
 
                   <Box pt={4} borderTop="1px solid #1E293B">
                     <Link href={`${ROUTES.booking}?deal=${deal.id}`}>
-                      <Button size="sm" style={{ width: "100%", fontSize: "13px", padding: "10px" }}>
+                      <Button
+                        size="sm"
+                        style={{ width: "100%", fontSize: "13px", padding: "10px" }}
+                      >
                         Book With This Deal
                       </Button>
                     </Link>

@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  Box,
-  Flex,
-  HStack,
-  Icon,
-  SimpleGrid,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
 import { FaLocationDot, FaWhatsapp, FaCompass, FaMapLocationDot } from "react-icons/fa6";
 import { MdDirectionsCar } from "react-icons/md";
@@ -30,20 +22,36 @@ export const MapSection: React.FC<MapSectionProps> = ({
 
   const resortCoordinates = "7.4333° N, 3.2833° E";
   const directionsUrl = "https://maps.google.com/?q=Igbo-Ora+Oyo+State+Nigeria";
-  const whatsappDirectionsUrl = "https://wa.me/2348123456789?text=Hello%20Grace%20Arena%20Resorts,%20I%20need%20driving%20directions%20to%20the%20resort.";
+  const whatsappDirectionsUrl =
+    "https://wa.me/2348123456789?text=Hello%20Grace%20Arena%20Resorts,%20I%20need%20driving%20directions%20to%20the%20resort.";
 
   return (
     <Box py={{ base: 14, md: 18 }} px={{ base: 4, md: 8, xl: 12 }} bg="white" color="#0F172A">
       <Box maxW="80rem" mx="auto">
-        <SimpleGrid columns={{ base: 1, lg: showDetailsOnly ? 1 : 2 }} gap={{ base: 8, lg: 12 }} alignItems="center">
+        <SimpleGrid
+          columns={{ base: 1, lg: showDetailsOnly ? 1 : 2 }}
+          gap={{ base: 8, lg: 12 }}
+          alignItems="center"
+        >
           {/* Information Column */}
           <Stack gap={4}>
             {subtitle && (
-              <Text fontSize="13px" fontWeight="bold" color="accent.600" letterSpacing="3px" textTransform="uppercase">
+              <Text
+                fontSize="13px"
+                fontWeight="bold"
+                color="accent.600"
+                letterSpacing="3px"
+                textTransform="uppercase"
+              >
                 {subtitle}
               </Text>
             )}
-            <Text as="h2" fontSize={{ base: "26px", md: "36px" }} fontWeight="bold" lineHeight="shorter">
+            <Text
+              as="h2"
+              fontSize={{ base: "26px", md: "36px" }}
+              fontWeight="bold"
+              lineHeight="shorter"
+            >
               {title}
             </Text>
             <Text fontSize="15px" color="#475569" lineHeight="tall">
@@ -58,7 +66,8 @@ export const MapSection: React.FC<MapSectionProps> = ({
                     Resort Campus Address
                   </Text>
                   <Text fontSize="13px" color="#64748B">
-                    Grace Arena Resorts, Igbo-Ora, Ibarapa Central Local Government, Oyo State, Nigeria
+                    Grace Arena Resorts, Igbo-Ora, Ibarapa Central Local Government, Oyo State,
+                    Nigeria
                   </Text>
                 </Box>
               </HStack>
@@ -89,12 +98,22 @@ export const MapSection: React.FC<MapSectionProps> = ({
             </Stack>
 
             <HStack gap={4} pt={4} flexWrap="wrap">
-              <a href={directionsUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+              <a
+                href={directionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: "none" }}
+              >
                 <Button variant="primary" size="md">
                   Get Driving Directions
                 </Button>
               </a>
-              <a href={whatsappDirectionsUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+              <a
+                href={whatsappDirectionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: "none" }}
+              >
                 <HStack
                   px={4}
                   py={2.5}

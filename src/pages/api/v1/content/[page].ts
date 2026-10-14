@@ -6,8 +6,16 @@ const PAGE_CONTENT: Record<string, Record<string, unknown>> = {
     heroTitle: "Your Comfort, Our Sacred Priority",
     tagline: "A Serene Christian Retreat in Igbo-Ora, Nigeria",
     campuses: [
-      { name: "GAR Elysian", tier: "Luxury Suites", buildings: ["Fountain Haven", "Oasis Villa", "The Cabana"] },
-      { name: "GAR Village", tier: "Rustic Thatched Huts", buildings: ["Executive Huts", "Presidential Huts", "Royal Huts"] },
+      {
+        name: "GAR Elysian",
+        tier: "Luxury Suites",
+        buildings: ["Fountain Haven", "Oasis Villa", "The Cabana"],
+      },
+      {
+        name: "GAR Village",
+        tier: "Rustic Thatched Huts",
+        buildings: ["Executive Huts", "Presidential Huts", "Royal Huts"],
+      },
     ],
   },
   about: {
@@ -38,7 +46,8 @@ const PAGE_CONTENT: Record<string, Record<string, unknown>> = {
   },
   terms: {
     title: "Terms and Conditions of Stay",
-    alcoholPolicy: "Grace Arena Resorts is a consecrated, alcohol-free Christian hospitality environment.",
+    alcoholPolicy:
+      "Grace Arena Resorts is a consecrated, alcohol-free Christian hospitality environment.",
     cancellationPolicy: "Full refund up to 48 hours prior to scheduled check-in.",
   },
 };

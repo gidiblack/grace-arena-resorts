@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  Box,
-  HStack,
-  Link,
-  SimpleGrid,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import { Box, HStack, Link, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 import NextLink from "next/link";
 import Button from "@/components/ui/button";
 import { ROUTES } from "@/constants/ROUTES";
@@ -200,8 +193,8 @@ export const HeroVideo: React.FC<HeroVideoProps> = ({
           maxW="42rem"
           lineHeight="tall"
         >
-          Step away from the city hustle into wholesome tranquility. Immerse yourself in refined accommodations,
-          the peaceful Prayer Hut, lush landscapes, and authentic Nigerian warmth.
+          Step away from the city hustle into wholesome tranquility. Immerse yourself in refined
+          accommodations, the peaceful Prayer Hut, lush landscapes, and authentic Nigerian warmth.
         </Text>
 
         <HStack gap={4} pt={4} flexWrap="wrap" justify="center">
@@ -274,7 +267,12 @@ export const HeroVideo: React.FC<HeroVideoProps> = ({
                     />
                   )}
 
-                  <Text fontSize="11px" fontWeight="semibold" color="accent.500" textTransform="uppercase">
+                  <Text
+                    fontSize="11px"
+                    fontWeight="semibold"
+                    color="accent.500"
+                    textTransform="uppercase"
+                  >
                     {subtitle}
                   </Text>
                   <Text fontSize="16px" fontWeight="bold" color="white" mt={0.5}>
