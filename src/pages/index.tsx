@@ -90,6 +90,27 @@ const AMENITIES = [
   },
 ];
 
+const THINGS_TO_DO = [
+  {
+    title: "Games Room",
+    image: gem1.src,
+    description:
+      "Unwind and have fun in our vibrant games room, where laughter and friendly competition create unforgettable memories for guests of all ages. From classic board games to modern entertainment, our games room offers a lively atmosphere for everyone to enjoy.",
+  },
+  {
+    title: "Spa & Wellness",
+    image: pool.src,
+    description:
+      "Indulge in ultimate relaxation at our spa and wellness center, where tranquility and rejuvenation await. Experience a range of luxurious treatments, from soothing massages to invigorating facials, designed to pamper your body and soothe your mind.",
+  },
+  {
+    title: "Outdoor Activities",
+    image: hut.src,
+    description:
+      "Embrace the great outdoors with our exciting range of outdoor activities, designed to invigorate your spirit and create unforgettable memories. From thrilling water sports to scenic hiking trails, our resort offers a variety of options for adventure seekers and nature lovers alike.",
+  },
+];
+
 export default function Home() {
   return (
     <>
@@ -271,7 +292,12 @@ export default function Home() {
 
         {/* Gallery Section */}
         <PageSection bgColor={"light.500"} pt={["8rem", null, "10rem", null, "30rem"]} pb={[12, null, 16, 20]}>
-          <Text as={"h2"} fontSize={[24, null, 28, 32, 36]} fontWeight={"medium"} color={"dark.500"}>
+          <Text
+            as={"h2"}
+            fontSize={[24, null, 28, 32, 36]}
+            fontWeight={"medium"}
+            color={"dark.500"}
+            textAlign={"center"}>
             OUR GALLERY
           </Text>
           <SimpleGrid
@@ -309,6 +335,55 @@ export default function Home() {
               <Image src={HeroBg.src} alt="suite 2" w={"full"} h={"full"} objectFit={"cover"} />
             </GridItem>
           </SimpleGrid>
+        </PageSection>
+
+        {/* Things to do Section */}
+        <PageSection
+          bg={`url(${sectionBg.src})`}
+          bgSize={"cover"}
+          bgRepeat={"no-repeat"}
+          bgPos={"top"}
+          bgColor={"light.500"}
+          minH={"32rem"}
+          justifyContent={"center"}
+          align={"center"}>
+          <Box my={[16, null, 20, 28, 32]}>
+            <Text
+              as={"h2"}
+              fontSize={[24, null, 28, 32, 36]}
+              fontWeight={"medium"}
+              color={"dark.500"}
+              textAlign={"center"}>
+              THINGS TO DO
+            </Text>
+            <SimpleGrid columns={{ base: 1, md: 3 }} gap={[8, null, 10, 12]} mt={[4, null, 5, 6, 8]}>
+              {THINGS_TO_DO.map(({ title, description, image }, i) => (
+                <Flex
+                  key={i}
+                  flexDir={"column"}
+                  borderRadius={16}
+                  outline={"4px solid"}
+                  outlineColor={"dark.500"}
+                  color={"dark.500"}
+                  _even={{ flexDir: "column-reverse" }}>
+                  <Box
+                    h={"280px"}
+                    bg={`url(${image}) rgba(0, 0, 0, 0.25)`}
+                    bgBlendMode={"overlay"}
+                    bgSize={"cover"}
+                    bgPos={"center"}
+                    borderRadius={8}
+                  />
+                  <Stack gap={[2, null, 3]} p={[4, null, 5, 6]}>
+                    <Text as={"h3"} fontSize={[20, null, 22, 24, 28]} fontWeight={"bold"}>
+                      {title}
+                    </Text>
+                    <Text fontSize={[14, null, 15, 16]}>{description}</Text>
+                  </Stack>
+                </Flex>
+              ))}
+            </SimpleGrid>
+          </Box>
         </PageSection>
       </PageWrapper>
     </>
