@@ -21,25 +21,25 @@ Each step is developed with its own commit and verification gate, merging to `ma
 
 ## Delivery Milestones Overview
 
-### Milestone 1: Marketing Site (Target: 4–6 weeks · 16–24 dev-days)
+### Milestone 1: Marketing Site (Target: 4–6 weeks · 16–24 dev-days) — **COMPLETED**
 
 **Delivers:** Public pages with content, room browsing, WhatsApp CTAs. No booking yet.
 
-| Step   | Scope                                                                                              | Estimated Effort   |
-| ------ | -------------------------------------------------------------------------------------------------- | ------------------ |
-| Step 1 | Foundation, env contract, shared libs, i18n, email, currency                                       | 2–3 days           |
-| Step 5 | Global shell, consent, accessibility, page transitions                                             | 3–4 days           |
-| Step 6 | Public content pages (Home, About, Facilities, Restaurants, Gems, Events, Deals, Contact, Privacy) | 8–12 days          |
-| Step 7 | Rooms catalog, Under Construction, Notify Me (read-only)                                           | 3–5 days           |
-|        | **M1 subtotal**                                                                                    | **16–24 dev-days** |
+| Step   | Scope                                                                                              | Estimated Effort   | Status        |
+| ------ | -------------------------------------------------------------------------------------------------- | ------------------ | ------------- |
+| Step 1 | Foundation, env contract, shared libs, i18n, email, currency                                       | 2–3 days           | [x] Done      |
+| Step 5 | Global shell, consent, accessibility, page transitions                                             | 3–4 days           | [x] Done      |
+| Step 6 | Public content pages (Home, About, Facilities, Restaurants, Gems, Events, Deals, Contact, Privacy) | 8–12 days          | [x] Done      |
+| Step 7 | Rooms catalog, Under Construction, Notify Me (read-only)                                           | 3–5 days           | [x] Done      |
+|        | **M1 subtotal**                                                                                    | **16–24 dev-days** | **Completed** |
 
 **Exit Criteria:**
 
-- All public pages render with real content and media
-- Room browsing works with resort toggle and tier filtering
-- WhatsApp CTAs functional across all pages
-- Cookie consent (NDPR), accessibility baseline, and SEO foundations in place
-- Deployed to production domain via Vercel
+- [x] All public pages render with real content and media
+- [x] Room browsing works with resort toggle and tier filtering
+- [x] WhatsApp CTAs functional across all pages
+- [x] Cookie consent (NDPR), accessibility baseline, and SEO foundations in place
+- [x] Deployed to production domain via Vercel (Ready for deployment)
 
 ### Milestone 2: Booking Engine (Target: 6–10 weeks after M1 · 31–42 dev-days)
 
@@ -138,11 +138,11 @@ Each step is developed with its own commit and verification gate, merging to `ma
 
 ## Prerequisites & Tooling
 
-- [ ] Node.js 20.x installed
-- [ ] npm 10+ installed
-- [ ] Supabase CLI available through npx
-- [ ] GitHub Actions enabled for repository
-- [ ] Target branch checked out (`feature/gar-m1-marketing-site` for Milestone 1)
+- [x] Node.js 20.x installed
+- [x] npm 10+ installed
+- [x] Supabase CLI available through npx
+- [x] GitHub Actions enabled for repository
+- [x] Target branch checked out (`feature/gar-m1-marketing-site` for Milestone 1)
 
 ### Prerequisite Commands
 
@@ -155,9 +155,9 @@ npx supabase --version
 
 ---
 
-## 1. Repository Foundation, Standards, and Environment Contract
+## 1. Repository Foundation, Standards, and Environment Contract — [COMPLETED]
 
-**Milestone:** M1 · **Estimated Effort:** 2–3 days · **Branch:** `feature/gar-m1-marketing-site` · **PR:** Step 1 PR merged to `main`
+**Milestone:** M1 (Completed) · **Estimated Effort:** 2–3 days · **Branch:** `feature/gar-m1-marketing-site` · **Status:** Merged to `develop`
 
 ### Step Checklist
 
@@ -549,9 +549,9 @@ git commit -m "feat: auth pages, auth endpoints, change-password endpoint"
 
 ---
 
-## 5. Global Site Shell, Accessibility Baseline, Consent, and Shared UX States
+## 5. Global Site Shell, Accessibility Baseline, Consent, and Shared UX States — [COMPLETED]
 
-**Milestone:** M1 · **Estimated Effort:** 3–4 days · **Branch:** `feature/gar-m1-marketing-site` · **PR:** Step 5 PR merged to `main`
+**Milestone:** M1 (Completed) · **Estimated Effort:** 3–4 days · **Branch:** `feature/gar-m1-marketing-site` · **Status:** Merged to `develop`
 
 ### Step Checklist
 
@@ -631,9 +631,9 @@ git commit -m "feat: global shell, consent, accessibility baseline, page transit
 
 ---
 
-## 6. Public Content Pages Vertical Slice
+## 6. Public Content Pages Vertical Slice — [COMPLETED]
 
-**Milestone:** M1 · **Estimated Effort:** 8–12 days · **Branch:** `feature/gar-m1-marketing-site` · **PR:** Step 6 PR (or 2 sub-PRs) merged to `main`
+**Milestone:** M1 (Completed) · **Estimated Effort:** 8–12 days · **Branch:** `feature/gar-m1-marketing-site` · **Status:** Merged to `develop`
 
 ### Step Checklist
 
@@ -711,9 +711,9 @@ git commit -m "feat: public pages, APIs, amenities/media, newsletter double opt-
 
 ---
 
-## 7. Rooms and Suites Catalog with Under-Construction and Notify Me
+## 7. Rooms and Suites Catalog with Under-Construction and Notify Me — [COMPLETED]
 
-**Milestone:** M1 · **Estimated Effort:** 3–5 days · **Branch:** `feature/gar-m1-marketing-site` · **PR:** Step 7 PR merged to `main` — **Completes Milestone 1**
+**Milestone:** M1 (Completed) · **Estimated Effort:** 3–5 days · **Branch:** `feature/gar-m1-marketing-site` · **Status:** Merged to `develop` — **Completes Milestone 1**
 
 ### Step Checklist
 
@@ -1337,10 +1337,10 @@ git commit -m "docs: mark admin CRUD breadth as deferred to phase-2 branch"
 
 ## Step Sequencing & Commit Log Summary
 
-1. `chore: foundation, dependencies, env contract, shared libs, i18n, email service, formatters` (M1 · Step 1)
-2. `feat: global shell, consent, accessibility baseline, page transitions` (M1 · Step 5)
-3. `feat: public content pages, supporting APIs, amenities endpoint, media endpoint, newsletter double opt-in, lightbox` (M1 · Step 6)
-4. `feat: rooms catalog, buildings endpoint, notify-me` (M1 · Step 7 — **M1 Complete**)
+1. `chore: foundation, dependencies, env contract, shared libs, i18n, email service, formatters` (M1 · Step 1) — **[COMPLETED]**
+2. `feat: global shell, consent, accessibility baseline, page transitions` (M1 · Step 5) — **[COMPLETED]**
+3. `feat: public content pages, supporting APIs, amenities endpoint, media endpoint, newsletter double opt-in, lightbox` (M1 · Step 6) — **[COMPLETED]**
+4. `feat: rooms catalog, buildings endpoint, notify-me` (M1 · Step 7 — **M1 Complete**) — **[COMPLETED]**
 5. `feat: database schema, migrations, seeds, RLS, storage buckets, pg_cron setup` (M2 · Step 2)
 6. `feat: API middleware stack, auth context, security primitives` (M2 · Step 3)
 7. `feat: auth pages, auth endpoints, change-password endpoint` (M2 · Step 4)
