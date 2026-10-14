@@ -54,6 +54,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["users"]["Insert"]>;
+        Relationships: [];
       };
       resorts: {
         Row: {
@@ -77,6 +78,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["resorts"]["Insert"]>;
+        Relationships: [];
       };
       buildings: {
         Row: {
@@ -96,6 +98,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["buildings"]["Insert"]>;
+        Relationships: [];
       };
       room_types: {
         Row: {
@@ -129,6 +132,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["room_types"]["Insert"]>;
+        Relationships: [];
       };
       rooms: {
         Row: {
@@ -150,6 +154,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["rooms"]["Insert"]>;
+        Relationships: [];
       };
       seasonal_prices: {
         Row: {
@@ -173,6 +178,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["seasonal_prices"]["Insert"]>;
+        Relationships: [];
       };
       deals: {
         Row: {
@@ -212,6 +218,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["deals"]["Insert"]>;
+        Relationships: [];
       };
       bookings: {
         Row: {
@@ -259,6 +266,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["bookings"]["Insert"]>;
+        Relationships: [];
       };
       booking_line_items: {
         Row: {
@@ -282,6 +290,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["booking_line_items"]["Insert"]>;
+        Relationships: [];
       };
       payments: {
         Row: {
@@ -315,6 +324,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["payments"]["Insert"]>;
+        Relationships: [];
       };
       restaurants: {
         Row: {
@@ -342,6 +352,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["restaurants"]["Insert"]>;
+        Relationships: [];
       };
       menu_items: {
         Row: {
@@ -369,6 +380,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["menu_items"]["Insert"]>;
+        Relationships: [];
       };
       facilities: {
         Row: {
@@ -398,6 +410,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["facilities"]["Insert"]>;
+        Relationships: [];
       };
       gems: {
         Row: {
@@ -427,6 +440,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["gems"]["Insert"]>;
+        Relationships: [];
       };
       event_categories: {
         Row: {
@@ -452,6 +466,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["event_categories"]["Insert"]>;
+        Relationships: [];
       };
       event_inquiries: {
         Row: {
@@ -485,6 +500,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["event_inquiries"]["Insert"]>;
+        Relationships: [];
       };
       contact_submissions: {
         Row: {
@@ -512,6 +528,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["contact_submissions"]["Insert"]>;
+        Relationships: [];
       };
       newsletter_subscribers: {
         Row: {
@@ -533,6 +550,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["newsletter_subscribers"]["Insert"]>;
+        Relationships: [];
       };
       notify_me_registrations: {
         Row: {
@@ -554,6 +572,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["notify_me_registrations"]["Insert"]>;
+        Relationships: [];
       };
       amenities: {
         Row: {
@@ -575,6 +594,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["amenities"]["Insert"]>;
+        Relationships: [];
       };
       room_type_amenities: {
         Row: {
@@ -588,6 +608,7 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["room_type_amenities"]["Insert"]>;
+        Relationships: [];
       };
       system_settings: {
         Row: {
@@ -607,6 +628,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["system_settings"]["Insert"]>;
+        Relationships: [];
       };
       media_assets: {
         Row: {
@@ -636,6 +658,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["media_assets"]["Insert"]>;
+        Relationships: [];
       };
       audit_logs: {
         Row: {
@@ -661,6 +684,7 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["audit_logs"]["Insert"]>;
+        Relationships: [];
       };
       failed_emails: {
         Row: {
@@ -688,6 +712,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["failed_emails"]["Insert"]>;
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
@@ -705,6 +730,7 @@ export interface Database {
         Returns: string;
       };
     };
+    CompositeTypes: Record<string, never>;
     Enums: {
       user_role: UserRole;
       room_tier: RoomTier;
