@@ -1,24 +1,29 @@
 ---
 goal: Grace Arena Resorts SRS v1.2 Implementation Plan
-version: 1.2
+version: 1.3
 date_created: 2026-03-29
-last_updated: 2026-03-29
+last_updated: 2026-10-14
 owner: Engineering Team
 status: Planned
-tags: [feature, architecture, migration, qa, security]
+tags: [feature, architecture, migration, qa, security, milestones]
 ---
 
 # Title
 
 Grace Arena Resorts SRS v1.2 Full-Stack Implementation Plan
 
-# Branch
+# Branches
 
-feature/gar-srs-v1-full-implementation
+- `feature/gar-m1-marketing-site` — Milestone 1
+- `feature/gar-m2-booking-engine` — Milestone 2
+- `feature/gar-m3-admin-ops` — Milestone 3
+- `feature/gar-admin-crud-phase-2` — Follow-up (Step 15)
 
 # Description
 
-This plan converts the authoritative requirements in docs/GAR-SRS.md into one dedicated feature branch and one PR for the core guest-facing platform and admin foundation, using commit-sized, testable steps for a Next.js 16 Pages Router and TypeScript codebase. The current repository is an early scaffold with Chakra UI setup, a single home page, and one sample API route. The plan therefore starts with foundational architecture and delivery tooling, then progresses through public pages, booking engine, account flows, admin foundation, and final quality gates. The full admin CRUD breadth is intentionally moved to a follow-up PR to reduce review risk.
+This plan converts the authoritative requirements in docs/GAR-SRS.md into **three delivery milestones**, each with its own branch and PR(s), using commit-sized, testable steps for a Next.js 16 Pages Router and TypeScript codebase. The current repository is an early scaffold with Chakra UI setup, a single home page, and one sample API route. The plan starts with foundational architecture and delivery tooling, then progresses through public pages, booking engine, account flows, admin foundation, and final quality gates. The full admin CRUD breadth is intentionally moved to a follow-up PR to reduce review risk.
+
+Each step is delivered as its own PR merged to `main` (not accumulated in a single monolithic branch). Early steps that don't expose user-facing features merge directly; later steps with incomplete user journeys use unreachable routes or feature flags until the milestone is complete.
 
 # Goal
 
@@ -28,12 +33,162 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 - Room browsing and under-construction notify flow
 - Authenticated booking engine with payment and PDF confirmation
 - Guest account management
-- Admin foundation for operational management (shell, RBAC, analytics)
+- Admin foundation for operational management (shell, RBAC, bookings management)
 - Security, accessibility, performance, and test coverage gates required by the SRS
+
+# Delivery Milestones
+
+> **Rationale:** The resort needs a web presence as soon as possible. Delivering value incrementally lets the resort start directing traffic to the site while the booking engine is being built. Milestones define shippable checkpoints that provide standalone user value.
+
+## Milestone 1: Marketing Site (Target: 4–6 weeks)
+
+**Delivers:** Public pages with content, room browsing, WhatsApp CTAs. No booking yet.
+
+| Step | Scope | Estimated Effort |
+|------|-------|-----------------|
+| Step 1 | Foundation, env contract, shared libs | 2–3 days |
+| Step 5 | Global shell, consent, accessibility | 3–4 days |
+| Step 6 | Public content pages (Home, About, Facilities, Restaurants, Gems, Events, Deals, Contact, Privacy) | 8–12 days |
+| Step 7 | Rooms catalog, Notify Me (read-only, no booking) | 3–5 days |
+| | **M1 subtotal** | **16–24 dev-days** |
+
+**Exit Criteria:**
+- All public pages render with real content and media
+- Room browsing works with resort toggle and tier filtering
+- WhatsApp CTAs functional across all pages
+- Cookie consent, accessibility baseline, and SEO foundations in place
+- Deployed to production domain via Vercel
+
+## Milestone 2: Booking Engine (Target: 6–10 weeks after M1)
+
+**Delivers:** Full guest booking flow with payment, accounts, and room management.
+
+| Step | Scope | Estimated Effort |
+|------|-------|-----------------|
+| Step 2 | Supabase schema, migrations, seeds, RLS | 3–5 days |
+| Step 3 | API middleware stack, auth context, security | 2–3 days |
+| Step 4 | Auth pages and endpoints | 4–5 days |
+| Step 8 | Booking engine backend (availability, pricing, lifecycle) | 8–10 days |
+| Step 9 | Payment integration, webhook security | 4–6 days |
+| Step 10 | Booking wizard frontend | 6–8 days |
+| Step 11 | Guest account and booking management | 4–5 days |
+| | **M2 subtotal** | **31–42 dev-days** |
+
+**Exit Criteria:**
+- Guests can register, log in, browse rooms, and complete a booking with Paystack payment
+- Booking confirmation PDF generated and emailed
+- Guest account shows booking history with cancellation and refund flows
+- All auth flows working (register, verify, login, reset, change password)
+- Payment webhook security verified in Paystack sandbox
+
+## Milestone 3: Admin & Operations (Target: 3–5 weeks after M2)
+
+**Delivers:** Admin dashboard, bookings management, operational tooling, quality gates.
+
+| Step | Scope | Estimated Effort |
+|------|-------|-----------------|
+| Step 12 | Admin portal foundation, RBAC, dashboard, bookings management | 5–7 days |
+| Step 13 | SEO finalization, background jobs, observability | 3–5 days |
+| Step 14 | Quality gate, CI/CD, documentation | 3–5 days |
+| | **M3 subtotal** | **11–17 dev-days** |
+
+**Exit Criteria:**
+- Admin dashboard with KPIs and bookings chart
+- Admin bookings management with status transitions, cancellation, refund processing
+- Background jobs running (pending booking expiry, failed email retry, deal deactivation)
+- Sentry monitoring integrated
+- CI pipeline passing (lint, typecheck, test, build, e2e smoke)
+- Core Web Vitals targets met
+
+## Total Estimated Effort: 58–83 dev-days
+
+---
+
+# Pre-Flight Checklist (Complete Before Step 1)
+
+> **Rationale:** Third-party service provisioning delays can block end-to-end validation. All external accounts and credentials must be secured before development begins.
+
+| Service | Action Needed | Owner | Due By |
+|---------|---------------|-------|--------|
+| **Supabase** | Create project, get anon key + service role key, enable pg_cron + pgcrypto extensions | Engineering | Before Step 1 |
+| **Vercel** | Connect repository, configure environment variables, enable preview deployments | Engineering | Before Step 1 |
+| **SendGrid** | Create account, verify sender domain and email, get API key | Engineering | Before Step 4 |
+| **Google reCAPTCHA v3** | Register site, get site key + secret key | Engineering | Before Step 3 |
+| **Google Maps** | Create API key, enable Maps Embed API + Places API | Engineering | Before Step 6 |
+| **Paystack** | Apply for merchant account, obtain test public + secret keys | Business/Finance | Before Step 9 |
+| **Google Analytics 4** | Create property, get measurement ID, set up GTM container | Marketing | Before Step 5 |
+| **Sentry** | Create project, get DSN | Engineering | Before Step 13 |
+| **Domain + SSL** | Purchase domain, point DNS to Vercel, provision SSL | Business/IT | Before M1 launch |
+| **Supabase Evaluation** | Confirm RLS learning curve manageable for team, test connection pooling behavior, verify edge function limits are sufficient for background jobs | Engineering | Before Step 2 |
+
+---
+
+# Content Workstream (Parallel to Code — Owned by Product/Marketing)
+
+> **Rationale:** Hotel websites live or die on photography, video, and copy. Code delivery without production content results in a placeholder site that damages the brand. This workstream **must run in parallel** with engineering, not sequentially after it.
+
+## Content Deliverables (Required for M1 Launch)
+
+| Deliverable | Owner | Due By | Status |
+|-------------|-------|--------|--------|
+| Professional resort photography — rooms, facilities, campuses, dining, exterior | Marketing / Photography team | 2 weeks before M1 launch | ❌ Not started |
+| Hero video production — 30–60 second resort overview, muted autoplay | Marketing / Video team | 2 weeks before M1 launch | ❌ Not started |
+| Copy for all 10 public pages — brand-approved, faith-aligned, reviewed for accuracy | Product / Copywriter | 3 weeks before M1 launch | ❌ Not started |
+| Menu data for all 4 restaurants with names, descriptions, prices (NGN) | Resort Operations | 2 weeks before M1 launch | ❌ Not started |
+| Facility descriptions, operating hours, and location-within-resort info | Resort Operations | 2 weeks before M1 launch | ❌ Not started |
+| "Our Story" / About content — founding story, mission, vision, values, milestones | Product / Founders | 3 weeks before M1 launch | ❌ Not started |
+| Privacy Policy legal text — NDPR/NDPA compliant, reviewed by compliance/legal | Compliance Owner / Legal | 3 weeks before M1 launch | ❌ Not started |
+| Social media handles and links (Facebook, Instagram, Twitter/X, YouTube, TikTok) | Marketing | 1 week before M1 launch | ❌ Not started |
+| Contact information — phone numbers, email addresses, physical address, operating hours | Resort Operations | 1 week before M1 launch | ❌ Not started |
+| Google Maps coordinates and branded map pin | Engineering / Marketing | 1 week before M1 launch | ❌ Not started |
+
+## Content Seeding Strategy (Required Before Each Milestone Launch)
+
+> **Rationale:** The plan seeds realistic data in SQL migrations for development/QA. A separate "Data Day" is needed before each milestone launch to replace seed data with verified production data.
+
+**Before M1 Launch (Data Day 1):**
+- [ ] Room inventory verified with actual unit counts and current prices
+- [ ] All media assets uploaded to Supabase Storage `media-public` bucket
+- [ ] Restaurant menus digitized and entered
+- [ ] Facility hours confirmed and entered
+- [ ] System settings configured (WhatsApp number, contact email, contact phone, map coordinates)
+- [ ] Content pages populated with approved copy
+
+**Before M2 Launch (Data Day 2):**
+- [ ] Seasonal pricing records entered for current and upcoming seasons
+- [ ] Active deals created with valid date ranges and promo codes
+- [ ] Tax rate verified (currently defaulting to 7.5% VAT)
+- [ ] Check-in/check-out times confirmed (currently defaulting to 14:00/11:00)
+- [ ] Pending booking expiry window confirmed (currently defaulting to 30 minutes)
+- [ ] Admin user accounts created for resort staff (Content Manager, Resort Admin, Super Admin)
+- [ ] Paystack live keys configured (replacing test keys)
+- [ ] SendGrid production sender verified
+
+**Before M3 Launch (Data Day 3):**
+- [ ] Sentry DSN configured for production
+- [ ] GA4 measurement ID configured
+- [ ] Error alerting thresholds reviewed and configured
+- [ ] Background job schedules reviewed and confirmed
+
+---
+
+# Staging & Preview Strategy
+
+> **Rationale:** Stakeholders need to review progress visually without running local dev. Vercel preview deployments provide this for free.
+
+- **Every PR** gets an automatic Vercel preview deployment URL, shareable with stakeholders
+- **`main` branch** auto-deploys to a staging URL (e.g., `staging.gracearenaresorts.com` or Vercel default)
+- **Production domain** is pointed to `main` only when a milestone's exit criteria are fully met
+- Stakeholders are invited to review preview deployments after each step PR is opened
+- A dedicated Vercel project is set up from Day 1 (Step 1 prerequisite)
+
+---
 
 # Implementation Steps
 
 ## Step 1: Repository Foundation, Standards, and Environment Contract
+
+**Milestone:** M1 · **Estimated Effort:** 2–3 days · **PR:** Own PR merged to `main`
 
 ### Files
 
@@ -78,6 +233,8 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 
 ## Step 2: Supabase Schema, Migrations, Seed Data, and RLS Baseline
 
+**Milestone:** M2 · **Estimated Effort:** 3–5 days · **PR:** Own PR merged to `main`
+
 ### Files
 
 - supabase/config.toml
@@ -120,6 +277,8 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 
 ## Step 3: API Core, Auth Session Handling, Rate Limiting, and Middleware
 
+**Milestone:** M2 · **Estimated Effort:** 2–3 days · **PR:** Own PR merged to `main`
+
 ### Files
 
 - src/pages/api/v1/\_shared/handler.ts
@@ -151,6 +310,8 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 - Security: verify HSTS, CSP, and other security headers are set correctly.
 
 ## Step 4: Authentication and User Profile Vertical Slice
+
+**Milestone:** M2 · **Estimated Effort:** 4–5 days · **PR:** Own PR merged to `main`
 
 ### Files
 
@@ -200,6 +361,8 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 
 ## Step 5: Global Site Shell, Accessibility Baseline, Consent, and Shared UX States
 
+**Milestone:** M1 · **Estimated Effort:** 3–4 days · **PR:** Own PR merged to `main`
+
 ### Files
 
 - src/components/layout/Navbar.tsx
@@ -241,6 +404,8 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 - Unit: WhatsApp FAB context-aware message generation. <!-- GAP-FIX: #44 -->
 
 ## Step 6: Public Content Pages Vertical Slice (Home, About, Facilities, Restaurants, Gems, Events, Deals, Contact, Privacy)
+
+**Milestone:** M1 · **Estimated Effort:** 8–12 days · **PR:** Own PR (or split into 2 PRs: Home+About+Facilities+Restaurants and Gems+Events+Deals+Contact+Privacy) merged to `main`
 
 ### Files
 
@@ -319,6 +484,8 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 
 ## Step 7: Rooms and Suites Catalog with Under-Construction and Notify Me
 
+**Milestone:** M1 · **Estimated Effort:** 3–5 days · **PR:** Own PR merged to `main` — completes M1
+
 ### Files
 
 - src/pages/rooms.tsx
@@ -349,6 +516,8 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 - Accessibility: modal or accordion semantics for amenity details.
 
 ## Step 8: Booking Engine Backend (Availability, Pricing, Booking Lifecycle)
+
+**Milestone:** M2 · **Estimated Effort:** 8–10 days · **PR:** Own PR merged to `main`
 
 ### Files
 
@@ -402,6 +571,8 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 
 ## Step 9: Payment Integration and Webhook Security
 
+**Milestone:** M2 · **Estimated Effort:** 4–6 days · **PR:** Own PR merged to `main`
+
 ### Files
 
 - src/pages/api/v1/payments/initiate.ts
@@ -440,6 +611,8 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 
 ## Step 10: Booking Wizard Frontend and Confirmation Experience
 
+**Milestone:** M2 · **Estimated Effort:** 6–8 days · **PR:** Own PR merged to `main`
+
 ### Files
 
 - src/pages/booking.tsx
@@ -476,6 +649,8 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 
 ## Step 11: Guest Account and Booking Management
 
+**Milestone:** M2 · **Estimated Effort:** 4–5 days · **PR:** Own PR merged to `main` — completes M2
+
 ### Files
 
 - src/pages/account/index.tsx
@@ -508,7 +683,11 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 - E2E: account login to booking management and cancellation flow.
 - Security: enforce own-booking access only.
 
-## Step 12: Admin Portal Foundation, RBAC, and Dashboard
+## Step 12: Admin Portal Foundation, RBAC, Dashboard, and Bookings Management
+
+**Milestone:** M3 · **Estimated Effort:** 5–7 days · **PR:** Own PR merged to `main`
+
+> **Simplified Admin Rationale (PM Recommendation):** The SRS specifies a full CMS with 14 sidebar modules, Recharts dashboards, occupancy heatmaps, and broad CRUD. For v1.0, the admin panel will likely have 2–3 users. To accelerate time-to-launch, this step builds: (1) the admin shell, RBAC, and dashboard KPIs, (2) **Bookings Management** — the most operationally critical module, and (3) **Room Status Management** — needed for marking rooms as available/maintenance. All other admin CRUD modules (content, restaurants, facilities, gems, events, deals, contact, newsletter, media, users, settings) remain deferred to Step 15. For general data inspection and quick edits during v1.0, resort staff can use the **Supabase Dashboard** directly — it provides a built-in GUI for tables, filters, and row editing.
 
 ### Files
 
@@ -518,6 +697,9 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 - src/components/admin/AdminSidebar.tsx
 - src/components/admin/AdminTopbar.tsx
 - src/components/admin/AdminBreadcrumb.tsx <!-- GAP-FIX: #38 -->
+- src/pages/admin/bookings/index.tsx <!-- PM-REC: operationally critical -->
+- src/pages/admin/bookings/[ref].tsx <!-- PM-REC: operationally critical -->
+- src/pages/admin/rooms/index.tsx <!-- PM-REC: room status management -->
 - src/pages/api/v1/analytics/bookings.ts
 - src/pages/api/v1/analytics/revenue.ts
 - src/pages/api/v1/analytics/occupancy.ts
@@ -525,7 +707,7 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 ### What
 
 - Implement protected admin shell with role-based access and desktop-first layout (must remain functional on tablet ≥ 768px per SRS 3.14). Distinct layout from public site (no public navbar/footer).
-- Implement collapsible sidebar navigation with all module links per SRS 3.14.1: Dashboard, Rooms & Buildings, Bookings, Restaurants & Menus, Facilities, Off-Beat Gems, Events & Inquiries, Deals & Offers, Contact Submissions, Newsletter, Media Library, Content Pages, Users (Super Admin only), System Settings (Super Admin only).
+- Implement collapsible sidebar navigation with all module links per SRS 3.14.1: Dashboard, Rooms & Buildings, Bookings, Restaurants & Menus, Facilities, Off-Beat Gems, Events & Inquiries, Deals & Offers, Contact Submissions, Newsletter, Media Library, Content Pages, Users (Super Admin only), System Settings (Super Admin only). Modules not yet implemented show as greyed-out sidebar items with a "Coming Soon" tooltip.
 - Implement AdminTopbar with: admin user name, role badge, "View Site" link (opens public site in new tab), logout button, notification bell (placeholder for new bookings/inquiries/contact submissions). <!-- GAP-FIX: #39 -->
 - Implement AdminBreadcrumb component for navigation context within nested pages. <!-- GAP-FIX: #38 -->
 - Implement dashboard metrics cards: total bookings (today/week/month), revenue (today/week/month), occupancy rate (today), pending bookings count, new contact submissions (unread), new event inquiries (unread).
@@ -533,7 +715,8 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 - Implement occupancy heatmap (calendar heatmap for current and next month).
 - Implement recent activity feed (last 10 actions with timestamps).
 - Implement quick actions placeholders: "Create Booking" (admin-initiated, links to future admin page), "Add Deal," "Upload Media."
-- Wire notifications and quick actions placeholders for downstream modules.
+- **Implement Bookings Management page (`/admin/bookings`):** Paginated bookings table with columns (reference, guest name, check-in, check-out, rooms, total, status, created date), filterable by status/date range/resort, searchable by reference/name/email. Booking detail view (`/admin/bookings/{ref}`) with full details, pricing breakdown, payment status, status history. Status action buttons (Mark Checked-In, Mark Checked-Out, Mark No-Show, Cancel Booking with refund calculator). Admin-initiated booking creation form (walk-in guests, no payment required, status = Confirmed directly). <!-- PM-REC: operationally critical -->
+- **Implement Room Status Management page (`/admin/rooms`):** Read-only room types list with the ability to edit individual room unit status (available/occupied/maintenance). Seasonal pricing management and full room type CRUD deferred to Step 15. <!-- PM-REC: operationally critical -->
 - Allow Resort Admin and Super Admin to view financial analytics; Content Manager has no financial analytics access.
 - Unauthenticated or unauthorized users redirected to `/login?redirect=/admin`.
 
@@ -541,10 +724,15 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 
 - Unit: RBAC guard utilities.
 - Integration: analytics endpoints with role enforcement (verify Content Manager cannot access financial analytics).
+- Integration: admin bookings list, detail, and status transition endpoints. <!-- PM-REC -->
+- Integration: admin room unit status update endpoint. <!-- PM-REC -->
 - E2E: unauthorized redirect and authorized dashboard rendering.
+- E2E: admin booking management flow — list, view detail, change status. <!-- PM-REC -->
 - Accessibility: keyboard navigation and heading structure in admin shell.
 
 ## Step 13: Observability, SEO Finalization, Background Jobs, and Operational Hardening
+
+**Milestone:** M3 · **Estimated Effort:** 3–5 days · **PR:** Own PR merged to `main`
 
 ### Files
 
@@ -579,6 +767,8 @@ Deliver an SRS-aligned v1.0 implementation baseline that includes:
 - Security: dependency audit and headers verification.
 
 ## Step 14: End-to-End Quality Gate, Documentation, and PR Assembly
+
+**Milestone:** M3 · **Estimated Effort:** 3–5 days · **PR:** Own PR merged to `main` — completes M3
 
 ### Files
 
