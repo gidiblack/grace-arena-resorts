@@ -1,0 +1,18 @@
+export const ROUTES = {
+  home: "/",
+  about: "/about",
+  facilities: "/facilities",
+  restaurants: "/restaurants",
+  gems: "/gems",
+  events: "/events",
+  deals: "/deals",
+  contact: "/contact",
+  privacy: "/privacy",
+  terms: "/terms",
+  rooms: "/rooms",
+  booking: "/booking",
+  account: "/account",
+  login: "/login",
+  register: "/register",
+  admin: "/admin",
+};
