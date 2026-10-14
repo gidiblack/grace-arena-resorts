@@ -54,14 +54,21 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
           p={{ base: 6, md: 8 }}
           maxW="480px"
           w="92vw"
-          boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.75)">
+          boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.75)"
+        >
           <Flex justify="space-between" align="center" mb={4}>
             <HStack gap={2}>
               <Box bg="amber.500/20" color="#F59E0B" p={2} borderRadius="10px">
                 <Icon as={FaHardHat} boxSize={5} />
               </Box>
               <Box>
-                <Text fontSize="12px" fontWeight="bold" color="#F59E0B" letterSpacing="wide" textTransform="uppercase">
+                <Text
+                  fontSize="12px"
+                  fontWeight="bold"
+                  color="#F59E0B"
+                  letterSpacing="wide"
+                  textTransform="uppercase"
+                >
                   Under Construction
                 </Text>
                 <Dialog.Title fontSize="18px" fontWeight="bold">
@@ -75,7 +82,8 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
               p={1.5}
               borderRadius="md"
               _hover={{ bg: "#1E293B" }}
-              cursor="pointer">
+              cursor="pointer"
+            >
               <Icon as={FaTimes} boxSize={4} color="gray.400" />
             </Box>
           </Flex>
@@ -87,10 +95,15 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
                 You’re on the Priority List!
               </Text>
               <Text fontSize="13px" color="gray.300" maxW="360px">
-                We will email you at <strong style={{ color: "#FCCA46" }}>{email}</strong> the moment bookings open for the{" "}
-                <strong>{roomTitle}</strong> at {campusName}.
+                We will email you at <strong style={{ color: "#FCCA46" }}>{email}</strong> the
+                moment bookings open for the <strong>{roomTitle}</strong> at {campusName}.
               </Text>
-              <Button variant="primary" size="sm" onClick={handleResetAndClose} style={{ marginTop: "12px" }}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleResetAndClose}
+                style={{ marginTop: "12px" }}
+              >
                 Done
               </Button>
             </Stack>
@@ -98,8 +111,8 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
             <form onSubmit={handleSubmit}>
               <Stack gap={4}>
                 <Text fontSize="13px" color="gray.300" lineHeight="tall">
-                  The {roomTitle} is currently undergoing exquisite architectural finishing. Register below to receive
-                  exclusive early-bird access and special opening rates.
+                  The {roomTitle} is currently undergoing exquisite architectural finishing.
+                  Register below to receive exclusive early-bird access and special opening rates.
                 </Text>
 
                 <Box>
@@ -149,7 +162,8 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
                     variant="secondary"
                     size="sm"
                     onClick={handleResetAndClose}
-                    style={{ fontSize: "13px", padding: "8px 18px" }}>
+                    style={{ fontSize: "13px", padding: "8px 18px" }}
+                  >
                     Cancel
                   </Button>
                   <Button
@@ -157,7 +171,8 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
                     variant="primary"
                     size="sm"
                     disabled={isLoading}
-                    style={{ fontSize: "13px", padding: "8px 22px" }}>
+                    style={{ fontSize: "13px", padding: "8px 22px" }}
+                  >
                     <Icon as={FaBell} mr={1.5} />
                     {isLoading ? "Subscribing..." : "Notify Me"}
                   </Button>

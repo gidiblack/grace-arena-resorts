@@ -22,8 +22,9 @@ describe("redactSensitiveData", () => {
     expect(redacted.api_key).toBe("[REDACTED]");
     expect(redacted.PAYSTACK_SECRET_KEY).toBe("[REDACTED]");
     expect(redacted.accessToken).toBe("[REDACTED]");
-    expect(redacted.metadata.safeField).toBe("safeValue");
-    expect(redacted.metadata.client_secret).toBe("[REDACTED]");
+    const metadata = redacted.metadata as Record<string, unknown>;
+    expect(metadata.safeField).toBe("safeValue");
+    expect(metadata.client_secret).toBe("[REDACTED]");
   });
 
   it("handles primitives and null values safely", () => {

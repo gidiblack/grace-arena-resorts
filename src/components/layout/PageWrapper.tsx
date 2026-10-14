@@ -5,11 +5,14 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import WhatsAppFab from "@/components/common/WhatsAppFab";
 import CookieConsentBanner from "@/components/common/CookieConsentBanner";
+import SkipToContent from "@/components/common/SkipToContent";
+import PageTransitionIndicator from "@/components/common/PageTransitionIndicator";
+import GlobalNetworkStatus from "@/components/common/GlobalNetworkStatus";
 import { Box } from "@chakra-ui/react";
 
 interface PageWrapperProps {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   children: React.ReactNode;
 }
 
@@ -23,42 +26,39 @@ const roboto = Roboto({
   subsets: ["latin"],
 });
 
-const PageWrapper = ({ title, description, children }: PageWrapperProps) => {
+export const PageWrapper: React.FC<PageWrapperProps> = ({
+  title = "Grace Arena Resorts",
+  description = "A Sanctuary of Peace, Luxury, and Christian Hospitality in Abuja, Nigeria",
+  children,
+}) => {
   return (
     <>
       <HeadComponent title={title} description={description} />
+      <PageTransitionIndicator />
+      <GlobalNetworkStatus />
+
       <Box
-        as="div"
         className={`${plusJakartaSans.variable} ${roboto.variable} bg-background text-foreground`}
         minH="100vh"
         display="flex"
         flexDirection="column"
-        position="relative">
-        {/* Skip to Content for WCAG Accessibility */}
-        <a
-          href="#main-content"
-          style={{
-            position: "absolute",
-            top: "-40px",
-            left: "20px",
-            backgroundColor: "#FCCA46",
-            color: "#070707",
-            padding: "8px 16px",
-            fontWeight: "bold",
-            borderRadius: "6px",
-            zIndex: 200,
-            textDecoration: "none",
-          }}>
-          Skip to main content
-        </a>
+        position="relative"
+      >
+        {/* Skip to Content for WCAG / a11y */}
+        <SkipToContent contentId="main-content" />
 
-        <Navbar />
+        <header role="banner">
+          <Navbar />
+        </header>
 
-        <Box as="main" id="main-content" flex="1" className={`${plusJakartaSans.variable} ${roboto.variable}`}>
+        <main id="main-content" role="main" style={{ flex: 1 }}>
           {children}
-        </Box>
+        </main>
 
-        <Footer />
+        <footer role="contentinfo">
+          <Footer />
+        </footer>
+
         <WhatsAppFab />
         <CookieConsentBanner />
       </Box>

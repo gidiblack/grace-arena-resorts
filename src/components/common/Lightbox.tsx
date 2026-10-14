@@ -70,11 +70,18 @@ export const Lightbox: React.FC<LightboxProps> = ({
       p={{ base: 4, md: 8 }}
       role="dialog"
       aria-modal="true"
-      aria-label="Image gallery lightbox">
+      aria-label="Image gallery lightbox"
+    >
       {/* Top bar */}
       <Flex justify="space-between" align="center" w="full" maxW="75rem" mx="auto" zIndex={2}>
         <HStack gap={3}>
-          <Text color="accent.500" fontSize="13px" fontWeight="bold" letterSpacing="wide" textTransform="uppercase">
+          <Text
+            color="accent.500"
+            fontSize="13px"
+            fontWeight="bold"
+            letterSpacing="wide"
+            textTransform="uppercase"
+          >
             {currentImage.category || "Resort Gallery"}
           </Text>
           <Text color="gray.400" fontSize="13px">
@@ -95,7 +102,8 @@ export const Lightbox: React.FC<LightboxProps> = ({
           _hover={{ bg: "accent.500", color: "dark.500", transform: "scale(1.1)" }}
           transition="all 0.2s"
           cursor="pointer"
-          aria-label="Close gallery (Press Escape)">
+          aria-label="Close gallery (Press Escape)"
+        >
           <Icon as={FaTimes} boxSize={5} />
         </Box>
       </Flex>
@@ -110,7 +118,8 @@ export const Lightbox: React.FC<LightboxProps> = ({
         w="full"
         mx="auto"
         my={4}
-        overflow="hidden">
+        overflow="hidden"
+      >
         {/* Previous Button */}
         <Box
           as="button"
@@ -126,7 +135,8 @@ export const Lightbox: React.FC<LightboxProps> = ({
           _hover={{ bg: "accent.500", color: "dark.500", transform: "scale(1.1)" }}
           transition="all 0.2s"
           cursor="pointer"
-          aria-label="Previous photo (Left arrow)">
+          aria-label="Previous photo (Left arrow)"
+        >
           <Icon as={FaChevronLeft} boxSize={{ base: 4, md: 5 }} />
         </Box>
 
@@ -136,7 +146,8 @@ export const Lightbox: React.FC<LightboxProps> = ({
           maxW="100%"
           display="flex"
           alignItems="center"
-          justifyContent="center">
+          justifyContent="center"
+        >
           <Image
             src={currentImage.src}
             alt={currentImage.alt}
@@ -163,7 +174,8 @@ export const Lightbox: React.FC<LightboxProps> = ({
           _hover={{ bg: "accent.500", color: "dark.500", transform: "scale(1.1)" }}
           transition="all 0.2s"
           cursor="pointer"
-          aria-label="Next photo (Right arrow)">
+          aria-label="Next photo (Right arrow)"
+        >
           <Icon as={FaChevronRight} boxSize={{ base: 4, md: 5 }} />
         </Box>
       </Flex>
@@ -177,7 +189,8 @@ export const Lightbox: React.FC<LightboxProps> = ({
         maxW="40rem"
         mx="auto"
         textAlign="center"
-        zIndex={2}>
+        zIndex={2}
+      >
         <Text color="light.500" fontSize={{ base: "14px", md: "16px" }} fontWeight="semibold">
           {currentImage.title || currentImage.alt}
         </Text>

@@ -1,9 +1,27 @@
 import React, { useState } from "react";
-import { Flex, GridItem, HStack, Icon, Image, SimpleGrid, Stack, Text, Box, Input } from "@chakra-ui/react";
+import {
+  Flex,
+  GridItem,
+  HStack,
+  Icon,
+  Image,
+  SimpleGrid,
+  Stack,
+  Text,
+  Box,
+  Input,
+} from "@chakra-ui/react";
 import Link from "next/link";
 import NextImage from "next/image";
 import logo from "../../../public/grace_arena_logo-light.svg";
-import { FaEnvelope, FaFacebook, FaInstagram, FaPhoneAlt, FaTwitter, FaWhatsapp } from "react-icons/fa";
+import {
+  FaEnvelope,
+  FaFacebook,
+  FaInstagram,
+  FaPhoneAlt,
+  FaTwitter,
+  FaWhatsapp,
+} from "react-icons/fa";
 import { ROUTES } from "@/constants/ROUTES";
 import { FaLocationDot } from "react-icons/fa6";
 import Button from "../ui/button";
@@ -19,11 +37,8 @@ export const Footer = () => {
   };
 
   const handleOpenCookieSettings = () => {
-    try {
-      localStorage.removeItem("gar_cookie_consent");
-      window.location.reload();
-    } catch {
-      window.location.reload();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("gar:open-cookie-preferences"));
     }
   };
 
@@ -31,7 +46,11 @@ export const Footer = () => {
     { label: "Facebook", href: "https://facebook.com", icon: FaFacebook },
     { label: "Instagram", href: "https://instagram.com", icon: FaInstagram },
     { label: "Twitter", href: "https://x.com", icon: FaTwitter },
-    { label: "WhatsApp", href: "https://wa.me/2348123456789?text=Hello%20Grace%20Arena%20Resorts", icon: FaWhatsapp },
+    {
+      label: "WhatsApp",
+      href: "https://wa.me/2348123456789?text=Hello%20Grace%20Arena%20Resorts",
+      icon: FaWhatsapp,
+    },
   ];
 
   return (
@@ -44,16 +63,24 @@ export const Footer = () => {
           flexDir={{ base: "column", md: "row" }}
           align={{ base: "flex-start", md: "center" }}
           justify="space-between"
-          gap={6}>
+          gap={6}
+        >
           <Stack gap={1} maxW="36rem">
-            <Text fontSize="13px" fontWeight="bold" color="accent.500" letterSpacing="wider" textTransform="uppercase">
+            <Text
+              fontSize="13px"
+              fontWeight="bold"
+              color="accent.500"
+              letterSpacing="wider"
+              textTransform="uppercase"
+            >
               Stay Connected With Serenity
             </Text>
             <Text fontSize={{ base: "20px", md: "24px" }} fontWeight="bold">
               Subscribe to GAR Special Retreats &amp; Deals
             </Text>
             <Text fontSize="14px" color="gray.300">
-              Receive updates on seasonal specials, spiritual retreat schedules, and campus additions.
+              Receive updates on seasonal specials, spiritual retreat schedules, and campus
+              additions.
             </Text>
           </Stack>
 
@@ -82,7 +109,11 @@ export const Footer = () => {
                   minW={{ sm: "280px" }}
                   _focus={{ borderColor: "accent.500", outline: "none" }}
                 />
-                <Button type="submit" size="sm" style={{ padding: "10px 24px", whiteSpace: "nowrap" }}>
+                <Button
+                  type="submit"
+                  size="sm"
+                  style={{ padding: "10px 24px", whiteSpace: "nowrap" }}
+                >
                   Join Newsletter
                 </Button>
               </Flex>
@@ -102,14 +133,20 @@ export const Footer = () => {
             <GridItem colSpan={{ base: 1, sm: 2, lg: 2 }}>
               <Stack gap={4} maxW="28rem">
                 <Link href={ROUTES.home}>
-                  <Image asChild width="128px" height="56px" position="relative" objectFit="contain">
+                  <Image
+                    asChild
+                    width="128px"
+                    height="56px"
+                    position="relative"
+                    objectFit="contain"
+                  >
                     <NextImage src={logo.src} alt="Grace Arena Resorts" width={128} height={56} />
                   </Image>
                 </Link>
                 <Text fontSize="14px" color="gray.600" lineHeight="tall">
-                  Nestled in the picturesque town of Igbo-Ora, the land of twins in Oyo State, Grace Arena Resorts is
-                  a premier Christian resort dedicated to tranquil hospitality, luxury accommodation, spiritual renewal,
-                  and unforgettable family moments.
+                  Nestled in the picturesque town of Igbo-Ora, the land of twins in Oyo State, Grace
+                  Arena Resorts is a premier Christian resort dedicated to tranquil hospitality,
+                  luxury accommodation, spiritual renewal, and unforgettable family moments.
                 </Text>
                 <HStack gap={3} pt={2}>
                   {SOCIALS.map((social) => (
@@ -119,7 +156,8 @@ export const Footer = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ textDecoration: "none" }}
-                      aria-label={`Visit our ${social.label} page`}>
+                      aria-label={`Visit our ${social.label} page`}
+                    >
                       <Box
                         boxSize={9}
                         borderRadius="full"
@@ -129,8 +167,13 @@ export const Footer = () => {
                         alignItems="center"
                         justifyContent="center"
                         color="gray.600"
-                        _hover={{ bg: "accent.500", color: "dark.500", transform: "translateY(-2px)" }}
-                        transition="all 0.2s">
+                        _hover={{
+                          bg: "accent.500",
+                          color: "dark.500",
+                          transform: "translateY(-2px)",
+                        }}
+                        transition="all 0.2s"
+                      >
                         <Icon as={social.icon} boxSize={4} />
                       </Box>
                     </a>
@@ -249,7 +292,8 @@ export const Footer = () => {
                   href="https://wa.me/2348123456789?text=Hello%20Grace%20Arena%20Resorts"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ textDecoration: "none" }}>
+                  style={{ textDecoration: "none" }}
+                >
                   <HStack gap={2}>
                     <Icon as={FaWhatsapp} boxSize={3.5} color="#25D366" />
                     <Text fontSize="13px" color="#16a34a" fontWeight="semibold">
@@ -272,7 +316,8 @@ export const Footer = () => {
           flexDir={{ base: "column", sm: "row" }}
           justify="space-between"
           align="center"
-          gap={3}>
+          gap={3}
+        >
           <Text fontSize="13px" color="gray.500">
             &copy; {new Date().getFullYear()} Grace Arena Resorts Ltd. All rights reserved.
           </Text>
@@ -297,7 +342,8 @@ export const Footer = () => {
               cursor="pointer"
               bg="transparent"
               border="none"
-              p={0}>
+              p={0}
+            >
               Cookie Preferences
             </Box>
           </HStack>

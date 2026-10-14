@@ -21,15 +21,32 @@ export const CookieConsentBanner: React.FC = () => {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      const stored = localStorage.getItem(COOKIE_KEY);
-      if (!stored) {
+
+    const timer = setTimeout(() => {
+      try {
+        const stored = localStorage.getItem(COOKIE_KEY);
+        if (!stored) {
+          setIsVisible(true);
+        } else {
+          const parsed = JSON.parse(stored);
+          setAnalyticsAllowed(Boolean(parsed.analytics));
+          setMarketingAllowed(Boolean(parsed.marketing));
+        }
+      } catch {
         setIsVisible(true);
       }
-    } catch {
-      // In case localStorage is blocked
-      setIsVisible(true);
-    }
+    }, 50);
+
+    const handleOpenSettings = () => {
+      setModalOpen(true);
+    };
+
+    window.addEventListener("gar:open-cookie-preferences", handleOpenSettings);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("gar:open-cookie-preferences", handleOpenSettings);
+    };
   }, []);
 
   const saveConsent = (analytics: boolean, marketing: boolean) => {
@@ -73,14 +90,16 @@ export const CookieConsentBanner: React.FC = () => {
           p={{ base: 4, md: 5 }}
           boxShadow="0 -10px 30px rgba(0, 0, 0, 0.45)"
           role="region"
-          aria-label="Cookie and Privacy Consent">
+          aria-label="Cookie and Privacy Consent"
+        >
           <Flex
             maxW="85rem"
             mx="auto"
             flexDir={{ base: "column", lg: "row" }}
             align={{ base: "flex-start", lg: "center" }}
             justify="space-between"
-            gap={4}>
+            gap={4}
+          >
             <HStack align="flex-start" gap={3} flex="1">
               <Icon as={FaShieldAlt} color="accent.500" boxSize={6} mt={1} />
               <Stack gap={1}>
@@ -88,8 +107,9 @@ export const CookieConsentBanner: React.FC = () => {
                   Your Privacy Matters (NDPR &amp; GDPR Compliant)
                 </Text>
                 <Text fontSize="12px" color="dark.100" maxW="48rem" lineHeight="tall">
-                  Grace Arena Resorts uses essential cookies to ensure our website functions securely and reliably. We
-                  also request your permission for optional analytics and marketing cookies to enhance your experience.
+                  Grace Arena Resorts uses essential cookies to ensure our website functions
+                  securely and reliably. We also request your permission for optional analytics and
+                  marketing cookies to enhance your experience.
                 </Text>
               </Stack>
             </HStack>
@@ -99,26 +119,30 @@ export const CookieConsentBanner: React.FC = () => {
               w={{ base: "full", lg: "auto" }}
               flexWrap="wrap"
               align="center"
-              justify={{ base: "flex-start", sm: "flex-end" }}>
+              justify={{ base: "flex-start", sm: "flex-end" }}
+            >
               <Button
                 variant="white"
                 size="sm"
                 onClick={() => setModalOpen(true)}
-                style={{ fontSize: "12px", padding: "8px 16px" }}>
+                style={{ fontSize: "12px", padding: "8px 16px" }}
+              >
                 Manage Preferences
               </Button>
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={handleRejectNonEssential}
-                style={{ fontSize: "12px", padding: "8px 16px", border: "1px solid #334155" }}>
+                style={{ fontSize: "12px", padding: "8px 16px", border: "1px solid #334155" }}
+              >
                 Essential Only
               </Button>
               <Button
                 variant="primary"
                 size="sm"
                 onClick={handleAcceptAll}
-                style={{ fontSize: "12px", padding: "8px 20px" }}>
+                style={{ fontSize: "12px", padding: "8px 20px" }}
+              >
                 Accept All
               </Button>
             </Flex>
@@ -138,7 +162,8 @@ export const CookieConsentBanner: React.FC = () => {
             p={{ base: 5, md: 7 }}
             maxW="540px"
             w="90vw"
-            boxShadow="2xl">
+            boxShadow="2xl"
+          >
             <Flex justify="space-between" align="center" mb={4}>
               <HStack gap={2}>
                 <Icon as={FaShieldAlt} color="accent.500" boxSize={5} />
@@ -152,7 +177,8 @@ export const CookieConsentBanner: React.FC = () => {
                 borderRadius="md"
                 _hover={{ bg: "#1f2937" }}
                 onClick={() => setModalOpen(false)}
-                cursor="pointer">
+                cursor="pointer"
+              >
                 <Icon as={FaTimes} boxSize={4} color="gray.400" />
               </Box>
             </Flex>
@@ -167,12 +193,21 @@ export const CookieConsentBanner: React.FC = () => {
                       Essential Cookies
                     </Text>
                   </HStack>
-                  <Text fontSize="11px" fontWeight="bold" color="green.400" bg="green.950" px={2} py={0.5} borderRadius="full">
+                  <Text
+                    fontSize="11px"
+                    fontWeight="bold"
+                    color="green.400"
+                    bg="green.950"
+                    px={2}
+                    py={0.5}
+                    borderRadius="full"
+                  >
                     ALWAYS ACTIVE
                   </Text>
                 </Flex>
                 <Text fontSize="12px" color="gray.300" mt={1.5} lineHeight="shorter">
-                  Required for core site security, booking sessions, user authentication, and NDPR verification.
+                  Required for core site security, booking sessions, user authentication, and NDPR
+                  verification.
                 </Text>
               </Box>
 
@@ -192,12 +227,14 @@ export const CookieConsentBanner: React.FC = () => {
                     bg={analyticsAllowed ? "accent.500" : "#374151"}
                     color={analyticsAllowed ? "dark.500" : "gray.300"}
                     onClick={() => setAnalyticsAllowed(!analyticsAllowed)}
-                    cursor="pointer">
+                    cursor="pointer"
+                  >
                     {analyticsAllowed ? "Enabled" : "Disabled"}
                   </Box>
                 </Flex>
                 <Text fontSize="12px" color="gray.300" mt={1.5} lineHeight="shorter">
-                  Allows us to measure traffic and feature usage anonymously to refine resort amenities and navigation.
+                  Allows us to measure traffic and feature usage anonymously to refine resort
+                  amenities and navigation.
                 </Text>
               </Box>
 
@@ -217,12 +254,14 @@ export const CookieConsentBanner: React.FC = () => {
                     bg={marketingAllowed ? "accent.500" : "#374151"}
                     color={marketingAllowed ? "dark.500" : "gray.300"}
                     onClick={() => setMarketingAllowed(!marketingAllowed)}
-                    cursor="pointer">
+                    cursor="pointer"
+                  >
                     {marketingAllowed ? "Enabled" : "Disabled"}
                   </Box>
                 </Flex>
                 <Text fontSize="12px" color="gray.300" mt={1.5} lineHeight="shorter">
-                  Enables seasonal deals and retreat package notifications tailored to your booking interests.
+                  Enables seasonal deals and retreat package notifications tailored to your booking
+                  interests.
                 </Text>
               </Box>
             </Stack>
@@ -232,14 +271,16 @@ export const CookieConsentBanner: React.FC = () => {
                 variant="secondary"
                 size="sm"
                 onClick={() => setModalOpen(false)}
-                style={{ fontSize: "12px", padding: "6px 16px" }}>
+                style={{ fontSize: "12px", padding: "6px 16px" }}
+              >
                 Cancel
               </Button>
               <Button
                 variant="primary"
                 size="sm"
                 onClick={handleSavePreferences}
-                style={{ fontSize: "12px", padding: "6px 18px" }}>
+                style={{ fontSize: "12px", padding: "6px 18px" }}
+              >
                 <Icon as={FaCheck} mr={1} /> Save Preferences
               </Button>
             </Flex>
