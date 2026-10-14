@@ -42,3 +42,7 @@ export async function enforceRateLimit(
 
   return true;
 }
+
+export default function notFound(_req: NextApiRequest, res: NextApiResponse) {
+  res.status(404).end();
+}

@@ -1,3 +1,4 @@
+import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
 import { env } from "@/config/env";
 import { logger } from "@/lib/logger";
@@ -84,4 +85,8 @@ export async function verifyRecaptcha(
       error: "Unable to verify anti-spam token",
     };
   }
+}
+
+export default function notFound(_req: NextApiRequest, res: NextApiResponse) {
+  res.status(404).end();
 }

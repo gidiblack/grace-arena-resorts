@@ -114,3 +114,7 @@ export async function requireRole(
 
   return user;
 }
+
+export default function notFound(_req: NextApiRequest, res: NextApiResponse) {
+  res.status(404).end();
+}

@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
-import { withApi } from "../handler";
-import { parsePagination, setPaginationHeaders } from "../pagination";
-import { verifyRecaptcha } from "../recaptcha";
+import { withApi } from "@/pages/api/v1/_shared/handler";
+import { parsePagination, setPaginationHeaders } from "@/pages/api/v1/_shared/pagination";
+import { verifyRecaptcha } from "@/pages/api/v1/_shared/recaptcha";
 
 // Mock helper to generate mock req and res
 function createMockHttp(

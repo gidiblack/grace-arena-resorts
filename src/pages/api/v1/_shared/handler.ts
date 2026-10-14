@@ -170,3 +170,7 @@ export function withApi<TBody = unknown, TQuery = unknown>(
     }
   };
 }
+
+export default function notFound(_req: NextApiRequest, res: NextApiResponse) {
+  res.status(404).end();
+}

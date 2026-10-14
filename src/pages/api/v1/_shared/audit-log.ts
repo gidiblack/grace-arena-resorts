@@ -1,4 +1,4 @@
-import type { NextApiRequest } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { getClientIp } from "@/lib/security/rate-limit";
 import { logger } from "@/lib/logger";
@@ -46,4 +46,8 @@ export async function recordAuditLog({
   } catch (err) {
     logger.error("Unexpected error recording audit log", { err });
   }
+}
+
+export default function notFound(_req: NextApiRequest, res: NextApiResponse) {
+  res.status(404).end();
 }

@@ -47,3 +47,7 @@ export function setPaginationHeaders(
   res.setHeader("X-Page", page.toString());
   res.setHeader("X-Limit", limit.toString());
 }
+
+export default function notFound(_req: NextApiRequest, res: NextApiResponse) {
+  res.status(404).end();
+}
