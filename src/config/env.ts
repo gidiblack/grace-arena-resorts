@@ -9,13 +9,18 @@ const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
 
   // Supabase (M1 mock mode fallback; live keys required in M2)
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional().default("http://127.0.0.1:54321"),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional().default("local-anon-key-placeholder"),
-  SUPABASE_SERVICE_ROLE_KEY: z
-    .string()
-    .min(1)
-    .optional()
-    .default("local-service-role-key-placeholder"),
+  NEXT_PUBLIC_SUPABASE_URL: z.preprocess(
+    (val) => val || process.env.SUPABASE_URL || undefined,
+    z.string().url().optional().default("http://127.0.0.1:54321")
+  ),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.preprocess(
+    (val) => val || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || undefined,
+    z.string().min(1).optional().default("local-anon-key-placeholder")
+  ),
+  SUPABASE_SERVICE_ROLE_KEY: z.preprocess(
+    (val) => val || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_KEY || undefined,
+    z.string().min(1).optional().default("local-service-role-key-placeholder")
+  ),
 
   // Paystack (M2 Booking Engine)
   PAYSTACK_SECRET_KEY: z.string().min(1).optional().default("sk_test_placeholder_key_for_dev"),
