@@ -7,7 +7,7 @@ import { FakeSupabase } from "@/test-utils/fake-supabase";
 import { mockApiCall } from "@/test-utils/api";
 import { resetRateLimits } from "@/lib/security/rate-limit";
 
-vi.mock("@/services/email/sendgrid", () => ({
+vi.mock("@/services/email", () => ({
   sendEmail: vi.fn().mockResolvedValue({ success: true }),
 }));
 vi.mock("@/services/booking/notifications", () => ({

@@ -21,9 +21,13 @@ const envSchema = z.object({
   PAYSTACK_SECRET_KEY: z.string().min(1).optional().default("sk_test_placeholder_key_for_dev"),
   PAYSTACK_WEBHOOK_SECRET: z.string().min(1).optional().default("whsec_placeholder_key_for_dev"),
 
-  // SendGrid Email Service
-  SENDGRID_API_KEY: z.string().min(1),
-  SENDGRID_FROM_EMAIL: z.string().email(),
+  // Resend Email Service
+  RESEND_API_KEY: z.string().min(1),
+  RESEND_FROM_EMAIL: z.preprocess(
+    (value) => (value === "" || value === undefined ? "onboarding@resend.dev" : value),
+    z.string().email()
+  ),
+  RESEND_REPLY_TO: blankAsUnset(z.string().email()),
 
   // Anti-spam (Optional in M1; revisit or use Cloudflare Turnstile before production forms)
   RECAPTCHA_SECRET_KEY: z.string().optional().default(""),

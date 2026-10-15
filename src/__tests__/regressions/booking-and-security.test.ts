@@ -10,7 +10,7 @@ import { calculateCancellationRefund } from "@/domain/booking/cancellation";
 import { canMarkNoShow } from "@/domain/booking/state-machine";
 import { addCalendarDays, resortDateTime, resortToday } from "@/domain/booking/time";
 
-vi.mock("@/services/email/sendgrid", () => ({
+vi.mock("@/services/email", () => ({
   sendEmail: vi.fn().mockResolvedValue({ success: true }),
 }));
 

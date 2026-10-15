@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/types/db";
 import { initiatePaystackRefund } from "./refund";
-import { sendEmail } from "@/services/email/sendgrid";
+import { sendEmail } from "@/services/email";
 import { runAfterResponse, sendBookingConfirmationEmail } from "@/services/booking/notifications";
 import { logger } from "@/lib/logger";
 

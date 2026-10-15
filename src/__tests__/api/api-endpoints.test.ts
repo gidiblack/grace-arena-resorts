@@ -22,12 +22,12 @@ import mediaHandler from "@/pages/api/v1/media/index";
 import contentHandler from "@/pages/api/v1/content/[page]";
 import { resetRateLimits } from "@/lib/security/rate-limit";
 
-import { sendEmail } from "@/services/email/sendgrid";
+import { sendEmail } from "@/services/email";
 import { newsletterUnsubscribeToken } from "@/services/newsletter/tokens";
 import { FakeSupabase } from "@/test-utils/fake-supabase";
 
 // Mock sendEmail to prevent network calls during testing
-vi.mock("@/services/email/sendgrid", () => ({
+vi.mock("@/services/email", () => ({
   sendEmail: vi.fn().mockResolvedValue({ success: true, messageId: "mock-id" }),
 }));
 

@@ -9,7 +9,7 @@ import {
 import { recordAuditLog } from "@/pages/api/v1/_shared/audit-log";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { initiatePaystackRefund } from "@/services/payments/refund";
-import { sendEmail } from "@/services/email/sendgrid";
+import { sendEmail } from "@/services/email";
 import { authorizeBookingAccess } from "@/services/booking/access";
 import { runAfterResponse } from "@/services/booking/notifications";
 import { ok, fail } from "@/lib/http/response";

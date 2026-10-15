@@ -27,24 +27,26 @@ flowchart LR
 ```
 
 ### Impacted Areas in Codebase
-| Component | File Path | Current SendGrid Usage |
-| :--- | :--- | :--- |
-| **Dependencies** | [`package.json`](../package.json) | `@sendgrid/mail` |
-| **Config / Schema** | [`src/config/env.ts`](../src/config/env.ts) | `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL` |
-| **Env Files** | [`.env.example`](../.env.example), `.env.local` | SendGrid environment variables |
-| **Service Layer** | [`src/services/email/sendgrid.ts`](../src/services/email/sendgrid.ts) | `sgMail.send()`, error handling, retry enqueueing |
-| **Retry Worker** | [`src/services/email/retry.ts`](../src/services/email/retry.ts) | Imports `sendEmail` & types |
-| **Staff Alerts** | [`src/services/email/staff-alert.ts`](../src/services/email/staff-alert.ts) | Imports `sendEmail`, uses `env.SENDGRID_FROM_EMAIL` |
-| **Auth & Bookings** | [`src/services/auth/verification.ts`](../src/services/auth/verification.ts), [`src/services/booking/notifications.ts`](../src/services/booking/notifications.ts), [`src/services/newsletter/confirmation.ts`](../src/services/newsletter/confirmation.ts), [`src/services/payments/settlement.ts`](../src/services/payments/settlement.ts) | Imports `sendEmail` |
-| **API Endpoints** | [`src/pages/api/v1/contact/index.ts`](../src/pages/api/v1/contact/index.ts), [`src/pages/api/v1/events/inquiries.ts`](../src/pages/api/v1/events/inquiries.ts), [`src/pages/api/v1/auth/forgot-password.ts`](../src/pages/api/v1/auth/forgot-password.ts), [`src/pages/api/v1/bookings/[ref]/cancel.ts`](../src/pages/api/v1/bookings/[ref]/cancel.ts), [`src/pages/api/v1/bookings/manage-link.ts`](../src/pages/api/v1/bookings/manage-link.ts), [`src/pages/api/v1/payments/webhook.ts`](../src/pages/api/v1/payments/webhook.ts) | Imports `sendEmail` |
-| **Test Mocks** | [`vitest.setup.ts`](../vitest.setup.ts), [`src/__tests__/regressions/email-reliability.test.ts`](../src/__tests__/regressions/email-reliability.test.ts), [`src/config/__tests__/env.test.ts`](../src/config/__tests__/env.test.ts) | `@sendgrid/mail` mock & env variables |
-| **Supabase Config** | [`supabase/config.toml`](../supabase/config.toml) | Commented SMTP settings for SendGrid |
+
+| Component           | File Path                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Current SendGrid Usage                              |
+| :------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------- |
+| **Dependencies**    | [`package.json`](../package.json)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `@sendgrid/mail`                                    |
+| **Config / Schema** | [`src/config/env.ts`](../src/config/env.ts)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`           |
+| **Env Files**       | [`.env.example`](../.env.example), `.env.local`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | SendGrid environment variables                      |
+| **Service Layer**   | [`src/services/email/sendgrid.ts`](../src/services/email/sendgrid.ts)                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `sgMail.send()`, error handling, retry enqueueing   |
+| **Retry Worker**    | [`src/services/email/retry.ts`](../src/services/email/retry.ts)                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Imports `sendEmail` & types                         |
+| **Staff Alerts**    | [`src/services/email/staff-alert.ts`](../src/services/email/staff-alert.ts)                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Imports `sendEmail`, uses `env.SENDGRID_FROM_EMAIL` |
+| **Auth & Bookings** | [`src/services/auth/verification.ts`](../src/services/auth/verification.ts), [`src/services/booking/notifications.ts`](../src/services/booking/notifications.ts), [`src/services/newsletter/confirmation.ts`](../src/services/newsletter/confirmation.ts), [`src/services/payments/settlement.ts`](../src/services/payments/settlement.ts)                                                                                                                                                                                           | Imports `sendEmail`                                 |
+| **API Endpoints**   | [`src/pages/api/v1/contact/index.ts`](../src/pages/api/v1/contact/index.ts), [`src/pages/api/v1/events/inquiries.ts`](../src/pages/api/v1/events/inquiries.ts), [`src/pages/api/v1/auth/forgot-password.ts`](../src/pages/api/v1/auth/forgot-password.ts), [`src/pages/api/v1/bookings/[ref]/cancel.ts`](../src/pages/api/v1/bookings/[ref]/cancel.ts), [`src/pages/api/v1/bookings/manage-link.ts`](../src/pages/api/v1/bookings/manage-link.ts), [`src/pages/api/v1/payments/webhook.ts`](../src/pages/api/v1/payments/webhook.ts) | Imports `sendEmail`                                 |
+| **Test Mocks**      | [`vitest.setup.ts`](../vitest.setup.ts), [`src/__tests__/regressions/email-reliability.test.ts`](../src/__tests__/regressions/email-reliability.test.ts), [`src/config/__tests__/env.test.ts`](../src/config/__tests__/env.test.ts)                                                                                                                                                                                                                                                                                                  | `@sendgrid/mail` mock & env variables               |
+| **Supabase Config** | [`supabase/config.toml`](../supabase/config.toml)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Commented SMTP settings for SendGrid                |
 
 ---
 
 ## 2. Phase-by-Phase Execution Plan
 
 ### Phase 1: Environment Variables & Configuration
+
 Use provider-explicit environment variables, initial testing sender, and optional reply-to configuration.
 
 1. **Schema Update in `src/config/env.ts`**:
@@ -69,6 +71,7 @@ Use provider-explicit environment variables, initial testing sender, and optiona
 ---
 
 ### Phase 2: Dependency Changes
+
 Replace the SendGrid package with the official Resend SDK:
 
 ```bash
@@ -82,6 +85,7 @@ npm install resend
 
 1. **Option Interface Enhancements**:
    Extend `SendEmailOptions` to support custom per-email `replyTo`:
+
    ```typescript
    export interface SendEmailOptions {
      to: string;
@@ -130,13 +134,16 @@ npm install resend
 ---
 
 ### Phase 4: Consumer Updates
+
 Update imports across the 12 service and API route files:
+
 - Change `import { sendEmail } from "@/services/email/sendgrid"` to `import { sendEmail } from "@/services/email"`.
 - Update `src/services/email/staff-alert.ts` to use `env.RESEND_REPLY_TO || env.RESEND_FROM_EMAIL`.
 
 ---
 
 ### Phase 5: Test Suite Modernization
+
 1. **`vitest.setup.ts`**:
    - Define `process.env.RESEND_API_KEY = "re_mock_key_for_testing"`.
    - Define `process.env.RESEND_FROM_EMAIL = "onboarding@resend.dev"`.
@@ -160,6 +167,7 @@ Update imports across the 12 service and API route files:
 ---
 
 ### Phase 6: Post-Migration Queue Draining & Verification
+
 1. **Drain SendGrid Backlog**:
    - Trigger the internal retry job:
      ```bash

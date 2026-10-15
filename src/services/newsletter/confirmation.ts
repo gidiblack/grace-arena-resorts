@@ -1,6 +1,6 @@
 import { env } from "@/config/env";
 import { issueToken } from "@/services/auth/tokens";
-import { sendEmail, type EmailSendResult } from "@/services/email/sendgrid";
+import { sendEmail, type EmailSendResult } from "@/services/email";
 
 /**
  * Issues a fresh single-use confirmation token and emails the double opt-in link.

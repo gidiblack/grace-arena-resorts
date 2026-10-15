@@ -4,7 +4,7 @@ import { verifyRecaptcha } from "../_shared/recaptcha";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
 import { env } from "@/config/env";
-import { sendEmail } from "@/services/email/sendgrid";
+import { sendEmail } from "@/services/email";
 import { notifyStaffOfSubmission } from "@/services/email/staff-alert";
 import { logger } from "@/lib/logger";
 

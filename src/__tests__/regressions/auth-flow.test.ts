@@ -4,7 +4,7 @@ import { mockApiCall, cookieValue } from "@/test-utils/api";
 import { resetRateLimits } from "@/lib/security/rate-limit";
 import { safeRedirectPath } from "@/lib/http/redirect";
 
-vi.mock("@/services/email/sendgrid", () => ({
+vi.mock("@/services/email", () => ({
   sendEmail: vi.fn().mockResolvedValue({ success: true }),
 }));
 
@@ -14,7 +14,7 @@ vi.mock("@/lib/supabase/server", () => ({
   createSupabaseAuthClient: () => db.current.authClient,
 }));
 
-import { sendEmail } from "@/services/email/sendgrid";
+import { sendEmail } from "@/services/email";
 import registerHandler from "@/pages/api/v1/auth/register";
 import verifyEmailHandler from "@/pages/api/v1/auth/verify-email";
 import loginHandler from "@/pages/api/v1/auth/login";

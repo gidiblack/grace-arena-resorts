@@ -3,7 +3,7 @@ import getRawBody from "raw-body";
 import { isValidPaystackSignature } from "@/services/payments/signature";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { settleSuccessfulCharge } from "@/services/payments/settlement";
-import { sendEmail } from "@/services/email/sendgrid";
+import { sendEmail } from "@/services/email";
 import { logger } from "@/lib/logger";
 import type { PaystackWebhookPayload } from "@/domain/payment/types";
 import type { Json } from "@/types/db";
