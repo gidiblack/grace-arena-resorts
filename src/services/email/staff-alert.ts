@@ -1,6 +1,6 @@
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { env } from "@/config/env";
-import { sendEmail } from "./sendgrid";
+import { sendEmail } from "./resend";
 import { logger } from "@/lib/logger";
 
 /**
@@ -23,7 +23,8 @@ export async function notifyStaffOfSubmission(details: {
       .maybeSingle();
 
     await sendEmail({
-      to: data?.value || env.SENDGRID_FROM_EMAIL,
+      to: data?.value || env.RESEND_REPLY_TO || env.RESEND_FROM_EMAIL,
+      replyTo: details.email,
       templateId: "staff_submission_alert",
       templateData: details,
     });

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { waitUntil } from "@vercel/functions";
 import type { Database } from "@/types/db";
-import { sendEmail, type EmailSendResult } from "@/services/email/sendgrid";
+import { sendEmail, type EmailSendResult } from "@/services/email";
 import { generateBookingPdfBuffer } from "@/services/pdf/booking-pdf";
 import { buildBookingPdfInput } from "./booking-data";
 import { issueBookingAccessToken, manageBookingUrl } from "./access";

@@ -3,7 +3,7 @@ import { forgotPasswordSchema } from "@/features/auth/schemas";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { issueToken } from "@/services/auth/tokens";
 import { ok } from "@/lib/http/response";
-import { sendEmail } from "@/services/email/sendgrid";
+import { sendEmail } from "@/services/email";
 import { env } from "@/config/env";
 import { logger } from "@/lib/logger";
 

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { withApi } from "../_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { issueBookingAccessToken, manageBookingUrl } from "@/services/booking/access";
-import { sendEmail } from "@/services/email/sendgrid";
+import { sendEmail } from "@/services/email";
 import { ok } from "@/lib/http/response";
 
 const manageLinkSchema = z.object({

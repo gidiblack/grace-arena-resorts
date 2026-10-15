@@ -1,11 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { FakeSupabase } from "@/test-utils/fake-supabase";
 
-// SendGrid rejects every send the way an out-of-credits account does
-const sgSend = vi.hoisted(() => vi.fn());
-vi.mock("@sendgrid/mail", () => ({
-  default: { setApiKey: vi.fn(), send: sgSend },
-}));
+const resendSend = vi.hoisted(() => vi.fn());
+vi.mock("resend", () => {
+  return {
+    Resend: class {
+      emails = { send: resendSend };
+    },
+  };
+});
 
 const db = vi.hoisted(() => ({ current: null as unknown as FakeSupabase }));
 vi.mock("@/lib/supabase/server", () => ({
@@ -13,20 +16,25 @@ vi.mock("@/lib/supabase/server", () => ({
   createSupabaseAuthClient: () => db.current.authClient,
 }));
 
-import { sendEmail } from "@/services/email/sendgrid";
+import { sendEmail } from "@/services/email";
 import { sendVerificationEmail } from "@/services/auth/verification";
 import { retryFailedEmails } from "@/services/email/retry";
 
-const creditsExceeded = Object.assign(new Error("Unauthorized"), {
-  code: 401,
-  response: { body: { errors: [{ message: "Maximum credits exceeded" }] } },
-});
+const quotaExceeded = {
+  data: null,
+  error: {
+    name: "rate_limit_exceeded" as const,
+    message: "Daily quota exceeded",
+    statusCode: 429,
+  },
+  headers: null,
+};
 
-describe("Regression: email failures are queued and retried (T1, T2)", () => {
+describe("Regression: email failures are queued and retried with Resend (T1, T2)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     db.current = new FakeSupabase();
-    sgSend.mockReset().mockRejectedValue(creditsExceeded);
+    resendSend.mockReset().mockResolvedValue(quotaExceeded);
   });
 
   it("reports provider outages and queues the email instead of claiming success", async () => {
@@ -40,7 +48,7 @@ describe("Regression: email failures are queued and retried (T1, T2)", () => {
       success: false,
       queued: true,
       providerUnavailable: true,
-      error: "Maximum credits exceeded",
+      error: "Daily quota exceeded",
     });
     const [row] = db.current.rows("failed_emails");
     expect(row).toMatchObject({
@@ -66,13 +74,17 @@ describe("Regression: email failures are queued and retried (T1, T2)", () => {
 
     // Provider recovers: the retry job rebuilds the email with a fresh link and marks it sent
     row.next_attempt_at = new Date(Date.now() - 1000).toISOString();
-    sgSend.mockReset().mockResolvedValue([{ statusCode: 202, headers: {} }]);
+    resendSend.mockReset().mockResolvedValue({
+      data: { id: "resend_msg_test" },
+      error: null,
+      headers: null,
+    });
 
     const summary = await retryFailedEmails();
 
     expect(summary).toMatchObject({ attempted: 1, sent: 1 });
     expect(db.current.rows("failed_emails")[0].sent_at).toBeTruthy();
-    const sentHtml = sgSend.mock.calls[0][0].html as string;
+    const sentHtml = resendSend.mock.calls[0][0].html as string;
     expect(sentHtml).toMatch(/verify-email\?token=/);
     // The retry itself must not enqueue a duplicate row
     expect(db.current.rows("failed_emails")).toHaveLength(1);
@@ -100,5 +112,26 @@ describe("Regression: email failures are queued and retried (T1, T2)", () => {
 
     // Exhausted rows are not picked up again
     expect((await retryFailedEmails()).attempted).toBe(0);
+  });
+
+  it("sets replyTo correctly from option or RESEND_REPLY_TO fallback", async () => {
+    resendSend.mockReset().mockResolvedValue({
+      data: { id: "msg_reply_test" },
+      error: null,
+      headers: null,
+    });
+
+    await sendEmail({
+      to: "guest@example.com",
+      templateId: "inquiry_acknowledgment",
+      templateData: { name: "Ada" },
+      replyTo: "custom-reply@example.com",
+    });
+
+    expect(resendSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyTo: "custom-reply@example.com",
+      })
+    );
   });
 });

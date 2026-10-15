@@ -13,15 +13,15 @@ describe("Environment schema validation", () => {
     const envSchema = z.object({
       NEXT_PUBLIC_APP_URL: z.string().url(),
       NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().regex(/^\d{10,15}$/),
-      SENDGRID_API_KEY: z.string().min(1),
-      SENDGRID_FROM_EMAIL: z.string().email(),
+      RESEND_API_KEY: z.string().min(1),
+      RESEND_FROM_EMAIL: z.string().email(),
     });
 
     const validEnv = {
       NEXT_PUBLIC_APP_URL: "http://localhost:3000",
       NEXT_PUBLIC_WHATSAPP_NUMBER: "2348123456789",
-      SENDGRID_API_KEY: "SG.valid_key_sample",
-      SENDGRID_FROM_EMAIL: "reservations@gracearenaresorts.com",
+      RESEND_API_KEY: "re_valid_key_sample",
+      RESEND_FROM_EMAIL: "onboarding@resend.dev",
     };
 
     const result = envSchema.safeParse(validEnv);
@@ -46,12 +46,12 @@ describe("Environment schema validation", () => {
     expect(result.success).toBe(false);
   });
 
-  it("fails fast when SENDGRID_FROM_EMAIL is not a valid email", () => {
+  it("fails fast when RESEND_FROM_EMAIL is not a valid email", () => {
     const envSchema = z.object({
-      SENDGRID_FROM_EMAIL: z.string().email(),
+      RESEND_FROM_EMAIL: z.string().email(),
     });
 
-    const result = envSchema.safeParse({ SENDGRID_FROM_EMAIL: "invalid-email" });
+    const result = envSchema.safeParse({ RESEND_FROM_EMAIL: "invalid-email" });
     expect(result.success).toBe(false);
   });
 });

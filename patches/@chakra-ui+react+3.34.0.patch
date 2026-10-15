@@ -1,0 +1,26 @@
+diff --git a/node_modules/@chakra-ui/react/dist/cjs/utils/memo.cjs b/node_modules/@chakra-ui/react/dist/cjs/utils/memo.cjs
+index 69b42eb..930dcec 100644
+--- a/node_modules/@chakra-ui/react/dist/cjs/utils/memo.cjs
++++ b/node_modules/@chakra-ui/react/dist/cjs/utils/memo.cjs
+@@ -16,7 +16,7 @@ function simpleHash(value) {
+     return `a:[${value.map(simpleHash).join(",")}]`;
+   }
+   if (type === "object") {
+-    const keys = Object.keys(value).sort();
++    const keys = Object.keys(value);
+     return `o:{${keys.map((k) => `${k}:${simpleHash(value[k])}`).join(",")}}`;
+   }
+   return String(value);
+diff --git a/node_modules/@chakra-ui/react/dist/esm/utils/memo.js b/node_modules/@chakra-ui/react/dist/esm/utils/memo.js
+index fc514d5..1e69912 100644
+--- a/node_modules/@chakra-ui/react/dist/esm/utils/memo.js
++++ b/node_modules/@chakra-ui/react/dist/esm/utils/memo.js
+@@ -14,7 +14,7 @@ function simpleHash(value) {
+     return `a:[${value.map(simpleHash).join(",")}]`;
+   }
+   if (type === "object") {
+-    const keys = Object.keys(value).sort();
++    const keys = Object.keys(value);
+     return `o:{${keys.map((k) => `${k}:${simpleHash(value[k])}`).join(",")}}`;
+   }
+   return String(value);

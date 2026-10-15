@@ -1,7 +1,7 @@
 import type { Json } from "@/types/db";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
-import { sendEmail, type EmailSendResult } from "./sendgrid";
+import { sendEmail, type EmailSendResult } from "./resend";
 import type { EmailTemplateId } from "./templates";
 import { sendVerificationEmail } from "@/services/auth/verification";
 import { sendBookingConfirmationEmail } from "@/services/booking/notifications";

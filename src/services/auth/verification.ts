@@ -1,5 +1,5 @@
 import { env } from "@/config/env";
-import { sendEmail, type EmailSendResult } from "@/services/email/sendgrid";
+import { sendEmail, type EmailSendResult } from "@/services/email";
 import { issueToken } from "./tokens";
 
 /**
