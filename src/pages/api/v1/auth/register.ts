@@ -1,24 +1,27 @@
-import bcrypt from "bcryptjs";
 import { withApi } from "../_shared/handler";
-import { registerSchema } from "@/features/auth/schemas";
+import { registerSchema, type RegisterInput } from "@/features/auth/schemas";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
-import { sendEmail } from "@/services/email/sendgrid";
-import { env } from "@/config/env";
+import { sendVerificationEmail } from "@/services/auth/verification";
 import { logger } from "@/lib/logger";
 
 export default withApi(
   async (req, res) => {
-    const { fullName, email, phone, password } = req.body;
+    const { fullName, email, phone, password } = req.body as RegisterInput;
     const normalizedEmail = email.toLowerCase().trim();
     const supabase = getSupabaseAdminClient();
 
-    // 1. Check if user already exists
-    const { data: existingUser } = await supabase
+    // 1. Reject duplicates (a lookup failure is an error, not "no user")
+    const { data: existingUser, error: lookupError } = await supabase
       .from("users")
       .select("id")
       .eq("email", normalizedEmail)
       .maybeSingle();
+
+    if (lookupError) {
+      logger.error("User lookup failed during registration", { error: lookupError });
+      return fail(res, "REGISTRATION_FAILED", "Registration is temporarily unavailable", 503);
+    }
 
     if (existingUser) {
       return fail(
@@ -29,75 +32,71 @@ export default withApi(
       );
     }
 
-    // 2. Hash password with bcrypt cost factor 12 per GAR-SRS Section 5.3
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    // 3. Create user in Supabase Auth
-    let authUserId: string;
+    // 2. Create the Supabase Auth identity (sole password store). The user is created
+    // pre-confirmed so they can sign in; booking access is gated by public.users.is_email_verified.
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: normalizedEmail,
       password,
-      email_confirm: false,
-      user_metadata: {
-        full_name: fullName,
-        phone,
-        role: "guest",
-      },
+      email_confirm: true,
+      user_metadata: { full_name: fullName, phone },
     });
 
     if (authError || !authData.user) {
-      // In dev or local test environments without live supabase auth daemon, generate UUID
-      if (authError?.message?.includes("fetch failed") || !authData?.user) {
-        authUserId = crypto.randomUUID();
-      } else {
-        logger.error("Supabase auth user creation error", { error: authError });
+      if (authError?.code === "email_exists" || authError?.status === 422) {
         return fail(
           res,
-          "AUTH_CREATION_FAILED",
-          "Failed to create user authentication identity",
-          500
+          "EMAIL_ALREADY_EXISTS",
+          "An account with this email address already exists",
+          409
         );
       }
-    } else {
-      authUserId = authData.user.id;
+      if (authError?.code === "weak_password") {
+        return fail(res, "WEAK_PASSWORD", authError.message, 400);
+      }
+      logger.error("Supabase auth user creation error", { error: authError });
+      return fail(res, "AUTH_CREATION_FAILED", "Failed to create your account", 500);
     }
 
-    // 4. Create user record in public.users table
-    const { error: dbError } = await supabase.from("users").insert({
-      id: authUserId,
-      email: normalizedEmail,
-      password_hash: passwordHash,
-      full_name: fullName,
-      phone,
-      role: "guest",
-      is_email_verified: false,
-    });
+    const userId = authData.user.id;
 
-    if (dbError) {
-      logger.error("Database user profile creation error", { error: dbError });
-      return fail(res, "DB_ERROR", "Failed to save user profile", 500);
-    }
-
-    // 5. Generate email verification link & dispatch SendGrid email
-    const verificationToken = Buffer.from(`${authUserId}:${Date.now()}`).toString("base64url");
-    const verifyUrl = `${env.NEXT_PUBLIC_APP_URL}/verify-email?token=${verificationToken}&email=${encodeURIComponent(normalizedEmail)}`;
-
-    await sendEmail({
-      to: normalizedEmail,
-      templateId: "email_verification",
-      templateData: {
-        name: fullName,
-        verifyUrl,
+    // 3. The on_auth_user_created trigger creates the profile; upsert keeps phone/name
+    // authoritative and covers environments where the trigger has not been deployed yet.
+    const { error: profileError } = await supabase.from("users").upsert(
+      {
+        id: userId,
+        email: normalizedEmail,
+        full_name: fullName,
+        phone,
       },
-    });
+      { onConflict: "id" }
+    );
+
+    if (profileError) {
+      logger.error("Profile creation failed; rolling back auth user", { error: profileError });
+      await supabase.auth.admin.deleteUser(userId);
+      return fail(res, "REGISTRATION_FAILED", "Failed to create your account", 500);
+    }
+
+    // 4. Verification email (failure is non-fatal: it is queued for retry and can be resent)
+    let verificationEmailSent = false;
+    try {
+      verificationEmailSent = (
+        await sendVerificationEmail({ userId, email: normalizedEmail, fullName })
+      ).success;
+    } catch (error) {
+      logger.error("Failed to issue verification email after registration", { error });
+    }
 
     return ok(
       res,
       {
-        userId: authUserId,
+        userId,
         email: normalizedEmail,
         fullName,
-        message: "Registration successful. Please verify your email to enable reservations.",
+        verificationEmailSent,
+        message: verificationEmailSent
+          ? "Registration successful. Please check your email to verify your account."
+          : "Your account was created, but we couldn't send the verification email right now. We'll retry automatically, or you can request a new link in a few minutes.",
       },
       201
     );

@@ -1,9 +1,11 @@
 import { withApi } from "../_shared/handler";
 import { forgotPasswordSchema } from "@/features/auth/schemas";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { issueToken } from "@/services/auth/tokens";
 import { ok } from "@/lib/http/response";
 import { sendEmail } from "@/services/email/sendgrid";
 import { env } from "@/config/env";
+import { logger } from "@/lib/logger";
 
 export default withApi(
   async (req, res) => {
@@ -11,7 +13,6 @@ export default withApi(
     const normalizedEmail = email.toLowerCase().trim();
     const supabase = getSupabaseAdminClient();
 
-    // Look up user silently
     const { data: user } = await supabase
       .from("users")
       .select("id, email, full_name")
@@ -19,19 +20,26 @@ export default withApi(
       .maybeSingle();
 
     if (user) {
-      // 1-hour expiration timestamp
-      const expiresAt = Date.now() + 60 * 60 * 1000;
-      const resetToken = Buffer.from(`${user.id}:${expiresAt}`).toString("base64url");
-      const resetUrl = `${env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(normalizedEmail)}`;
+      try {
+        // Random single-use token (1-hour expiry); only its hash is stored
+        const resetToken = await issueToken({
+          purpose: "password_reset",
+          email: normalizedEmail,
+          userId: user.id,
+        });
+        const resetUrl = `${env.NEXT_PUBLIC_APP_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
 
-      await sendEmail({
-        to: normalizedEmail,
-        templateId: "password_reset",
-        templateData: {
-          name: user.full_name,
-          resetUrl,
-        },
-      });
+        await sendEmail({
+          to: normalizedEmail,
+          templateId: "password_reset",
+          templateData: {
+            name: user.full_name,
+            resetUrl,
+          },
+        });
+      } catch (error) {
+        logger.error("Failed to issue password reset email", { error });
+      }
     }
 
     // Always respond with generic 200 to protect against account enumeration

@@ -18,7 +18,7 @@ function createMockReqRes(options: {
     method: options.method || "GET",
     query: options.query || {},
     body: options.body || {},
-    headers: options.headers || {},
+    headers: options.headers || { "sec-fetch-site": "same-origin" },
     socket: { remoteAddress: "127.0.0.1" },
   } as unknown as NextApiRequest;
 
@@ -211,7 +211,7 @@ describe("Step 7 Rooms & Catalog API Endpoints", () => {
 
       await notifyMeHandler(req, res);
       expect(getStatusCode()).toBe(400);
-      expect(getData().error.code).toBe("VALIDATION_ERROR");
+      expect(getData().error.code).toBe("INVALID_REQUEST_BODY");
     });
   });
 });

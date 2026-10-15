@@ -2,8 +2,8 @@ import { withApi } from "@/pages/api/v1/_shared/handler";
 import { resendVerificationSchema } from "@/features/auth/schemas";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok } from "@/lib/http/response";
-import { sendEmail } from "@/services/email/sendgrid";
-import { env } from "@/config/env";
+import { sendVerificationEmail } from "@/services/auth/verification";
+import { logger } from "@/lib/logger";
 
 export default withApi(
   async (req, res) => {
@@ -18,21 +18,21 @@ export default withApi(
       .maybeSingle();
 
     if (user && !user.is_email_verified) {
-      const verificationToken = Buffer.from(`${user.id}:${Date.now()}`).toString("base64url");
-      const verifyUrl = `${env.NEXT_PUBLIC_APP_URL}/verify-email?token=${verificationToken}&email=${encodeURIComponent(normalizedEmail)}`;
-
-      await sendEmail({
-        to: normalizedEmail,
-        templateId: "email_verification",
-        templateData: {
-          name: user.full_name,
-          verifyUrl,
-        },
-      });
+      try {
+        await sendVerificationEmail({
+          userId: user.id,
+          email: normalizedEmail,
+          fullName: user.full_name,
+        });
+      } catch (error) {
+        logger.error("Failed to resend verification email", { error });
+      }
     }
 
+    // Generic response prevents account enumeration
     return ok(res, {
-      message: "If your account is awaiting verification, a new confirmation link has been sent.",
+      message:
+        "If your account is awaiting verification, a new confirmation link is on its way. If it does not arrive within a few minutes, please try again later or contact us on WhatsApp.",
     });
   },
   {
@@ -42,6 +42,10 @@ export default withApi(
       keyPrefix: "auth-resend-verification",
       maxRequests: 1,
       windowSeconds: 60,
+      identifierExtractor: (req) =>
+        String(req.body?.email || "")
+          .toLowerCase()
+          .trim(),
     },
   }
 );

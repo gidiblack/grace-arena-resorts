@@ -511,7 +511,11 @@ export const MOCK_DEALS: DealItem[] = [
     discountType: "percentage",
     discountValue: 15,
     promoCode: "SERENITY15",
-    applicableRooms: ["executive-hut", "elysian-standard", "elysian-deluxe"],
+    applicableRooms: [
+      "village-executive-hut",
+      "elysian-fountain-standard",
+      "elysian-fountain-deluxe",
+    ],
     validFrom: "2026-01-01",
     validTo: "2026-12-31",
     terms: [
@@ -532,7 +536,11 @@ export const MOCK_DEALS: DealItem[] = [
     discountType: "percentage",
     discountValue: 20,
     promoCode: "FAMILY20",
-    applicableRooms: ["elysian-deluxe", "fountain-suite", "oasis-villa"],
+    applicableRooms: [
+      "elysian-fountain-deluxe",
+      "elysian-oasis-deluxe-suite",
+      "elysian-oasis-premium-suite",
+    ],
     validFrom: "2026-01-01",
     validTo: "2026-12-31",
     terms: [
@@ -553,7 +561,7 @@ export const MOCK_DEALS: DealItem[] = [
     discountType: "fixed",
     discountValue: 25000,
     promoCode: "PEACE25",
-    applicableRooms: ["executive-hut", "elysian-standard"],
+    applicableRooms: ["village-executive-hut", "elysian-fountain-standard"],
     validFrom: "2026-01-01",
     validTo: "2026-12-31",
     terms: ["Check-in Tuesday, check-out Thursday", "Quiet policy strictly observed"],

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import NextLink from "next/link";
 import { Box, Button, Input, Stack, Text } from "@chakra-ui/react";
@@ -16,6 +16,17 @@ export default function RegisterPage() {
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Prefill from the post-booking "Create an account" link (/register?email=&name=)
+  useEffect(() => {
+    if (!router.isReady) return;
+    const { email: qEmail, name: qName } = router.query;
+    const timer = setTimeout(() => {
+      if (typeof qEmail === "string") setEmail((prev) => prev || qEmail);
+      if (typeof qName === "string") setFullName((prev) => prev || qName);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [router.isReady, router.query]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +67,8 @@ export default function RegisterPage() {
       }
 
       // Redirect to email verification interstitial
-      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+      const sentFlag = data.data?.verificationEmailSent === false ? "&sent=0" : "";
+      router.push(`/verify-email?email=${encodeURIComponent(email)}${sentFlag}`);
     } catch {
       setErrorMsg("Network error occurred. Please try again.");
       setIsLoading(false);
@@ -110,7 +122,11 @@ export default function RegisterPage() {
               border="1px solid"
               borderColor="gray.300"
               _placeholder={{ color: "gray.500", opacity: 1 }}
-              _focus={{ borderColor: "yellow.600", outline: "none", boxShadow: "0 0 0 1px #D97706" }}
+              _focus={{
+                borderColor: "yellow.600",
+                outline: "none",
+                boxShadow: "0 0 0 1px #D97706",
+              }}
             />
           </Box>
 
@@ -140,7 +156,11 @@ export default function RegisterPage() {
               border="1px solid"
               borderColor="gray.300"
               _placeholder={{ color: "gray.500", opacity: 1 }}
-              _focus={{ borderColor: "yellow.600", outline: "none", boxShadow: "0 0 0 1px #D97706" }}
+              _focus={{
+                borderColor: "yellow.600",
+                outline: "none",
+                boxShadow: "0 0 0 1px #D97706",
+              }}
             />
           </Box>
 
@@ -170,7 +190,11 @@ export default function RegisterPage() {
               border="1px solid"
               borderColor="gray.300"
               _placeholder={{ color: "gray.500", opacity: 1 }}
-              _focus={{ borderColor: "yellow.600", outline: "none", boxShadow: "0 0 0 1px #D97706" }}
+              _focus={{
+                borderColor: "yellow.600",
+                outline: "none",
+                boxShadow: "0 0 0 1px #D97706",
+              }}
             />
           </Box>
 
@@ -200,7 +224,11 @@ export default function RegisterPage() {
               border="1px solid"
               borderColor="gray.300"
               _placeholder={{ color: "gray.500", opacity: 1 }}
-              _focus={{ borderColor: "yellow.600", outline: "none", boxShadow: "0 0 0 1px #D97706" }}
+              _focus={{
+                borderColor: "yellow.600",
+                outline: "none",
+                boxShadow: "0 0 0 1px #D97706",
+              }}
             />
             <Text fontSize="xs" color="gray.500" mt={1}>
               At least 8 characters, including 1 uppercase, 1 lowercase, and 1 number.
@@ -233,7 +261,11 @@ export default function RegisterPage() {
               border="1px solid"
               borderColor="gray.300"
               _placeholder={{ color: "gray.500", opacity: 1 }}
-              _focus={{ borderColor: "yellow.600", outline: "none", boxShadow: "0 0 0 1px #D97706" }}
+              _focus={{
+                borderColor: "yellow.600",
+                outline: "none",
+                boxShadow: "0 0 0 1px #D97706",
+              }}
             />
           </Box>
 

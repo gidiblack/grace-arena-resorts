@@ -1,49 +1,63 @@
-import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
+import { withApi } from "../_shared/handler";
+import { verifyRecaptcha } from "../_shared/recaptcha";
+import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
-import { sendEmail } from "@/services/email/sendgrid";
-import { env } from "@/config/env";
+import { sendNewsletterConfirmation } from "@/services/newsletter/confirmation";
 import { logger } from "@/lib/logger";
 
 const subscribeSchema = z.object({
   email: z.string().email("Please provide a valid email address"),
+  recaptchaToken: z.string().optional(),
 });
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return fail(res, "METHOD_NOT_ALLOWED", "Method not allowed", 405);
-  }
+export default withApi(
+  async (req, res) => {
+    const { email, recaptchaToken } = req.body as z.infer<typeof subscribeSchema>;
+    const normalizedEmail = email.toLowerCase().trim();
 
-  const parsed = subscribeSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return fail(res, "VALIDATION_ERROR", "Invalid email", 400, parsed.error.format());
-  }
+    const recaptcha = await verifyRecaptcha(recaptchaToken, "newsletter");
+    if (!recaptcha.success) {
+      return fail(res, "RECAPTCHA_FAILED", "Spam protection check failed. Please try again.", 400);
+    }
 
-  const { email } = parsed.data;
-  const token = Buffer.from(`${email}:${Date.now()}`).toString("base64url");
-  const confirmUrl = `${env.NEXT_PUBLIC_APP_URL}/api/v1/newsletter/confirm?token=${token}`;
+    const supabase = getSupabaseAdminClient();
+    const { data: existing, error: lookupError } = await supabase
+      .from("newsletter_subscribers")
+      .select("id, is_confirmed, unsubscribed_at")
+      .eq("email", normalizedEmail)
+      .maybeSingle();
 
-  logger.info("Newsletter subscription requested", { email });
+    if (lookupError) {
+      logger.error("Newsletter subscriber lookup failed", { error: lookupError });
+      return fail(res, "SUBSCRIBE_FAILED", "Unable to subscribe right now", 503);
+    }
 
-  // Dispatch double opt-in confirmation email via SendGrid
-  try {
-    await sendEmail({
-      to: email,
-      templateId: "newsletter_confirmation",
-      templateData: {
-        confirmUrl,
-      },
-    });
-  } catch (error) {
-    logger.warn("Failed to dispatch newsletter confirmation email", { error, email });
-  }
+    const alreadyActive = existing?.is_confirmed && !existing.unsubscribed_at;
 
-  return ok(
-    res,
-    {
+    if (!alreadyActive) {
+      if (!existing) {
+        const { error } = await supabase
+          .from("newsletter_subscribers")
+          .insert({ email: normalizedEmail });
+        if (error) {
+          logger.error("Failed to save newsletter subscriber", { error });
+          return fail(res, "SUBSCRIBE_FAILED", "Unable to subscribe right now", 503);
+        }
+      }
+
+      // Double opt-in: nothing is sent to the address until it confirms
+      await sendNewsletterConfirmation(normalizedEmail);
+    }
+
+    // Same response either way (no subscription status disclosure)
+    return ok(res, {
       message: "Please check your inbox to confirm your newsletter subscription.",
-      email,
-    },
-    200
-  );
-}
+    });
+  },
+  {
+    allowedMethods: ["POST"],
+    bodySchema: subscribeSchema,
+    rateLimit: { keyPrefix: "newsletter-subscribe", maxRequests: 5, windowSeconds: 3600 },
+  }
+);

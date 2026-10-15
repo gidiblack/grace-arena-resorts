@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
+import { consumeRateLimit, getClientIp } from "@/lib/security/rate-limit";
 import { fail } from "@/lib/http/response";
 
 export interface RateLimitOptions {
@@ -23,7 +23,7 @@ export async function enforceRateLimit(
     : getClientIp(req);
 
   const key = `${options.keyPrefix}:${identifier}`;
-  const result = checkRateLimit(key, options.maxRequests, options.windowSeconds);
+  const result = await consumeRateLimit(key, options.maxRequests, options.windowSeconds);
 
   res.setHeader("X-RateLimit-Limit", options.maxRequests.toString());
   res.setHeader("X-RateLimit-Remaining", Math.max(0, result.remaining).toString());

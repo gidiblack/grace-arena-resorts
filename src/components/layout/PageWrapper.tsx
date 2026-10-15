@@ -5,6 +5,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import WhatsAppFab from "@/components/common/WhatsAppFab";
 import CookieConsentBanner from "@/components/common/CookieConsentBanner";
+import AnalyticsLoader from "@/components/common/AnalyticsLoader";
 import SkipToContent from "@/components/common/SkipToContent";
 import PageTransitionIndicator from "@/components/common/PageTransitionIndicator";
 import GlobalNetworkStatus from "@/components/common/GlobalNetworkStatus";
@@ -63,6 +64,7 @@ export const PageWrapper: React.FC<PageWrapperProps> = ({
 
         <WhatsAppFab />
         <CookieConsentBanner />
+        <AnalyticsLoader />
       </Box>
     </>
   );

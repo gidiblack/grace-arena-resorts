@@ -1,3 +1,5 @@
+import { addCalendarDays, nightsBetween } from "@/domain/booking/time";
+
 export interface RoomSelection {
   roomTypeId: string;
   quantity: number;
@@ -73,17 +75,12 @@ export function calculateBookingPricing({
   deal?: DealRecord | null;
   taxRate?: number;
 }): BookingPricingQuote {
-  const start = new Date(checkInDate);
-  const end = new Date(checkOutDate);
+  const nights = Math.max(1, nightsBetween(checkInDate, checkOutDate));
 
-  const diffTime = end.getTime() - start.getTime();
-  const nights = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)));
-
-  // Generate dates array for each night of the stay
+  // Calendar date of each night of the stay
   const nightDates: string[] = [];
   for (let i = 0; i < nights; i++) {
-    const d = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
-    nightDates.push(d.toISOString().slice(0, 10));
+    nightDates.push(addCalendarDays(checkInDate, i));
   }
 
   const roomLineItems: RoomLineItemPricing[] = [];
@@ -106,8 +103,8 @@ export function calculateBookingPricing({
       let isSeasonal = false;
 
       if (matching.length > 0) {
-        // Sort descending by createdAt or latest entry
-        const chosen = matching[matching.length - 1];
+        // Overlapping seasons: the most recently created override wins
+        const chosen = pickLatestSeasonalPrice(matching);
         effectiveRate = chosen.price;
         isSeasonal = true;
       }
@@ -177,4 +174,13 @@ export function calculateBookingPricing({
     total,
     taxRate,
   };
+}
+
+/**
+ * Picks the most recently created seasonal price; records without createdAt rank lowest.
+ */
+export function pickLatestSeasonalPrice<T extends { createdAt?: string | null }>(matching: T[]): T {
+  return [...matching].sort(
+    (a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+  )[0];
 }

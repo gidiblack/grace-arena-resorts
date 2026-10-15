@@ -19,9 +19,6 @@ export function setSecurityHeaders(res: NextApiResponse): void {
   // Permissions policy
   res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
 
-  // Cross-site scripting / content security baseline
-  res.setHeader(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.paystack.co https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; frame-src 'self' https://js.paystack.co https://www.google.com/ https://www.google.com/maps/; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https:; connect-src 'self' https:;"
-  );
+  // API responses are JSON only: nothing may be loaded or framed
+  res.setHeader("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
 }

@@ -5,16 +5,13 @@ import { generateOfferJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
 import { ROUTES } from "@/constants/ROUTES";
 import Link from "next/link";
-import suite from "@/assets/suite.jpg";
-import dining from "@/assets/dining.jpg";
-import hut from "@/assets/hut.jpg";
-import elysian from "@/assets/gar-elysian.jpg";
+import { MOCK_DEALS } from "@/data/mock/resort-data";
 import { FaTag } from "react-icons/fa";
 
 interface DealItem {
   id: string;
   title: string;
-  category: "Room Deals" | "Dining Deals" | "Package Deals" | "Seasonal Offers";
+  category: "Room Deals" | "Package Deals";
   discountText: string;
   promoCode: string;
   validUntil: string;
@@ -23,63 +20,32 @@ interface DealItem {
   terms: string;
 }
 
-const DEALS_DATA: DealItem[] = [
-  {
-    id: "spiritual-retreat-20",
-    title: "Pastoral & Church Retreat Package",
-    category: "Package Deals",
-    discountText: "20% OFF",
-    promoCode: "GRACE20",
-    validUntil: "November 30, 2026",
-    image: elysian.src,
-    description:
-      "Special retreat pricing for church leadership and ministry teams booking 5+ rooms for 2 nights or more.",
-    terms:
-      "Includes private sessions at The Prayer Hut and complimentary audio-visual conference room setup.",
-  },
-  {
-    id: "weekend-village-getaway",
-    title: "Executive Thatched Hut Weekend Special",
-    category: "Room Deals",
-    discountText: "15% OFF",
-    promoCode: "VILLAGE15",
-    validUntil: "December 15, 2026",
-    image: hut.src,
-    description:
-      "Unwind in the authentic thatched Executive Huts with complimentary continental breakfast and fire pit evening access.",
-    terms: "Valid for Friday–Sunday weekend bookings. Non-refundable.",
-  },
-  {
-    id: "couples-elysian-feast",
-    title: "Elysian Romance & Fine Dining Package",
-    category: "Dining Deals",
-    discountText: "Free 3-Course Dinner",
-    promoCode: "ELYSIANLOVE",
-    validUntil: "End of Year",
-    image: dining.src,
-    description:
-      "Book 2 nights in The Cabana or Deluxe Suite and receive a complimentary 3-course candlelit dinner for two.",
-    terms: "Includes chef starter, prime main course, and dessert at GAR Elysian restaurant.",
-  },
-  {
-    id: "twin-heritage-family",
-    title: "Igbo-Ora Twin Family Holiday Special",
-    category: "Seasonal Offers",
-    discountText: "₦25,000 Voucher",
-    promoCode: "TWINCITY",
-    validUntil: "December 31, 2026",
-    image: suite.src,
-    description:
-      "Bring the whole family to experience the world capital of twins with guided Idere Hills hiking and farm harvest tour included.",
-    terms: "Voucher redeemable on dining, spa, and recreational arcade games.",
-  },
-];
+// Single source of truth with the booking engine: these codes are seeded into public.deals
+// (migration 0004) and validated by /api/v1/deals/validate/[code].
+const DEALS_DATA: DealItem[] = MOCK_DEALS.map((deal) => ({
+  id: deal.id,
+  title: deal.title,
+  category: deal.applicableRooms.length > 1 ? "Package Deals" : "Room Deals",
+  discountText:
+    deal.discountType === "percentage"
+      ? `${deal.discountValue}% OFF`
+      : `₦${deal.discountValue.toLocaleString()} OFF`,
+  promoCode: deal.promoCode,
+  validUntil: new Date(`${deal.validTo}T00:00:00`).toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }),
+  image: deal.image,
+  description: deal.description,
+  terms: deal.terms.join(" • "),
+}));
 
 export default function DealsPage() {
   const [selectedCat, setSelectedCat] = useState("All");
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  const categories = ["All", "Room Deals", "Package Deals", "Dining Deals", "Seasonal Offers"];
+  const categories = ["All", "Room Deals", "Package Deals"];
 
   const handleCopyCode = (code: string) => {
     if (navigator.clipboard) {
@@ -251,7 +217,7 @@ export default function DealsPage() {
                   </Stack>
 
                   <Box pt={4} borderTop="1px solid #1E293B">
-                    <Link href={`${ROUTES.booking}?deal=${deal.id}`}>
+                    <Link href={`${ROUTES.booking}?deal=${encodeURIComponent(deal.promoCode)}`}>
                       <Button
                         size="sm"
                         style={{ width: "100%", fontSize: "13px", padding: "10px" }}

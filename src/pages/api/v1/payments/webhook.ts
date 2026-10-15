@@ -2,16 +2,10 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import getRawBody from "raw-body";
 import { isValidPaystackSignature } from "@/services/payments/signature";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
-import { initiatePaystackRefund } from "@/services/payments/refund";
+import { settleSuccessfulCharge } from "@/services/payments/settlement";
 import { sendEmail } from "@/services/email/sendgrid";
-import { generateBookingPdfBuffer } from "@/services/pdf/booking-pdf";
 import { logger } from "@/lib/logger";
-import {
-  isGatewayDowntime,
-  STANDARD_HOLD_WINDOW_MS,
-  DOWNTIME_HOLD_WINDOW_MS,
-  type PaystackWebhookPayload,
-} from "@/domain/payment/types";
+import type { PaystackWebhookPayload } from "@/domain/payment/types";
 import type { Json } from "@/types/db";
 
 export const config = {
@@ -19,6 +13,17 @@ export const config = {
     bodyParser: false,
   },
 };
+
+/**
+ * Stable idempotency key per Paystack event. Refund events carry their own id; charge events
+ * are keyed by transaction id/reference.
+ */
+export function webhookEventKey(payload: PaystackWebhookPayload): string | null {
+  const id = payload.data?.id ?? payload.data?.refund?.id;
+  const ref = payload.data?.reference || payload.data?.transaction_reference;
+  if (id === undefined && !ref) return null;
+  return `${payload.event}:${id ?? ref}`;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -41,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  // 2. Cryptographic signature validation with timing-safe comparison
+  // 2. Cryptographic signature validation (HMAC-SHA512 with the Paystack secret key)
   const signature = req.headers["x-paystack-signature"];
   if (!isValidPaystackSignature(rawBody, signature)) {
     logger.warn("Unauthorized Paystack webhook attempt with invalid signature", {
@@ -67,266 +72,62 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .json({ success: false, error: { code: "INVALID_JSON", message: "Malformed JSON payload" } });
   }
 
+  const eventKey = webhookEventKey(payload);
+  if (!eventKey) {
+    logger.warn("Paystack webhook without identifiable data ignored", { event: payload.event });
+    return res.status(200).json({ success: true });
+  }
+
   const supabase = getSupabaseAdminClient();
-  const eventId = String(payload.data?.id || payload.data?.reference || Date.now());
 
-  // 4. Enforce idempotency and replay attack protection
-  const { data: existingEvent } = await supabase
-    .from("audit_logs")
-    .select("id")
-    .eq("action", "paystack_webhook")
-    .eq("entity_id", eventId)
-    .maybeSingle();
+  // 4. Idempotency ledger: record the event, skip only if it was fully processed before
+  await supabase.from("webhook_events").upsert(
+    {
+      provider: "paystack",
+      event_key: eventKey,
+      event_type: payload.event,
+      payload: payload as unknown as Json,
+    },
+    { onConflict: "provider,event_key", ignoreDuplicates: true }
+  );
 
-  if (existingEvent) {
-    logger.info("Paystack webhook duplicate event acknowledged", { eventId, event: payload.event });
+  const { data: ledger } = await supabase
+    .from("webhook_events")
+    .select("id, attempts, processed_at")
+    .eq("provider", "paystack")
+    .eq("event_key", eventKey)
+    .single();
+
+  if (ledger?.processed_at) {
     return res.status(200).json({ success: true, message: "Duplicate webhook event acknowledged" });
   }
 
-  // Log incoming webhook event for auditing
-  await supabase.from("audit_logs").insert({
-    action: "paystack_webhook",
-    entity: "payment",
-    entity_id: eventId,
-    new_data: {
-      event: payload.event,
-      reference: payload.data?.reference,
-      amount: payload.data?.amount,
-      status: payload.data?.status,
-    },
-    ip_address: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || null,
-  });
-
-  // 5. Process supported webhook events
+  // 5. Process supported events
   try {
     switch (payload.event) {
       case "charge.success": {
-        const reference = payload.data.reference;
-        const amountNaira = (payload.data.amount || 0) / 100;
-
-        // Locate payment record
-        const { data: payment } = await supabase
-          .from("payments")
-          .select("*")
-          .eq("gateway_reference", reference)
-          .maybeSingle();
-
-        let bookingId = payment?.booking_id;
-        if (!bookingId) {
-          const refPrefix = reference.split("-").slice(0, 2).join("-");
-          const { data: b } = await supabase
-            .from("bookings")
-            .select("id")
-            .eq("reference", refPrefix)
-            .maybeSingle();
-          bookingId = b?.id;
-        }
-
-        if (!bookingId) {
-          logger.warn("Received charge.success for unknown booking reference", { reference });
-          return res.status(200).json({ success: true, message: "No matching booking found" });
-        }
-
-        const { data: booking } = await supabase
-          .from("bookings")
-          .select("*")
-          .eq("id", bookingId)
-          .maybeSingle();
-        if (!booking) {
-          return res.status(200).json({ success: true });
-        }
-
-        // Check if hold window expired
-        const { data: downtimeSetting } = await supabase
-          .from("system_settings")
-          .select("value")
-          .eq("key", "paystack_downtime")
-          .maybeSingle();
-
-        const isDowntime = isGatewayDowntime(downtimeSetting?.value);
-        const holdDurationMs = isDowntime ? DOWNTIME_HOLD_WINDOW_MS : STANDARD_HOLD_WINDOW_MS;
-        const elapsedMs = Date.now() - new Date(booking.created_at).getTime();
-
-        if (booking.status === "pending" && elapsedMs > holdDurationMs) {
-          // Late payment race condition on expired hold -> auto-trigger full refund
-          logger.warn("Webhook detected payment on expired hold; auto-refunding", {
-            reference,
-            bookingReference: booking.reference,
+        const result = await settleSuccessfulCharge(supabase, {
+          reference: payload.data.reference,
+          amountKobo: payload.data.amount,
+          currency: payload.data.currency || "NGN",
+          paidAt: payload.data.paid_at,
+        });
+        if (result.outcome === "not_found") {
+          logger.warn("charge.success for unknown payment reference", {
+            reference: payload.data.reference,
           });
-
-          await initiatePaystackRefund({
-            transactionReferenceOrId: reference,
-            amountKobo: payload.data.amount,
-            customerNote:
-              "Automated refund: Booking hold window expired before checkout completion.",
-          });
-
-          if (payment) {
-            await supabase
-              .from("payments")
-              .update({
-                status: "refunded",
-                refund_amount: amountNaira,
-                refunded_at: new Date().toISOString(),
-                paid_at: payload.data.paid_at || new Date().toISOString(),
-              })
-              .eq("id", payment.id);
-          }
-
-          await supabase
-            .from("bookings")
-            .update({
-              status: "cancelled",
-            })
-            .eq("id", booking.id);
-
-          await sendEmail({
-            to: booking.guest_email,
-            templateId: "booking_refund_initiated",
-            templateData: {
-              reference: booking.reference,
-              amount: amountNaira,
-              message:
-                "Your payment was received after your booking hold expired. A full refund has been automatically initiated.",
-            },
-          });
-
-          return res
-            .status(200)
-            .json({ success: true, message: "Auto-refund processed for expired hold" });
-        }
-
-        // Valid payment: update payment status and confirm booking
-        if (payment) {
-          await supabase
-            .from("payments")
-            .update({
-              status: "success",
-              paid_at: payload.data.paid_at || new Date().toISOString(),
-            })
-            .eq("id", payment.id);
-        }
-
-        if (booking.status === "pending") {
-          await supabase.from("bookings").update({ status: "confirmed" }).eq("id", booking.id);
-
-          // Generate PDF and send confirmation email
-          const { data: lineItems } = await supabase
-            .from("booking_line_items")
-            .select("*")
-            .eq("booking_id", booking.id);
-
-          const roomTypeIds = (lineItems || []).map((li) => li.room_type_id);
-          const { data: roomTypes } = await supabase
-            .from("room_types")
-            .select("id, name, tier")
-            .in("id", roomTypeIds);
-
-          const roomMap = new Map((roomTypes || []).map((r) => [r.id, r]));
-
-          try {
-            const pdfBuffer = await generateBookingPdfBuffer({
-              reference: booking.reference,
-              status: "confirmed",
-              guestName: booking.guest_name,
-              guestEmail: booking.guest_email,
-              guestPhone: booking.guest_phone,
-              checkInDate: booking.check_in_date,
-              checkOutDate: booking.check_out_date,
-              nights: booking.nights,
-              rooms: (lineItems || []).map((li) => {
-                const rt = roomMap.get(li.room_type_id);
-                return {
-                  name: rt?.name || "Resort Room",
-                  quantity: li.quantity,
-                  unitPrice: li.unit_price,
-                  lineTotal: li.line_total,
-                };
-              }),
-              subtotal: booking.subtotal,
-              dealDiscount: booking.deal_discount,
-              tax: booking.tax,
-              total: booking.total,
-              createdAt: booking.created_at,
-              paymentGateway: "Paystack",
-            });
-
-            await sendEmail({
-              to: booking.guest_email,
-              templateId: "booking_confirmation",
-              templateData: {
-                reference: booking.reference,
-                guestName: booking.guest_name,
-                checkInDate: booking.check_in_date,
-                checkOutDate: booking.check_out_date,
-              },
-              attachments: [
-                {
-                  content: pdfBuffer.toString("base64"),
-                  filename: `Confirmation-${booking.reference}.pdf`,
-                  type: "application/pdf",
-                  disposition: "attachment",
-                },
-              ],
-            });
-          } catch (pdfErr) {
-            logger.error("Failed to generate PDF confirmation on webhook charge.success", {
-              error: pdfErr,
-            });
-          }
         }
         break;
       }
 
       case "refund.processed": {
-        const txRef = payload.data.transaction_reference || payload.data.reference;
-        const refundAmountNaira = (payload.data.amount || 0) / 100;
-
-        const { data: payment } = await supabase
-          .from("payments")
-          .select("*")
-          .or(`gateway_reference.eq.${txRef},id.eq.${txRef}`)
-          .maybeSingle();
-
-        if (payment) {
-          const isFullRefund = refundAmountNaira >= payment.amount;
-          await supabase
-            .from("payments")
-            .update({
-              status: isFullRefund ? "refunded" : "partially_refunded",
-              refund_amount: refundAmountNaira,
-              refunded_at: new Date().toISOString(),
-            })
-            .eq("id", payment.id);
-
-          // Disclose completion email if booking exists
-          const { data: booking } = await supabase
-            .from("bookings")
-            .select("*")
-            .eq("id", payment.booking_id)
-            .maybeSingle();
-
-          if (booking) {
-            await sendEmail({
-              to: booking.guest_email,
-              templateId: "booking_refund_completed",
-              templateData: {
-                reference: booking.reference,
-                amount: refundAmountNaira,
-              },
-            });
-          }
-        }
+        await handleRefundProcessed(payload);
         break;
       }
 
       case "refund.failed": {
-        logger.error("Paystack refund failed event received", { data: payload.data });
-        await supabase.from("audit_logs").insert({
-          action: "paystack_refund_failed",
-          entity: "payment",
-          entity_id: String(payload.data.id || payload.data.reference),
-          new_data: payload.data as unknown as Json,
+        logger.error("Paystack refund failed event received", {
+          reference: payload.data.transaction_reference || payload.data.reference,
         });
         break;
       }
@@ -336,11 +137,78 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         break;
     }
 
+    if (ledger) {
+      await supabase
+        .from("webhook_events")
+        .update({
+          processed_at: new Date().toISOString(),
+          attempts: ledger.attempts + 1,
+          last_error: null,
+        })
+        .eq("id", ledger.id);
+    }
+
     return res.status(200).json({ success: true });
   } catch (err) {
-    logger.error("Error processing Paystack webhook event", { event: payload.event, error: err });
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error("Error processing Paystack webhook event", {
+      event: payload.event,
+      error: message,
+    });
+    if (ledger) {
+      await supabase
+        .from("webhook_events")
+        .update({ attempts: ledger.attempts + 1, last_error: message })
+        .eq("id", ledger.id);
+    }
+    // Non-2xx makes Paystack retry; the ledger is not marked processed
     return res
       .status(500)
       .json({ success: false, error: { code: "SERVER_ERROR", message: "Webhook handler failed" } });
+  }
+}
+
+async function handleRefundProcessed(payload: PaystackWebhookPayload) {
+  const supabase = getSupabaseAdminClient();
+  const txRef = payload.data.transaction_reference || payload.data.reference;
+  const refundAmountNaira = Math.round((payload.data.amount || 0) / 100);
+
+  const { data: payment } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("gateway", "paystack")
+    .eq("gateway_reference", txRef)
+    .maybeSingle();
+
+  if (!payment) {
+    logger.warn("refund.processed for unknown payment reference", { reference: txRef });
+    return;
+  }
+
+  const isFullRefund = refundAmountNaira >= payment.amount;
+  await supabase
+    .from("payments")
+    .update({
+      status: isFullRefund ? "refunded" : "partially_refunded",
+      refund_amount: refundAmountNaira,
+      refunded_at: new Date().toISOString(),
+    })
+    .eq("id", payment.id);
+
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("reference, guest_email")
+    .eq("id", payment.booking_id)
+    .maybeSingle();
+
+  if (booking) {
+    await sendEmail({
+      to: booking.guest_email,
+      templateId: "booking_refund_completed",
+      templateData: {
+        reference: booking.reference,
+        amount: refundAmountNaira,
+      },
+    });
   }
 }

@@ -1,4 +1,5 @@
 import type { BookingStatus } from "@/types/db";
+import { resortDateTime, DEFAULT_CHECK_IN_HOUR } from "./time";
 
 export { BookingStatus };
 
@@ -41,10 +42,9 @@ export function assertTransition(from: BookingStatus, to: BookingStatus): void {
 export function canMarkNoShow(
   now: Date = new Date(),
   checkInDate: string | Date,
-  checkInHour = 14
+  checkInHour = DEFAULT_CHECK_IN_HOUR
 ): boolean {
-  const checkIn = new Date(checkInDate);
-  checkIn.setHours(checkInHour, 0, 0, 0);
+  const checkIn = resortDateTime(checkInDate, checkInHour);
   const threshold = new Date(checkIn.getTime() + 24 * 60 * 60 * 1000);
   return now >= threshold;
 }

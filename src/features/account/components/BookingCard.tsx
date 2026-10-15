@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import Link from "next/link";
 import { Box, Flex, HStack, Icon, Text, Badge, SimpleGrid } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
 import {
@@ -58,6 +57,8 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [resending, setResending] = useState(false);
   const [resendNotice, setResendNotice] = useState<string | null>(null);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
 
   // Status color badges per SRS specification:
   // Confirmed: green, Pending: yellow, Cancelled: red, Checked-In: blue, Checked-Out: grey
@@ -137,8 +138,43 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
     }
   };
 
+  // The settled payment (if any) carries refund state; ignore failed/abandoned attempts
   const paymentRecord =
-    booking.payments && booking.payments.length > 0 ? booking.payments[0] : null;
+    booking.payments?.find((p) =>
+      ["success", "refund_pending", "refunded", "partially_refunded"].includes(p.status)
+    ) ?? null;
+
+  const handleCompletePayment = async () => {
+    setPaying(true);
+    setPayError(null);
+    try {
+      const res = await fetch("/api/v1/payments/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingReference: booking.reference }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success && json.data?.authorizationUrl) {
+        window.location.href = json.data.authorizationUrl;
+        return;
+      }
+      setPayError(json.error?.message || "Unable to start payment. Please try again.");
+    } catch {
+      setPayError("Network error while starting payment.");
+    }
+    setPaying(false);
+  };
+
+  const refundNotice = (() => {
+    if (!paymentRecord || !paymentRecord.refund_amount) {
+      return "Cancelled reservation. No refund applicable.";
+    }
+    const amount = `₦${paymentRecord.refund_amount.toLocaleString()}`;
+    if (paymentRecord.status === "refund_pending") {
+      return `${amount} refund in progress (typically 5–10 business days).`;
+    }
+    return `${amount} refunded.`;
+  })();
 
   return (
     <>
@@ -213,6 +249,21 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
           </Box>
         </SimpleGrid>
 
+        {payError && (
+          <Box
+            p={2}
+            mb={3}
+            borderRadius="6px"
+            bg="rgba(229, 62, 62, 0.15)"
+            color="#FC8181"
+            fontSize="12px"
+            textAlign="center"
+            role="alert"
+          >
+            {payError}
+          </Box>
+        )}
+
         {/* Resend feedback banner */}
         {resendNotice && (
           <Box
@@ -236,12 +287,7 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
           {booking.status === "cancelled" && (
             <HStack gap={2} color="gray.300" fontSize="12px">
               <Icon as={FaInfoCircle} color="#FC8181" boxSize={4} />
-              <Text>
-                Refund status:{" "}
-                {paymentRecord?.refund_amount
-                  ? `₦${paymentRecord.refund_amount.toLocaleString()} processed (3–5 business days timeline)`
-                  : "Cancelled reservation. No refund applicable or refund processed."}
-              </Text>
+              <Text>Refund status: {refundNotice}</Text>
             </HStack>
           )}
 
@@ -259,17 +305,17 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
             {/* PENDING: Complete Payment, Cancel */}
             {booking.status === "pending" && (
               <>
-                <Link
-                  href={`/booking?room=&reference=${encodeURIComponent(booking.reference)}`}
-                  style={{ textDecoration: "none" }}
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={paying}
+                  onClick={handleCompletePayment}
                 >
-                  <Button variant="primary" size="sm">
-                    <HStack gap={2}>
-                      <Icon as={FaCreditCard} />
-                      <Text>Complete Payment</Text>
-                    </HStack>
-                  </Button>
-                </Link>
+                  <HStack gap={2}>
+                    <Icon as={FaCreditCard} />
+                    <Text>Complete Payment</Text>
+                  </HStack>
+                </Button>
 
                 <Button
                   variant="secondary"
@@ -315,7 +361,7 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
                 </Button>
 
                 <a
-                  href={`https://wa.me/2348123456789?text=${encodeURIComponent(`Hello Grace Arena, I am inquiring about my booking ${booking.reference}.`)}`}
+                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hello Grace Arena, I am inquiring about my booking ${booking.reference}.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ textDecoration: "none" }}

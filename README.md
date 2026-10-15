@@ -34,6 +34,44 @@ Required environment variables:
 - `SENDGRID_API_KEY`: SendGrid API key
 - `SENDGRID_FROM_EMAIL`: Verified sender email address
 
+Also required for the booking engine (M2):
+
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `PAYSTACK_SECRET_KEY`, and `PAYSTACK_WEBHOOK_SECRET` (must equal the Paystack secret key: Paystack signs webhooks with it)
+
+Optional:
+
+- `CRON_SECRET` (16+ characters): enables the failed-email retry job (see below)
+- `VERCEL_KV_REST_API_URL` / `VERCEL_KV_REST_API_TOKEN`: shared rate limiting across serverless instances
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID`: Google Analytics 4, loaded only after analytics consent
+- `NEXT_PUBLIC_USE_MOCK_DATA=true`: serve bundled mock data without Supabase (UI previews/tests only)
+
+> **Restart `npm run dev` after editing `.env.local`.** Settings are read once at startup; Next.js
+> reloads the file but already-loaded modules (env parser, SendGrid client) keep the old values.
+
+> **Testing without email:** outside production, when an email cannot be sent (e.g. the SendGrid
+> account is out of credits), the action link (verify, reset, newsletter, manage booking) is printed
+> to the dev server console as `[dev] Email not delivered; …`.
+
+#### Failed email retries
+
+Failed sends are queued in `failed_emails` and retried with backoff (3 attempts in total) by
+`/api/v1/internal/jobs/retry-failed-emails`, authorized with `Authorization: Bearer $CRON_SECRET`.
+Schedule it every 10 minutes with either:
+
+- **Vercel Cron** (Pro plan for sub-daily schedules): add to `vercel.json`:
+  `{"crons":[{"path":"/api/v1/internal/jobs/retry-failed-emails","schedule":"*/10 * * * *"}]}` (Vercel sends `CRON_SECRET` automatically), or
+- **Supabase pg_cron + pg_net** (SQL editor, role `postgres`):
+
+  ```sql
+  SELECT cron.schedule('retry-failed-emails', '*/10 * * * *', $$
+    SELECT net.http_post(
+      url := 'https://<your-domain>/api/v1/internal/jobs/retry-failed-emails',
+      headers := jsonb_build_object('Authorization', 'Bearer <CRON_SECRET>')
+    );
+  $$);
+  ```
+
 ### 3. Available Commands
 
 ```bash

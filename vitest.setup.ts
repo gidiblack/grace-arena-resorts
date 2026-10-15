@@ -6,6 +6,7 @@ process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000";
 process.env.NEXT_PUBLIC_WHATSAPP_NUMBER = "2348123456789";
 process.env.SENDGRID_API_KEY = "SG.mock_sendgrid_key_for_testing";
 process.env.SENDGRID_FROM_EMAIL = "reservations@gracearenaresorts.com";
+process.env.NEXT_PUBLIC_USE_MOCK_DATA = "true";
 
 // Mock window.matchMedia for next-themes and Chakra UI in jsdom
 if (typeof window !== "undefined") {

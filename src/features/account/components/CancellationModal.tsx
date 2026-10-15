@@ -8,6 +8,8 @@ interface CancellationModalProps {
   onClose: () => void;
   bookingReference: string;
   onSuccess: () => void;
+  /** Booking access token for guests managing a booking without an account */
+  accessToken?: string;
 }
 
 interface RefundPreview {
@@ -26,7 +28,9 @@ export default function CancellationModal({
   onClose,
   bookingReference,
   onSuccess,
+  accessToken,
 }: CancellationModalProps) {
+  const tokenQuery = accessToken ? `?t=${encodeURIComponent(accessToken)}` : "";
   const [loadingPreview, setLoadingPreview] = useState(true);
   const [preview, setPreview] = useState<RefundPreview | null>(null);
   const [reason, setReason] = useState("");
@@ -40,7 +44,7 @@ export default function CancellationModal({
 
     async function loadPreview() {
       try {
-        const res = await fetch(`/api/v1/bookings/${bookingReference}/cancel`);
+        const res = await fetch(`/api/v1/bookings/${bookingReference}/cancel${tokenQuery}`);
         const json = await res.json();
         if (res.ok && json.success) {
           setPreview(json.data);
@@ -55,7 +59,7 @@ export default function CancellationModal({
     }
 
     loadPreview();
-  }, [isOpen, bookingReference]);
+  }, [isOpen, bookingReference, tokenQuery]);
 
   if (!isOpen) return null;
 
@@ -63,8 +67,8 @@ export default function CancellationModal({
     setCancelling(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/bookings/${bookingReference}/cancel`, {
-        method: "POST",
+      const res = await fetch(`/api/v1/bookings/${bookingReference}/cancel${tokenQuery}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason: reason || "Guest requested cancellation" }),
       });
@@ -227,7 +231,11 @@ export default function CancellationModal({
                 borderRadius="8px"
                 rows={2}
                 _placeholder={{ color: "gray.400", opacity: 1 }}
-                _focus={{ borderColor: "brand.gold", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
+                _focus={{
+                  borderColor: "brand.gold",
+                  outline: "none",
+                  boxShadow: "0 0 0 1px #D4AF37",
+                }}
               />
             </Box>
           </Stack>

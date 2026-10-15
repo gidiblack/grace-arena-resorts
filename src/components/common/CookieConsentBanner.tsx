@@ -84,6 +84,7 @@ export const CookieConsentBanner: React.FC = () => {
       document.cookie = `${COOKIE_KEY}=${encodeURIComponent(
         JSON.stringify(consent)
       )}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+      window.dispatchEvent(new CustomEvent("gar:consent-updated", { detail: consent }));
     } catch (e) {
       console.warn("Could not save cookie consent", e);
     }

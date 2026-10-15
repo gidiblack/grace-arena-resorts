@@ -1,3 +1,5 @@
+import { resortDateTime, DEFAULT_CHECK_IN_HOUR } from "./time";
+
 export type CancellationRefundTier = "full" | "half" | "none";
 
 export interface RefundCalculationResult {
@@ -9,6 +11,7 @@ export interface RefundCalculationResult {
 
 /**
  * Calculates refund amount and percentage according to GAR-SRS Section 4.3:
+ * Check-in time is evaluated in resort time (WAT), independent of the server timezone.
  * - >= 72h before check-in (14:00): 100% refund
  * - 24h to 72h before check-in (14:00): 50% refund
  * - < 24h before check-in (14:00): 0% refund
@@ -17,10 +20,9 @@ export function calculateCancellationRefund(
   totalPaid: number,
   checkInDate: string | Date,
   cancellationDate: Date = new Date(),
-  checkInHour = 14
+  checkInHour = DEFAULT_CHECK_IN_HOUR
 ): RefundCalculationResult {
-  const checkIn = new Date(checkInDate);
-  checkIn.setHours(checkInHour, 0, 0, 0);
+  const checkIn = resortDateTime(checkInDate, checkInHour);
 
   const diffMs = checkIn.getTime() - cancellationDate.getTime();
   const hoursUntilCheckIn = diffMs / (1000 * 60 * 60);

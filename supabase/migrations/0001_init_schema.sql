@@ -46,8 +46,9 @@ CREATE TABLE IF NOT EXISTS public.buildings (
 CREATE TABLE IF NOT EXISTS public.room_types (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   building_id UUID NOT NULL REFERENCES public.buildings(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
-  tier TEXT NOT NULL CHECK (tier IN ('budget', 'standard', 'deluxe', 'executive', 'presidential', 'royal')),
+  tier TEXT NOT NULL CHECK (tier IN ('budget', 'standard', 'deluxe', 'premium', 'executive', 'presidential', 'royal')),
   description TEXT NOT NULL,
   base_price INTEGER NOT NULL CHECK (base_price >= 0),
   max_guests INTEGER NOT NULL DEFAULT 2 CHECK (max_guests > 0),
