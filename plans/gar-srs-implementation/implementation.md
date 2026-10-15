@@ -1070,17 +1070,21 @@ git commit -m "feat: guest account, booking management, profile and password cha
 - [ ] Build protected admin shell (`AdminLayout`, `AdminSidebar`, `AdminTopbar`, `AdminBreadcrumb`)
 - [ ] Sidebar links all 14 modules per SRS 3.14.1; unbuilt modules show greyed out with "Coming Soon" tooltip
 - [ ] AdminTopbar includes: admin user name, role badge, "View Site" link, logout button, notification bell placeholder
-- [ ] Implement dashboard metrics cards: bookings count, revenue, occupancy rate, pending bookings, unread contact/inquiry counts
-- [ ] Implement bookings chart (Recharts: booking count and revenue over last 30 days) and occupancy heatmap
+- [ ] Implement dashboard metrics cards: bookings count, revenue, occupancy rate, **average daily rate (ADR)**, pending bookings, unread contact/inquiry counts (ADR + revenue restricted from Content Manager)
+- [ ] Implement dashboard charts (Recharts): (1) bookings over time — line chart, last 30 days; (2) revenue over time — bar chart, last 30 days; (3) occupancy by room type — bar chart; (4) revenue by campus — pie chart; plus occupancy heatmap
 - [ ] Implement recent activity feed (last 10 actions with timestamps)
 - [ ] Implement Bookings Management (`/admin/bookings/index.tsx`, `/admin/bookings/[ref].tsx`):
   - Table: reference, guest, dates, rooms, total, status, created date
-  - Actions: Mark Checked-In, Mark Checked-Out, Mark No-Show (guarded by 24h), Cancel Booking
-  - Admin-initiated walk-in booking creation form
+  - Actions: Mark Checked-In (with **room unit assignment selector**), Mark Checked-Out, Mark No-Show (guarded by 24h), Cancel Booking
+  - **Payment details panel** on booking detail: payment method, gateway reference, amount paid, refund status/amount
+  - **Status timeline component**: chronological audit trail of status changes with timestamps and actor name (reads from `audit_logs` where `entity='booking'`)
+  - Admin-initiated walk-in booking creation form (sets `channel = 'walk_in'`, supports `gateway: 'cash' | 'pos'`)
 - [ ] Implement Room Status Management (`/admin/rooms/index.tsx`):
   - View room types and toggle individual room unit status (available / occupied / maintenance)
+  - When admin changes a **RoomType** status from `under_construction` → `available`, trigger batch NotifyMe emails to all registered subscribers for that room type (set `isNotified = true`, `notifiedAt = NOW()`; failed sends retry up to 3× with exponential backoff)
 - [ ] Restrict financial analytics: Content Manager denied financial metrics; Resort Admin & Super Admin granted access
 - [ ] Unauthenticated or unauthorized users redirect to `/login?redirect=/admin`
+- [ ] Implement admin session inactivity timeout: 30-minute sliding window tracked via last-activity timestamp; stale sessions redirect to `/login`
 
 ### Explicit File Paths
 
@@ -1100,6 +1104,7 @@ git commit -m "feat: guest account, booking management, profile and password cha
 ### Commands
 
 ```powershell
+npm install recharts
 npm run dev
 npm run lint
 npm run test
@@ -1108,12 +1113,15 @@ npm run test
 ### Verification Checklist
 
 - [ ] Admin shell renders desktop-first without public navbar/footer
-- [ ] Content Manager is blocked from financial analytics endpoints
-- [ ] Resort Admin and Super Admin can view revenue and occupancy charts
+- [ ] Content Manager is blocked from financial analytics endpoints and ADR/revenue KPI cards
+- [ ] Resort Admin and Super Admin can view all 4 charts (bookings line, revenue bar, occupancy bar, revenue-by-campus pie)
 - [ ] Bookings table filters by status, date range, resort, and searches by reference/name
-- [ ] Admin can mark Checked-In, Checked-Out, and No-Show on `/admin/bookings/[ref]`
+- [ ] Admin can mark Checked-In (with unit assignment), Checked-Out, and No-Show on `/admin/bookings/[ref]`
+- [ ] Booking detail displays payment details panel and status change timeline
 - [ ] Room unit status toggle persists in database
-- [ ] Admin booking creation creates Confirmed booking without online payment
+- [ ] Admin booking creation creates Confirmed booking without online payment, records `channel = 'walk_in'`
+- [ ] Changing RoomType from `under_construction` → `available` triggers NotifyMe emails
+- [ ] Admin session expires after 30 minutes of inactivity
 
 ### STOP & COMMIT
 
@@ -1130,52 +1138,53 @@ git commit -m "feat: admin shell, RBAC guards, analytics dashboard, bookings man
 
 ### Step Checklist
 
-- [ ] Generate dynamic `sitemap.xml` (includes public pages, excludes auth/booking/account) and `robots.txt`
-- [ ] Complete structured-data schemas across all page types
+- [ ] Generate dynamic `sitemap.xml` (includes public pages, excludes auth/booking/account/admin) and `robots.txt` (disallow `/admin`, `/api`, `/account`)
+- [ ] Complete structured-data schemas across all page types; add `og:url` meta tag alongside existing canonical URL
 - [ ] Initialize Sentry client and server error/performance monitoring hooks
-- [ ] Implement and schedule background jobs via pg_cron:
-  - `expire-pending-bookings` (every 5 mins): expire stale pending bookings, release room holds
-  - `retry-failed-emails` (every 10 mins): retry sends from `failed_emails` with exponential backoff (max 3 retries)
-  - `notify-room-available`: send batch emails to NotifyMe registrations when room status changes from `under_construction` to `available`
-  - `deactivate-expired-deals` (daily): set `isActive=false` for deals past `endDate`
-- [ ] Produce operational incident response runbook (`docs/operations/runbook.md`)
+- [ ] Configure Sentry alerting rules (document thresholds in runbook): error rate spikes, API p95 latency, failed payment webhooks, background job failures
+- [ ] Verify and test existing background jobs (SQL functions already defined in migrations `0003`/`0006`, scheduled via pg_cron):
+  - `expire_pending_bookings` (every 5 mins): verify stale pending bookings are expired and room holds released
+  - `retry_failed_emails` (every 10 mins): verify retry logic with exponential backoff (max 3 retries)
+  - `deactivate_expired_deals` (daily): verify `is_active=false` for deals past `end_date`
+  - **Note:** `notify-room-available` is now event-driven in Step 12 (triggered from admin room status endpoint), not a cron job
+- [ ] Produce operational incident response runbook (`docs/operations/runbook.md`) including Sentry alert thresholds, background job monitoring, rollback procedures, and common failure modes
 
 ### Explicit File Paths
 
 - [ ] src/pages/sitemap.xml.ts
 - [ ] src/pages/robots.txt.ts
-- [ ] src/lib/seo/structured-data/*
+- [ ] src/lib/seo/structured-data/* (or additions to existing `src/lib/seo/meta.ts`)
 - [ ] src/lib/monitoring/sentry.ts
-- [ ] supabase/functions/expire-pending-bookings/index.ts
-- [ ] supabase/functions/retry-failed-emails/index.ts
-- [ ] supabase/functions/notify-room-available/index.ts
-- [ ] supabase/functions/deactivate-expired-deals/index.ts
 - [ ] docs/operations/runbook.md
 
 ### Commands
 
 ```powershell
-npx supabase functions serve expire-pending-bookings --no-verify-jwt
-npx supabase functions serve retry-failed-emails --no-verify-jwt
-npx supabase functions serve notify-room-available --no-verify-jwt
-npx supabase functions serve deactivate-expired-deals --no-verify-jwt
+npm install @sentry/nextjs
 npm run lint
 npm run test
+npm run dev
+# Verify background jobs locally:
+npx supabase db reset
+# Inspect pg_cron schedule:
+# SELECT * FROM cron.job;
 ```
 
 ### Verification Checklist
 
-- [ ] `sitemap.xml` lists all public routes and excludes private routes
+- [ ] `sitemap.xml` lists all public routes and excludes private routes (`/admin`, `/account`, `/booking`, `/login`, `/register`)
+- [ ] `robots.txt` disallows `/admin`, `/api`, `/account`
 - [ ] Expired pending bookings release unit inventory after 30 minutes
 - [ ] Failed email retry handles transient SendGrid errors up to 3 attempts
-- [ ] Expired deals automatically set `isActive=false`
-- [ ] Notify-me emails fire when under-construction room becomes available
+- [ ] Expired deals automatically set `is_active=false`
+- [ ] Sentry captures client-side and server-side errors with performance tracing
+- [ ] Notify-me emails fire when admin changes RoomType from `under_construction` to `available` (Step 12 event-driven trigger)
 
 ### STOP & COMMIT
 
 ```powershell
-git add src/pages/sitemap.xml.ts src/pages/robots.txt.ts src/lib/seo src/lib/monitoring supabase/functions docs/operations/runbook.md
-git commit -m "feat: observability, SEO completion, background jobs, operational runbook"
+git add src/pages/sitemap.xml.ts src/pages/robots.txt.ts src/lib/seo src/lib/monitoring docs/operations/runbook.md
+git commit -m "feat: observability, SEO completion, background jobs verification, operational runbook"
 ```
 
 ---
