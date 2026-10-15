@@ -104,6 +104,7 @@ describe("Step 10: Booking Wizard & Confirmation Experience", () => {
           nights={3}
           total={225750}
           status="confirmed"
+          isSignedIn
         />
       );
 
@@ -115,6 +116,30 @@ describe("Step 10: Booking Wizard & Confirmation Experience", () => {
 
       const pdfLink = screen.getByText("Download Voucher (PDF)").closest("a");
       expect(pdfLink).toHaveAttribute("href", "/api/v1/bookings/GAR-TEST999/pdf");
+    });
+
+    it("shows a guest the private manage link and an account offer instead of 'My Bookings'", () => {
+      renderWithChakra(
+        <BookingConfirmationView
+          reference="GAR-GUEST001"
+          guestName="Ada Obi"
+          guestEmail="ada@example.com"
+          checkInDate="2026-06-15"
+          checkOutDate="2026-06-18"
+          nights={3}
+          total={100000}
+          manageUrl="http://localhost:3000/manage-booking/GAR-GUEST001?t=secret-token"
+        />
+      );
+
+      const manageLink = screen.getByText("Open Manage Booking").closest("a");
+      expect(manageLink).toHaveAttribute(
+        "href",
+        "http://localhost:3000/manage-booking/GAR-GUEST001?t=secret-token"
+      );
+      const register = screen.getByText("Create an Account").closest("a");
+      expect(register?.getAttribute("href")).toContain("email=ada%40example.com");
+      expect(screen.queryByText("View All My Bookings →")).not.toBeInTheDocument();
     });
 
     it("handles resend email trigger", async () => {

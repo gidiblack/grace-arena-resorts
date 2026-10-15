@@ -4,13 +4,14 @@ import { verifyPayment } from "@/services/payments/paystack";
 import { settleSuccessfulCharge } from "@/services/payments/settlement";
 import { ok, fail } from "@/lib/http/response";
 import { logger } from "@/lib/logger";
+import {
+  authorizeBookingAccess,
+  manageBookingUrl,
+  presentedAccessToken,
+} from "@/services/booking/access";
 
 export default withApi(
   async (req, res, { user }) => {
-    if (!user) {
-      return fail(res, "UNAUTHORIZED", "Authentication required", 401);
-    }
-
     // Paystack appends ?reference=<transaction ref>&trxref=<same> to the callback URL
     const rawRef = req.query.reference ?? req.query.trxref ?? req.body?.reference;
     const reference = Array.isArray(rawRef) ? rawRef[0] : rawRef;
@@ -35,14 +36,15 @@ export default withApi(
 
     const { data: ownerCheck } = await supabase
       .from("bookings")
-      .select("user_id")
+      .select("id, reference, user_id")
       .eq("id", payment.booking_id)
       .single();
 
-    const isAdmin = ["resort_admin", "super_admin"].includes(user.role);
-    if (!isAdmin && ownerCheck?.user_id !== user.id) {
+    const access = ownerCheck ? await authorizeBookingAccess(req, ownerCheck, user) : null;
+    if (!ownerCheck || !access) {
       return fail(res, "FORBIDDEN", "Access denied", 403);
     }
+    const guestToken = access === "token" ? presentedAccessToken(req, ownerCheck.reference) : null;
 
     // 2. Verify with Paystack
     let verified;
@@ -96,6 +98,8 @@ export default withApi(
       paymentStatus: latestPayment?.status ?? payment.status,
       bookingStatus: booking?.status,
       gatewayMessage: verified.gatewayResponse || null,
+      manageUrl: guestToken ? manageBookingUrl(ownerCheck.reference, guestToken) : null,
+      isSignedIn: Boolean(user),
       booking: booking
         ? {
             reference: booking.reference,
@@ -111,6 +115,5 @@ export default withApi(
   },
   {
     allowedMethods: ["GET", "POST"],
-    requireAuth: true,
   }
 );

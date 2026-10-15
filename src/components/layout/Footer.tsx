@@ -76,7 +76,7 @@ export const Footer = () => {
     { label: "Twitter", href: "https://x.com", icon: FaTwitter },
     {
       label: "WhatsApp",
-      href: "https://wa.me/2348123456789?text=Hello%20Grace%20Arena%20Resorts",
+      href: `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=Hello%20Grace%20Arena%20Resorts`,
       icon: FaWhatsapp,
     },
   ];
@@ -367,6 +367,11 @@ export const Footer = () => {
           </Text>
 
           <HStack gap={4} flexWrap="wrap" justify="center">
+            <Link href={ROUTES.manageBooking}>
+              <Text fontSize="12px" color="gray.500" _hover={{ color: "accent.500" }}>
+                Manage a Booking
+              </Text>
+            </Link>
             <Link href={ROUTES.privacy}>
               <Text fontSize="12px" color="gray.500" _hover={{ color: "accent.500" }}>
                 Privacy Policy (NDPR)

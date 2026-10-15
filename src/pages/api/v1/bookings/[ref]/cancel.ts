@@ -10,6 +10,8 @@ import { recordAuditLog } from "@/pages/api/v1/_shared/audit-log";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { initiatePaystackRefund } from "@/services/payments/refund";
 import { sendEmail } from "@/services/email/sendgrid";
+import { authorizeBookingAccess } from "@/services/booking/access";
+import { runAfterResponse } from "@/services/booking/notifications";
 import { ok, fail } from "@/lib/http/response";
 import { logger } from "@/lib/logger";
 import type { BookingStatus, Database, Json } from "@/types/db";
@@ -29,17 +31,19 @@ function describePolicy(refund: RefundCalculationResult, paid: number): string {
   return "Cancelled less than 24 hours before check-in: no refund applies.";
 }
 
-async function loadBooking(req: NextApiRequest, user: AuthUser) {
+async function loadBooking(req: NextApiRequest, user: AuthUser | undefined) {
   const ref = String(req.query.ref || "")
     .toUpperCase()
     .trim();
   const supabase = getSupabaseAdminClient();
-  const isAdmin = ["resort_admin", "super_admin"].includes(user.role);
 
-  let query = supabase.from("bookings").select("*").eq("reference", ref);
-  if (!isAdmin) query = query.eq("user_id", user.id);
-  const { data: booking } = await query.maybeSingle();
-  if (!booking) return null;
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("*")
+    .eq("reference", ref)
+    .maybeSingle();
+  // Admin, signed-in owner, or a guest holding the booking's manage link
+  if (!booking || !(await authorizeBookingAccess(req, booking, user))) return null;
 
   const { data: payments } = await supabase
     .from("payments")
@@ -55,7 +59,7 @@ async function loadBooking(req: NextApiRequest, user: AuthUser) {
 
 export default withApi(
   async (req, res, ctx) => {
-    const user = ctx.user!;
+    const user = ctx.user;
     const loaded = await loadBooking(req, user);
 
     if (!loaded) {
@@ -177,7 +181,7 @@ export default withApi(
     }
 
     await recordAuditLog({
-      userId: user.id,
+      userId: user?.id ?? null,
       action: "CANCEL_BOOKING",
       entity: "booking",
       entityId: booking.id,
@@ -187,15 +191,17 @@ export default withApi(
     });
 
     if (refundStatus === "initiated") {
-      await sendEmail({
-        to: booking.guest_email,
-        templateId: "booking_refund_initiated",
-        templateData: {
-          reference: booking.reference,
-          amount: refund.refundAmount,
-          message: "Your refund will reflect in your account within 5–10 business days.",
-        },
-      });
+      runAfterResponse("refund initiated email", () =>
+        sendEmail({
+          to: booking.guest_email,
+          templateId: "booking_refund_initiated",
+          templateData: {
+            reference: booking.reference,
+            amount: refund.refundAmount,
+            message: "Your refund will reflect in your account within 5–10 business days.",
+          },
+        })
+      );
     }
 
     return ok(res, {
@@ -212,6 +218,5 @@ export default withApi(
   },
   {
     allowedMethods: ["GET", "PUT"],
-    requireAuth: true,
   }
 );

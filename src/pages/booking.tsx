@@ -142,6 +142,10 @@ export default function BookingPage() {
   // Step 3: Guest Information
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
+  const [confirmEmail, setConfirmEmail] = useState("");
+  const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [guestDetailsError, setGuestDetailsError] = useState<string | null>(null);
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [guestPhone, setGuestPhone] = useState("+234");
   const [prayerHutInterest, setPrayerHutInterest] = useState(true);
   const [specialRequests, setSpecialRequests] = useState("");
@@ -175,6 +179,8 @@ export default function BookingPage() {
     checkOutDate: string;
     nights: number;
     total: number;
+    manageUrl?: string | null;
+    isSignedIn?: boolean;
   } | null>(null);
 
   // Check-out date calculation
@@ -193,8 +199,10 @@ export default function BookingPage() {
         if (res.ok) {
           const json = await res.json();
           if (json.success && json.data) {
+            setIsSignedIn(true);
             setGuestName((prev) => prev || json.data.fullName || "");
             setGuestEmail((prev) => prev || json.data.email || "");
+            setConfirmEmail((prev) => prev || json.data.email || "");
             if (json.data.phone) {
               setGuestPhone(json.data.phone);
             }
@@ -207,6 +215,13 @@ export default function BookingPage() {
     loadCurrentUser();
   }, []);
 
+  // Debounce date/night edits so typing a date does not fire a request per keystroke
+  const [stayQuery, setStayQuery] = useState({ checkInDate, nights });
+  useEffect(() => {
+    const timer = setTimeout(() => setStayQuery({ checkInDate, nights }), 300);
+    return () => clearTimeout(timer);
+  }, [checkInDate, nights]);
+
   // Fetch live availability from API (no client-side fallback catalogue: rooms must be bookable)
   useEffect(() => {
     let isMounted = true;
@@ -215,7 +230,7 @@ export default function BookingPage() {
       setRoomsError(null);
       try {
         const res = await fetch(
-          `/api/v1/availability?checkIn=${encodeURIComponent(checkInDate)}&nights=${nights}`
+          `/api/v1/availability?checkIn=${encodeURIComponent(stayQuery.checkInDate)}&nights=${stayQuery.nights}`
         );
         const json = await res.json();
         if (!isMounted) return;
@@ -253,7 +268,7 @@ export default function BookingPage() {
     return () => {
       isMounted = false;
     };
-  }, [checkInDate, nights]);
+  }, [stayQuery]);
 
   // Any change to the stay invalidates a previously created pending booking
   useEffect(() => {
@@ -340,8 +355,13 @@ export default function BookingPage() {
         const json = await res.json();
         if (cancelled) return;
 
-        if (res.status === 401) {
-          router.push(`/login?redirect=${encodeURIComponent(router.asPath)}`);
+        if (res.status === 403) {
+          setPaymentOutcome({
+            title: "Open Your Booking Link",
+            message:
+              'This browser can\'t access the reservation. Use the "Manage Your Booking" link from your confirmation email, or contact us on WhatsApp with your reference.',
+            bookingRef: bookingReference,
+          });
           return;
         }
 
@@ -355,6 +375,8 @@ export default function BookingPage() {
             checkOutDate: booking.checkOutDate,
             nights: booking.nights,
             total: booking.total,
+            manageUrl: json.data?.manageUrl ?? null,
+            isSignedIn: Boolean(json.data?.isSignedIn),
           });
           setCurrentStep(5);
           return;
@@ -473,6 +495,15 @@ export default function BookingPage() {
   // Step 3 validation
   const validateGuestDetails = () => {
     setPhoneError(null);
+    setGuestDetailsError(null);
+    if (guestEmail.trim().toLowerCase() !== confirmEmail.trim().toLowerCase()) {
+      setGuestDetailsError("Email addresses do not match. Please check your email for typos.");
+      return false;
+    }
+    if (!privacyConsent) {
+      setGuestDetailsError("Please accept the Privacy Policy to continue.");
+      return false;
+    }
     const result = step3GuestSchema.safeParse({
       fullName: guestName,
       email: guestEmail,
@@ -488,7 +519,7 @@ export default function BookingPage() {
           "Phone number must be in +234XXXXXXXXXX Nigerian format (10 digits after +234)"
         );
       } else {
-        setPaymentError(issue.message);
+        setGuestDetailsError(issue.message);
       }
       return false;
     }
@@ -521,6 +552,7 @@ export default function BookingPage() {
           },
           promoCode: appliedDeal?.code,
           paymentMethod: "paystack",
+          privacyConsent,
         };
 
         const bookingRes = await fetch("/api/v1/bookings", {
@@ -532,16 +564,7 @@ export default function BookingPage() {
         const bookingData = await bookingRes.json();
 
         if (!bookingRes.ok || !bookingData.success) {
-          // Sign-in and email verification are required to book (SRS 4.1)
-          if (bookingData.error?.code === "UNAUTHORIZED") {
-            router.push(`/login?redirect=${encodeURIComponent(router.asPath)}`);
-            return;
-          }
-          if (bookingData.error?.code === "EMAIL_NOT_VERIFIED") {
-            router.push(`/verify-email?email=${encodeURIComponent(guestEmail)}`);
-            return;
-          }
-
+          // No account needed (SRS v1.3); hold/rate limits and validation return readable messages
           setPaymentError(bookingData.error?.message || "Failed to reserve rooms.");
           setIsProcessingPayment(false);
           return;
@@ -673,6 +696,8 @@ export default function BookingPage() {
               checkOutDate={confirmedBookingData.checkOutDate}
               nights={confirmedBookingData.nights}
               total={confirmedBookingData.total}
+              manageUrl={confirmedBookingData.manageUrl}
+              isSignedIn={confirmedBookingData.isSignedIn ?? isSignedIn}
             />
           ) : (
             /* Wizard Steps 1 to 4 */
@@ -1167,6 +1192,31 @@ export default function BookingPage() {
 
                       <Box>
                         <Text fontSize="13px" fontWeight="medium" mb={1.5} color="gray.300">
+                          Confirm Email Address *
+                        </Text>
+                        <Input
+                          type="email"
+                          value={confirmEmail}
+                          onChange={(e) => setConfirmEmail(e.target.value)}
+                          onPaste={(e) => e.preventDefault()}
+                          placeholder="Re-enter your email address"
+                          aria-label="Confirm email address"
+                          bg="#1E293B"
+                          border="1px solid #334155"
+                          color="white"
+                          p={3}
+                          borderRadius="8px"
+                          _placeholder={{ color: "gray.400", opacity: 1 }}
+                          _focus={{ borderColor: "accent.500", outline: "none" }}
+                        />
+                        <Text fontSize="12px" color="gray.400" mt={1}>
+                          Your confirmation and private &quot;Manage booking&quot; link are sent
+                          here. No account is needed to book.
+                        </Text>
+                      </Box>
+
+                      <Box>
+                        <Text fontSize="13px" fontWeight="medium" mb={1.5} color="gray.300">
                           Nigerian Phone Number (+234XXXXXXXXXX) *
                         </Text>
                         <Input
@@ -1257,6 +1307,51 @@ export default function BookingPage() {
                           _focus={{ borderColor: "accent.500", outline: "none" }}
                         />
                       </Box>
+                      {/* NDPR consent (guests may not have registered) */}
+                      <Flex align="flex-start" gap={3}>
+                        <input
+                          id="privacy-consent"
+                          type="checkbox"
+                          checked={privacyConsent}
+                          onChange={(e) => setPrivacyConsent(e.target.checked)}
+                          style={{
+                            cursor: "pointer",
+                            marginTop: "4px",
+                            accentColor: "#FCCA46",
+                            width: "16px",
+                            height: "16px",
+                          }}
+                        />
+                        <label
+                          htmlFor="privacy-consent"
+                          style={{ fontSize: "13px", color: "#CBD5E1" }}
+                        >
+                          I agree to the Grace Arena Resorts{" "}
+                          <a
+                            href="/privacy"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: "#FCCA46", textDecoration: "underline" }}
+                          >
+                            Privacy Policy
+                          </a>{" "}
+                          and consent to my details being used to manage this reservation. *
+                        </label>
+                      </Flex>
+
+                      {guestDetailsError && (
+                        <Box
+                          p={3}
+                          borderRadius="8px"
+                          bg="rgba(229, 62, 62, 0.12)"
+                          border="1px solid rgba(229, 62, 62, 0.4)"
+                          role="alert"
+                        >
+                          <Text fontSize="13px" color="red.200">
+                            {guestDetailsError}
+                          </Text>
+                        </Box>
+                      )}
                     </Stack>
 
                     <Flex justify="flex-end" mt={8}>

@@ -21,6 +21,9 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 import bookingsHandler from "@/pages/api/v1/bookings/index";
+import bookingDetailHandler from "@/pages/api/v1/bookings/[ref]";
+import claimHandler from "@/pages/api/v1/bookings/[ref]/claim";
+import { cookieValue } from "@/test-utils/api";
 
 const GUEST_ID = "11111111-0000-0000-0000-000000000001";
 const ROOM_A = "44444444-4444-4444-4444-444444444401";
@@ -81,6 +84,7 @@ function bookingBody(overrides: Record<string, unknown> = {}) {
     adults: 2,
     children: 0,
     guest: { fullName: "Ada Obi", email: "ada@example.com", phone: "+2348012345678" },
+    privacyConsent: true,
     ...overrides,
   };
 }
@@ -96,21 +100,30 @@ describe("Regression: booking creation (audit D1, D4, D6, D8, E2)", () => {
     rpcArgs = null;
     db.current.rpcHandlers.create_booking_with_lock = (args) => {
       rpcArgs = args;
-      return {
-        data: { id: "booking-1", reference: args.p_reference, status: args.p_status },
-        error: null,
-        status: 200,
+      const row = {
+        id: `booking-${db.current.rows("bookings").length + 1}`,
+        reference: args.p_reference,
+        status: args.p_status,
+        user_id: args.p_user_id,
+        channel: args.p_channel,
+        guest_name: args.p_guest_name,
+        guest_email: args.p_guest_email,
+        check_in_date: args.p_check_in,
+        check_out_date: args.p_check_out,
+        total: args.p_total,
       };
+      db.current.seed("bookings", [row]);
+      return { data: row, error: null, status: 200 };
     };
     seedCatalog();
     token = seedGuest();
   });
 
-  const post = async (body: unknown, accessToken = token) => {
+  const post = async (body: unknown, accessToken: string | null = token) => {
     const call = mockApiCall({
       method: "POST",
       body,
-      cookies: { gar_access_token: accessToken },
+      cookies: accessToken ? { gar_access_token: accessToken } : {},
     });
     await bookingsHandler(call.req, call.res);
     return call;
@@ -145,11 +158,113 @@ describe("Regression: booking creation (audit D1, D4, D6, D8, E2)", () => {
     expect(rpcArgs).toBeNull();
   });
 
-  it("requires a verified email for online bookings", async () => {
+  it("lets a signed-out guest book without an account and hands back a private manage link", async () => {
+    const call = await post(
+      bookingBody({
+        guest: { fullName: "New Guest", email: "new@example.com", phone: "+2348012345678" },
+      }),
+      null
+    );
+
+    expect(call.status()).toBe(201);
+    expect(rpcArgs).toMatchObject({ p_user_id: null, p_channel: "online_guest" });
+    expect(rpcArgs!.p_privacy_consent_at).toBeTruthy();
+    expect(rpcArgs!.p_max_pending_holds).toBe(3);
+
+    const manageUrl = new URL(call.body().data.manageUrl);
+    const reference = call.body().data.booking.reference;
+    expect(manageUrl.pathname).toBe(`/manage-booking/${reference}`);
+    expect(cookieValue(call.header("set-cookie"), "gar_booking_access")).toBeTruthy();
+
+    // The manage link alone (no account, no cookie) opens the booking...
+    const viaLink = mockApiCall({ query: { ref: reference, t: manageUrl.searchParams.get("t")! } });
+    await bookingDetailHandler(viaLink.req, viaLink.res);
+    expect(viaLink.status()).toBe(200);
+    expect(viaLink.body().data.accessVia).toBe("token");
+
+    // ...but a wrong token does not, and the response does not reveal the booking exists
+    const wrong = mockApiCall({ query: { ref: reference, t: "x".repeat(43) } });
+    await bookingDetailHandler(wrong.req, wrong.res);
+    expect(wrong.status()).toBe(404);
+  });
+
+  it("attaches a signed-out booking immediately to a verified account with the same email", async () => {
+    const call = await post(bookingBody(), null);
+    expect(call.status()).toBe(201);
+    expect(rpcArgs).toMatchObject({ p_user_id: GUEST_ID, p_channel: "online_guest" });
+    expect(call.body().data.linkedToAccount).toBe(true);
+  });
+
+  it("does not attach to an unverified account with the same email", async () => {
     db.current.rows("users")[0].is_email_verified = false;
-    const call = await post(bookingBody());
-    expect(call.status()).toBe(403);
-    expect(call.body().error.code).toBe("EMAIL_NOT_VERIFIED");
+    await post(bookingBody(), null);
+    expect(rpcArgs).toMatchObject({ p_user_id: null, p_channel: "online_guest" });
+  });
+
+  it("books under the signed-in account, verified or not", async () => {
+    db.current.rows("users")[0].is_email_verified = false;
+    const call = await post(
+      bookingBody({
+        guest: { fullName: "Ada Obi", email: "other@example.com", phone: "+2348012345678" },
+      })
+    );
+    expect(call.status()).toBe(201);
+    expect(rpcArgs).toMatchObject({ p_user_id: GUEST_ID, p_channel: "online_account" });
+  });
+
+  it("requires privacy consent at checkout", async () => {
+    const call = await post(bookingBody({ privacyConsent: undefined }), null);
+    expect(call.status()).toBe(400);
+    expect(call.body().error.code).toBe("PRIVACY_CONSENT_REQUIRED");
+  });
+
+  it("limits online bookings to 10 per hour per IP", async () => {
+    for (let i = 0; i < 10; i++) {
+      expect((await post(bookingBody(), null)).status()).toBe(201);
+    }
+    const eleventh = await post(bookingBody(), null);
+    expect(eleventh.status()).toBe(429);
+  });
+
+  it("maps the per-email live hold cap to a 429", async () => {
+    db.current.rpcHandlers.create_booking_with_lock = () => ({
+      data: null,
+      error: { message: "TOO_MANY_PENDING_HOLDS", details: "3" },
+      status: 400,
+    });
+    const call = await post(bookingBody(), null);
+    expect(call.status()).toBe(429);
+    expect(call.body().error.code).toBe("TOO_MANY_PENDING_HOLDS");
+  });
+
+  it("lets a signed-in user claim a guest booking they hold the manage link for", async () => {
+    const guestCall = await post(
+      bookingBody({
+        guest: { fullName: "Ada Obi", email: "different@example.com", phone: "+2348012345678" },
+      }),
+      null
+    );
+    const reference = guestCall.body().data.booking.reference;
+    const t = new URL(guestCall.body().data.manageUrl).searchParams.get("t")!;
+
+    const noToken = mockApiCall({
+      method: "POST",
+      query: { ref: reference },
+      cookies: { gar_access_token: token },
+    });
+    await claimHandler(noToken.req, noToken.res);
+    expect(noToken.status()).toBe(404);
+
+    const claim = mockApiCall({
+      method: "POST",
+      query: { ref: reference, t },
+      cookies: { gar_access_token: token },
+    });
+    await claimHandler(claim.req, claim.res);
+    expect(claim.status()).toBe(200);
+    expect(db.current.rows("bookings").find((b) => b.reference === reference)!.user_id).toBe(
+      GUEST_ID
+    );
   });
 
   it("rejects non-UUID room ids from the static catalogue with a validation error", async () => {

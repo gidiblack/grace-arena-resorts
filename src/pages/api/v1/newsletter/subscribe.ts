@@ -2,10 +2,8 @@ import { z } from "zod";
 import { withApi } from "../_shared/handler";
 import { verifyRecaptcha } from "../_shared/recaptcha";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
-import { issueToken } from "@/services/auth/tokens";
 import { ok, fail } from "@/lib/http/response";
-import { sendEmail } from "@/services/email/sendgrid";
-import { env } from "@/config/env";
+import { sendNewsletterConfirmation } from "@/services/newsletter/confirmation";
 import { logger } from "@/lib/logger";
 
 const subscribeSchema = z.object({
@@ -49,14 +47,7 @@ export default withApi(
       }
 
       // Double opt-in: nothing is sent to the address until it confirms
-      const token = await issueToken({ purpose: "newsletter_confirm", email: normalizedEmail });
-      await sendEmail({
-        to: normalizedEmail,
-        templateId: "newsletter_confirmation",
-        templateData: {
-          confirmUrl: `${env.NEXT_PUBLIC_APP_URL}/api/v1/newsletter/confirm?token=${encodeURIComponent(token)}`,
-        },
-      });
+      await sendNewsletterConfirmation(normalizedEmail);
     }
 
     // Same response either way (no subscription status disclosure)

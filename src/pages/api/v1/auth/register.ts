@@ -77,9 +77,12 @@ export default withApi(
       return fail(res, "REGISTRATION_FAILED", "Failed to create your account", 500);
     }
 
-    // 4. Verification email (failure is non-fatal: the guest can resend from /verify-email)
+    // 4. Verification email (failure is non-fatal: it is queued for retry and can be resent)
+    let verificationEmailSent = false;
     try {
-      await sendVerificationEmail({ userId, email: normalizedEmail, fullName });
+      verificationEmailSent = (
+        await sendVerificationEmail({ userId, email: normalizedEmail, fullName })
+      ).success;
     } catch (error) {
       logger.error("Failed to issue verification email after registration", { error });
     }
@@ -90,7 +93,10 @@ export default withApi(
         userId,
         email: normalizedEmail,
         fullName,
-        message: "Registration successful. Please verify your email to enable reservations.",
+        verificationEmailSent,
+        message: verificationEmailSent
+          ? "Registration successful. Please check your email to verify your account."
+          : "Your account was created, but we couldn't send the verification email right now. We'll retry automatically, or you can request a new link in a few minutes.",
       },
       201
     );

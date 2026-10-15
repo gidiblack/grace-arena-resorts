@@ -6,6 +6,7 @@ import { initializePayment } from "@/services/payments/paystack";
 import { ok, fail } from "@/lib/http/response";
 import { logger } from "@/lib/logger";
 import { env } from "@/config/env";
+import { authorizeBookingAccess } from "@/services/booking/access";
 
 const initiateSchema = z.object({
   bookingReference: z.string().min(1, "Booking reference is required"),
@@ -13,10 +14,6 @@ const initiateSchema = z.object({
 
 export default withApi(
   async (req, res, { user }) => {
-    if (!user) {
-      return fail(res, "UNAUTHORIZED", "Authentication required", 401);
-    }
-
     const { bookingReference } = req.body as z.infer<typeof initiateSchema>;
     const supabase = getSupabaseAdminClient();
 
@@ -31,9 +28,8 @@ export default withApi(
       return fail(res, "NOT_FOUND", "Booking reservation not found", 404);
     }
 
-    // 2. Only the booking owner (or resort admins) may pay for it
-    const isAdmin = ["resort_admin", "super_admin"].includes(user.role);
-    if (!isAdmin && booking.user_id !== user.id) {
+    // 2. Only admins, the signed-in owner, or a guest holding the booking's access token may pay
+    if (!(await authorizeBookingAccess(req, booking, user))) {
       return fail(res, "FORBIDDEN", "Access denied for this reservation", 403);
     }
 
@@ -79,7 +75,7 @@ export default withApi(
     }
 
     // 5. Unique payment reference per attempt
-    const paymentRef = `${booking.reference}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+    const paymentRef = `${booking.reference}-${crypto.randomBytes(16).toString("hex").toUpperCase()}`;
     const amountKobo = booking.total * 100;
 
     const { error: pInsertError } = await supabase.from("payments").insert({
@@ -91,7 +87,7 @@ export default withApi(
       status: "pending",
       metadata: {
         bookingReference: booking.reference,
-        initiatedBy: user.id,
+        initiatedBy: user?.id ?? "guest",
       },
     });
 
@@ -139,7 +135,6 @@ export default withApi(
   },
   {
     allowedMethods: ["POST"],
-    requireAuth: true,
     bodySchema: initiateSchema,
   }
 );

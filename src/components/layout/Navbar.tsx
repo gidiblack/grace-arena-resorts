@@ -37,7 +37,9 @@ export const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
   const { open, onClose, onToggle, setOpen } = useDisclosure();
-  const currentPath = router.asPath.split("?")[0];
+  // Ignore ?query and #hash (the server never sees the hash), and use the route pathname until the
+  // router is ready so server and client render the same active link (hydration-safe)
+  const currentPath = router.isReady ? router.asPath.split(/[?#]/)[0] : router.pathname;
 
   useEffect(() => {
     if (typeof window === "undefined") return;

@@ -42,7 +42,16 @@ export default withApi(
       logger.warn("Failed to sync email_confirm to Supabase Auth", { error: authError });
     }
 
-    return ok(res, { verified: true, email: consumed.email });
+    // Guest bookings made with this email now belong to the verified account (SRS v1.3)
+    const { data: linkedBookings, error: linkError } = await supabase.rpc("link_guest_bookings", {
+      p_user_id: consumed.userId,
+      p_email: consumed.email,
+    });
+    if (linkError) {
+      logger.error("Failed to link guest bookings after verification", { error: linkError });
+    }
+
+    return ok(res, { verified: true, email: consumed.email, linkedBookings: linkedBookings ?? 0 });
   },
   {
     allowedMethods: ["POST"],

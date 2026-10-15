@@ -1,7 +1,7 @@
 # Software Requirements Specification — Grace Arena Resorts (GAR) Website
 
-**Version:** 1.2
-**Date:** March 29, 2026
+**Version:** 1.3
+**Date:** October 15, 2026
 **Status:** Draft (Revised)
 **Prepared by:** Software Architecture Team
 **Audience:** Developers, Designers, QA Engineers, Project Stakeholders
@@ -114,13 +114,13 @@ A future native mobile app may consume the same API layer, so the backend must b
 
 ### 2.3 User Classes & Characteristics
 
-| User Class                  | Description                                                                              | Access Level                                             |
-| --------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| **Guest (Unauthenticated)** | Anonymous website visitor browsing pages, viewing rooms, exploring facilities            | Public pages only                                        |
-| **Registered Guest**        | User with an account who can make and manage bookings, view booking history              | Public pages + booking management                        |
-| **Content Manager**         | Staff member who manages page content, menus, deals, media uploads                       | CMS: content, restaurants, facilities, deals, media      |
-| **Resort Admin**            | Staff member who manages rooms, bookings, event inquiries, and operational data          | CMS: all content + rooms, bookings, inquiries, analytics |
-| **Super Admin**             | System administrator with full access including user management and system configuration | Full system access                                       |
+| User Class                  | Description                                                                                                   | Access Level                                                                              |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Guest (Unauthenticated)** | Anonymous website visitor browsing pages, viewing rooms, exploring facilities, and booking without an account | Public pages + create, pay for, and manage own bookings via a private booking access link |
+| **Registered Guest**        | User with an account who can make and manage bookings, view booking history                                   | Public pages + booking management                                                         |
+| **Content Manager**         | Staff member who manages page content, menus, deals, media uploads                                            | CMS: content, restaurants, facilities, deals, media                                       |
+| **Resort Admin**            | Staff member who manages rooms, bookings, event inquiries, and operational data                               | CMS: all content + rooms, bookings, inquiries, analytics                                  |
+| **Super Admin**             | System administrator with full access including user management and system configuration                      | Full system access                                                                        |
 
 ### 2.4 Operating Environment
 
@@ -890,7 +890,12 @@ For each restaurant/dining outlet:
 
 ### 3.11 Authentication Pages
 
-> **Design Note:** Authentication is required before a guest can create a booking (Section 4.1). These pages handle account creation, login, and password recovery. Guest checkout without an account is **not** supported in v1.0 — the `userId` field on the `Booking` entity is nullable to support bookings created by admin on behalf of walk-in guests (admin-initiated bookings via CMS), but all online bookings require a registered account.
+> **Design Note (v1.3):** Guest checkout is supported. Anyone can complete the booking wizard and pay without an account; registering or signing in is offered **after** the booking is complete so the guest can track and cancel bookings in one place. The `userId` field on `Booking` is nullable for guest bookings and admin walk-in bookings; `Booking.channel` records how a booking was made (`online_guest`, `online_account`, `walk_in`).
+>
+> - **Booking access link:** every online booking gets a private "Manage booking" link (random token stored only as a hash, valid until 30 days after check-out), shown on the confirmation screen and included in confirmation emails. It allows viewing, PDF download, resending the confirmation, completing payment for a pending hold, and cancellation under the standard refund policy. Guests can request a new link at `/manage-booking` with their reference and email.
+> - **Account linking:** guest bookings are attached to an account only when that account's email is **verified** and matches the booking email — immediately at booking time if such an account already exists, otherwise when the email is verified. A signed-in user holding a booking's access link can also add it to their account.
+> - **Consent:** the guest-details step requires acceptance of the Privacy Policy (NDPR); the consent timestamp is stored on the booking.
+> - **Abuse limits:** at most 10 online bookings per hour per IP and 3 live (unpaid, unexpired) holds per email. reCAPTCHA v3 on booking creation is planned before production launch.
 
 #### 3.11.1 Registration Page
 
@@ -1237,7 +1242,7 @@ Each follows a standard CRUD pattern:
 **Business Logic:**
 
 - Passwords hashed with bcrypt (min cost factor 12)
-- Email verification required before booking
+- Email verification is **not** required to book (v1.3); it is required to link guest bookings to an account
 - Password reset tokens expire after 1 hour
 - JWT access tokens expire after 15 minutes; refresh tokens after 7 days (30 days if "Remember me" is selected)
 - Failed login attempts: lock account after 5 consecutive failures for 15 minutes. Lockout auto-expires after 15 minutes (time-based). The failed attempt counter resets on successful login. The user is shown a clear error message: "Your account has been temporarily locked due to too many failed attempts. Please try again in 15 minutes or reset your password." reCAPTCHA v3 is triggered after 3 failed attempts (before lockout threshold).
@@ -1245,12 +1250,13 @@ Each follows a standard CRUD pattern:
 
 **Authorization Matrix:**
 
-| Role             | Can Manage Users | Can Manage Content | Can Manage Bookings | Can Manage Rooms | System Config |
-| ---------------- | ---------------- | ------------------ | ------------------- | ---------------- | ------------- |
-| Registered Guest | Own profile only | No                 | Own bookings only   | No               | No            |
-| Content Manager  | No               | Yes                | View only           | No               | No            |
-| Resort Admin     | No               | Yes                | Yes                 | Yes              | No            |
-| Super Admin      | Yes              | Yes                | Yes                 | Yes              | Yes           |
+| Role               | Can Manage Users | Can Manage Content | Can Manage Bookings                  | Can Manage Rooms | System Config |
+| ------------------ | ---------------- | ------------------ | ------------------------------------ | ---------------- | ------------- |
+| Guest (no account) | No               | No                 | Own bookings via booking access link | No               | No            |
+| Registered Guest   | Own profile only | No                 | Own bookings only                    | No               | No            |
+| Content Manager    | No               | Yes                | View only                            | No               | No            |
+| Resort Admin       | No               | Yes                | Yes                                  | Yes              | No            |
+| Super Admin        | Yes              | Yes                | Yes                                  | Yes              | Yes           |
 
 ### 4.2 Room & Inventory Management
 
@@ -1843,11 +1849,12 @@ _Detailed wireframes to be produced in design phase based on these specification
 
 ### 9.3 Revision History
 
-| Version | Date           | Author            | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| ------- | -------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1.0     | March 29, 2026 | Architecture Team | Initial SRS draft                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| 1.1     | —              | Architecture Team | Revised per BA critique: added cookie consent banner; global error/loading/empty states; fixed hero video mobile spec; fixed Village max-guests; rewrote booking page as 4-step wizard with per-night pricing; added Auth pages (3.11), Guest Account (3.12), Privacy Policy (3.13), Admin CMS panel (3.14); expanded auth lockout & booking engine specs; added Amenity, RoomTypeAmenity, SystemSetting entities; added calendar availability & PDF endpoints; added SMS deferral note; added CAPTCHA & webhook verification mandates; resolved guest-checkout vs. required-auth contradiction |
-| 1.2     | March 29, 2026 | Architecture Team | Added Section 2.7 Technology Stack specifying concrete implementation choices: Supabase (managed PostgreSQL + Auth + Storage), Next.js API Routes, Chakra UI v3, Paystack, SendGrid, Vercel deployment. Updated Sections 2.4, 4, 5.3, and 5.5 to align with chosen stack.                                                                                                                                                                                                                                                                                                                       |
+| Version | Date             | Author                                 | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------- | ---------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0     | March 29, 2026   | Architecture Team                      | Initial SRS draft                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 1.1     | —                | Architecture Team                      | Revised per BA critique: added cookie consent banner; global error/loading/empty states; fixed hero video mobile spec; fixed Village max-guests; rewrote booking page as 4-step wizard with per-night pricing; added Auth pages (3.11), Guest Account (3.12), Privacy Policy (3.13), Admin CMS panel (3.14); expanded auth lockout & booking engine specs; added Amenity, RoomTypeAmenity, SystemSetting entities; added calendar availability & PDF endpoints; added SMS deferral note; added CAPTCHA & webhook verification mandates; resolved guest-checkout vs. required-auth contradiction |
+| 1.2     | March 29, 2026   | Architecture Team                      | Added Section 2.7 Technology Stack specifying concrete implementation choices: Supabase (managed PostgreSQL + Auth + Storage), Next.js API Routes, Chakra UI v3, Paystack, SendGrid, Vercel deployment. Updated Sections 2.4, 4, 5.3, and 5.5 to align with chosen stack.                                                                                                                                                                                                                                                                                                                       |
+| 1.3     | October 15, 2026 | Product Owner (approved) / Engineering | Guest checkout: online bookings no longer require an account or email verification. Added booking access ("Manage booking") links valid until 30 days after check-out, post-booking account offer, account linking by verified email (immediate when a verified account exists), checkout privacy consent, and booking abuse limits (10 bookings/hour/IP, 3 live holds/email; reCAPTCHA deferred). Updated 2.3, 3.11, 4.1.                                                                                                                                                                      |
 
 ---
 

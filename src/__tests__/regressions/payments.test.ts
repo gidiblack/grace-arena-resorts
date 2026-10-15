@@ -11,7 +11,8 @@ vi.mock("@/services/email/sendgrid", () => ({
   sendEmail: vi.fn().mockResolvedValue({ success: true }),
 }));
 vi.mock("@/services/booking/notifications", () => ({
-  sendBookingConfirmationEmail: vi.fn().mockResolvedValue(true),
+  sendBookingConfirmationEmail: vi.fn().mockResolvedValue({ success: true }),
+  runAfterResponse: (_label: string, task: () => Promise<unknown>) => task(),
 }));
 vi.mock("@/services/payments/refund", () => ({
   initiatePaystackRefund: vi.fn().mockResolvedValue({ refundId: 991, status: "pending" }),
@@ -29,6 +30,7 @@ import { settleSuccessfulCharge } from "@/services/payments/settlement";
 import webhookHandler from "@/pages/api/v1/payments/webhook";
 import cancelHandler from "@/pages/api/v1/bookings/[ref]/cancel";
 import { env } from "@/config/env";
+import { issueBookingAccessToken } from "@/services/booking/access";
 
 function resetRefundMock() {
   vi.mocked(initiatePaystackRefund).mockReset().mockResolvedValue({
@@ -319,6 +321,32 @@ describe("Regression: guest cancellation refunds (audit C3, E1)", () => {
     expect(call.status()).toBe(502);
     expect(db.current.rows("bookings")[0].status).toBe("confirmed");
     expect(db.current.rows("payments")[0].status).toBe("success");
+  });
+
+  it("lets a guest without an account cancel via their manage link only", async () => {
+    seedBooking({
+      user_id: null,
+      channel: "online_guest",
+      status: "confirmed",
+      hold_expires_at: null,
+    });
+    db.current.rows("payments")[0].status = "success";
+    const booking = db.current.rows("bookings")[0] as {
+      id: string;
+      guest_email: string;
+      check_out_date: string;
+    };
+    const t = await issueBookingAccessToken(booking);
+
+    const anonymous = mockApiCall({ method: "PUT", query: { ref: "GAR-ABCDEFGH" } });
+    await cancelHandler(anonymous.req, anonymous.res);
+    expect(anonymous.status()).toBe(404);
+
+    const viaLink = mockApiCall({ method: "PUT", query: { ref: "GAR-ABCDEFGH", t } });
+    await cancelHandler(viaLink.req, viaLink.res);
+    expect(viaLink.status()).toBe(200);
+    expect(db.current.rows("bookings")[0].status).toBe("cancelled");
+    expect(initiatePaystackRefund).toHaveBeenCalledTimes(1);
   });
 
   it("cannot cancel another guest's booking", async () => {

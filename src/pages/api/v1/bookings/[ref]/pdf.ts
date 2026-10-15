@@ -3,6 +3,7 @@ import { getAuthUser } from "@/pages/api/v1/_shared/auth";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { generateBookingPdfBuffer } from "@/services/pdf/booking-pdf";
 import { buildBookingPdfInput } from "@/services/booking/booking-data";
+import { authorizeBookingAccess } from "@/services/booking/access";
 import { fail } from "@/lib/http/response";
 import { logger } from "@/lib/logger";
 
@@ -12,34 +13,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return fail(res, "METHOD_NOT_ALLOWED", "Method not allowed", 405);
   }
 
-  const { ref } = req.query;
-  if (!ref || typeof ref !== "string") {
+  const ref = String(req.query.ref || "")
+    .toUpperCase()
+    .trim();
+  if (!ref) {
     return fail(res, "MISSING_REF", "Booking reference is required", 400);
   }
 
-  // 1. Authenticate user
-  const user = await getAuthUser(req, res);
-  if (!user) {
-    return fail(res, "UNAUTHORIZED", "Authentication required to download booking PDF", 401);
-  }
-
   const supabase = getSupabaseAdminClient();
-  const isAdmin = ["resort_admin", "super_admin", "content_manager"].includes(user.role);
+  const [user, { data: booking }] = await Promise.all([
+    getAuthUser(req, res),
+    supabase.from("bookings").select("*").eq("reference", ref).maybeSingle(),
+  ]);
 
-  // 2. Fetch booking
-  let query = supabase.from("bookings").select("*").eq("reference", ref.toUpperCase().trim());
-
-  if (!isAdmin) {
-    query = query.eq("user_id", user.id);
-  }
-
-  const { data: booking, error } = await query.maybeSingle();
-
-  if (error || !booking) {
+  const access = booking
+    ? await authorizeBookingAccess(req, booking, user ?? undefined, [
+        "resort_admin",
+        "super_admin",
+        "content_manager",
+      ])
+    : null;
+  if (!booking || !access) {
     return fail(res, "NOT_FOUND", "Booking reservation not found or access denied", 404);
   }
 
-  // 3. Generate PDF buffer (real room names, settled payment method)
   try {
     const pdfBuffer = await generateBookingPdfBuffer(await buildBookingPdfInput(supabase, booking));
 
@@ -49,6 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `attachment; filename="GraceArenaResorts-${booking.reference}.pdf"`
     );
     res.setHeader("Content-Length", pdfBuffer.length);
+    res.setHeader("Cache-Control", "private, no-store");
 
     return res.status(200).send(pdfBuffer);
   } catch (err) {

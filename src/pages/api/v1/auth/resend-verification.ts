@@ -31,7 +31,8 @@ export default withApi(
 
     // Generic response prevents account enumeration
     return ok(res, {
-      message: "If your account is awaiting verification, a new confirmation link has been sent.",
+      message:
+        "If your account is awaiting verification, a new confirmation link is on its way. If it does not arrive within a few minutes, please try again later or contact us on WhatsApp.",
     });
   },
   {

@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+/** Optional settings left blank in .env files (e.g. copied from .env.example) count as unset */
+const blankAsUnset = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((value) => (value === "" ? undefined : value), schema.optional());
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
@@ -29,9 +33,12 @@ const envSchema = z.object({
   NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().regex(/^\d{10,15}$/, "Must be between 10 and 15 digits"),
 
   // Optional rate limiting & analytics
-  VERCEL_KV_REST_API_URL: z.string().url().optional(),
-  VERCEL_KV_REST_API_TOKEN: z.string().min(1).optional(),
+  VERCEL_KV_REST_API_URL: blankAsUnset(z.string().url()),
+  VERCEL_KV_REST_API_TOKEN: blankAsUnset(z.string().min(1)),
   NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
+
+  // Shared secret for internal job endpoints (Vercel Cron sends it as "Authorization: Bearer <secret>")
+  CRON_SECRET: blankAsUnset(z.string().min(16)),
 
   // Serve bundled mock data from booking APIs instead of Supabase (local UI preview/tests only)
   NEXT_PUBLIC_USE_MOCK_DATA: z

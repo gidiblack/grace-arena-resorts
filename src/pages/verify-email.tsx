@@ -7,7 +7,8 @@ import { ROUTES } from "@/constants/ROUTES";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
-  const { email, token } = router.query;
+  const { email, token, sent } = router.query;
+  const emailNotSent = sent === "0";
 
   const [isResending, setIsResending] = useState(false);
   const [resendStatus, setResendStatus] = useState<string | null>(null);
@@ -113,6 +114,13 @@ export default function VerifyEmailPage() {
               Please click the link inside the confirmation email we sent to activate your account.
               Email verification is required before reservations can be confirmed.
             </Text>
+
+            {emailNotSent && !resendStatus && (
+              <Box p={3} mb={4} bg="orange.50" borderRadius="md" color="orange.800" fontSize="sm">
+                We couldn&apos;t send your verification email just now. We&apos;ll retry
+                automatically, or you can request a new link below in a few minutes.
+              </Box>
+            )}
 
             {resendStatus && (
               <Box p={3} mb={4} bg="blue.50" borderRadius="md" color="blue.700" fontSize="sm">

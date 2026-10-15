@@ -4,7 +4,7 @@ import { assertTransition, canMarkNoShow } from "@/domain/booking/state-machine"
 import { recordAuditLog } from "@/pages/api/v1/_shared/audit-log";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
-import { sendBookingConfirmationEmail } from "@/services/booking/notifications";
+import { runAfterResponse, sendBookingConfirmationEmail } from "@/services/booking/notifications";
 import { logger } from "@/lib/logger";
 import type { BookingStatus } from "@/types/db";
 
@@ -92,7 +92,9 @@ export default withApi(
 
     // 5. If transitioning to Confirmed: dispatch confirmation email with PDF
     if (targetStatus === "confirmed" && currentStatus === "pending") {
-      await sendBookingConfirmationEmail(supabase, updatedBooking);
+      runAfterResponse("booking confirmation email", () =>
+        sendBookingConfirmationEmail(supabase, updatedBooking)
+      );
     }
 
     // 6. Record admin audit log

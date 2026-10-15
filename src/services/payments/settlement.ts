@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/types/db";
 import { initiatePaystackRefund } from "./refund";
 import { sendEmail } from "@/services/email/sendgrid";
-import { sendBookingConfirmationEmail } from "@/services/booking/notifications";
+import { runAfterResponse, sendBookingConfirmationEmail } from "@/services/booking/notifications";
 import { logger } from "@/lib/logger";
 
 type Db = SupabaseClient<Database>;
@@ -128,7 +128,9 @@ export async function settleSuccessfulCharge(
     .maybeSingle();
 
   if (confirmed) {
-    await sendBookingConfirmationEmail(supabase, confirmed);
+    runAfterResponse("booking confirmation email", () =>
+      sendBookingConfirmationEmail(supabase, confirmed)
+    );
     return { outcome: "confirmed", booking: confirmed, payment: claimed };
   }
 
@@ -247,14 +249,16 @@ async function refundClaimedPayment(
   }
 
   if (booking) {
-    await sendEmail({
-      to: booking.guest_email,
-      templateId: "booking_refund_initiated",
-      templateData: {
-        reference: booking.reference,
-        amount: Math.round(charge.amountKobo / 100),
-        message: why.notifyMessage,
-      },
-    });
+    runAfterResponse("refund initiated email", () =>
+      sendEmail({
+        to: booking.guest_email,
+        templateId: "booking_refund_initiated",
+        templateData: {
+          reference: booking.reference,
+          amount: Math.round(charge.amountKobo / 100),
+          message: why.notifyMessage,
+        },
+      })
+    );
   }
 }

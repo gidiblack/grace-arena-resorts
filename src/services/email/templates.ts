@@ -7,7 +7,8 @@ export type EmailTemplateId =
   | "room_notify_alert"
   | "booking_refund_initiated"
   | "booking_refund_completed"
-  | "staff_submission_alert";
+  | "staff_submission_alert"
+  | "booking_manage_link";
 
 export interface EmailRenderedContent {
   subject: string;
@@ -145,9 +146,23 @@ export function renderEmailTemplate(
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1a202c;">
             <h2 style="color: #2b6cb0;">Booking Confirmed!</h2>
             <p>Your reservation <strong>${ref}</strong> has been confirmed. Please see the attached confirmation receipt for details.</p>
+            ${
+              data.manageUrl && data.manageUrl !== "#"
+                ? `<p style="margin: 24px 0;">
+              <a href="${data.manageUrl}" style="background-color: #2b6cb0; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">
+                Manage Your Booking
+              </a>
+            </p>
+            <p style="font-size: 13px; color: #718096;">Use this private link to view, download, or cancel your reservation. Keep it safe — anyone with the link can manage this booking.</p>`
+                : ""
+            }
           </div>
         `,
-        text: `Your reservation ${ref} at Grace Arena Resorts has been confirmed.`,
+        text: `Your reservation ${ref} at Grace Arena Resorts has been confirmed.${
+          data.manageUrl && data.manageUrl !== "#"
+            ? ` Manage your booking: ${String(rawData.manageUrl)}`
+            : ""
+        }`,
       };
     }
 
@@ -180,6 +195,25 @@ export function renderEmailTemplate(
           </div>
         `,
         text: `Your refund of ₦${Number(amount).toLocaleString()} for reservation ${ref} has been processed.`,
+      };
+    }
+
+    case "booking_manage_link": {
+      return {
+        subject: `Manage your reservation ${rawData.reference || ""} — Grace Arena Resorts`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1a202c;">
+            <h2 style="color: #2b6cb0;">Hello ${data.name || "Guest"},</h2>
+            <p>Here is your private link to view, download, or cancel reservation <strong>${data.reference}</strong>.</p>
+            <p style="margin: 24px 0;">
+              <a href="${data.manageUrl}" style="background-color: #2b6cb0; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">
+                Manage Your Booking
+              </a>
+            </p>
+            <p style="font-size: 13px; color: #718096;">If you did not request this link, you can ignore this email. Anyone with the link can manage this booking, so please keep it private.</p>
+          </div>
+        `,
+        text: `Manage reservation ${rawData.reference}: ${rawData.manageUrl}`,
       };
     }
 

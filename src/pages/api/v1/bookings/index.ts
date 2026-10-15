@@ -5,11 +5,21 @@ import { generateBookingReference } from "@/domain/booking/reference";
 import { addCalendarDays, isValidCalendarDate, resortToday } from "@/domain/booking/time";
 import { calculateBookingPricing } from "@/services/pricing/pricing-engine";
 import { findValidDeal, getTaxRate } from "@/services/booking/booking-data";
-import { sendBookingConfirmationEmail } from "@/services/booking/notifications";
+import { runAfterResponse, sendBookingConfirmationEmail } from "@/services/booking/notifications";
+import {
+  issueBookingAccessToken,
+  manageBookingUrl,
+  rememberBookingAccess,
+} from "@/services/booking/access";
+import { enforceRateLimit } from "../_shared/rate-limit";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
 import { logger } from "@/lib/logger";
-import type { BookingStatus, Database } from "@/types/db";
+import type { BookingChannel, BookingStatus, Database } from "@/types/db";
+
+/** Anti-abuse limits for online bookings (product decision 2026-10-15; reCAPTCHA deferred) */
+export const GUEST_BOOKINGS_PER_IP_PER_HOUR = 10;
+export const MAX_LIVE_HOLDS_PER_EMAIL = 3;
 
 const BOOKING_STATUSES = [
   "pending",
@@ -42,17 +52,22 @@ export const createBookingSchema = z.object({
   dealId: z.guid().optional(),
   promoCode: z.string().trim().min(1).max(40).optional(),
   paymentMethod: z.enum(["paystack", "cash", "pos"]).optional().default("paystack"),
+  // NDPR: guests consent at checkout because they may not have registered (SRS v1.3)
+  privacyConsent: z.boolean().optional(),
 });
 
 export default withApi(
   async (req, res, ctx) => {
-    const user = ctx.user!;
+    const user = ctx.user;
     const supabase = getSupabaseAdminClient();
 
     // ==========================================
-    // GET: List bookings
+    // GET: List bookings (signed-in users only)
     // ==========================================
     if (req.method === "GET") {
+      if (!user) {
+        return fail(res, "UNAUTHORIZED", "Authentication required to access this resource", 401);
+      }
       const { page, limit, offset } = parsePagination(req);
       const { status, reference, guestEmail } = req.query;
 
@@ -125,18 +140,26 @@ export default withApi(
       );
     }
     const payload = parseResult.data;
-    const isAdmin = ["resort_admin", "super_admin"].includes(user.role);
+    const isAdmin = Boolean(user && ["resort_admin", "super_admin"].includes(user.role));
     const isWalkInAdminBooking =
       isAdmin && (payload.paymentMethod === "cash" || payload.paymentMethod === "pos");
 
-    // Email verification is required for online bookings (GAR-SRS Section 4.1)
-    if (!isAdmin && !user.isEmailVerified) {
-      return fail(
-        res,
-        "EMAIL_NOT_VERIFIED",
-        "Email verification is required before creating online reservations. Please verify your email first.",
-        403
-      );
+    // Online bookings: no account or email verification required (SRS v1.3), but consent is
+    if (!isWalkInAdminBooking) {
+      if (payload.privacyConsent !== true) {
+        return fail(
+          res,
+          "PRIVACY_CONSENT_REQUIRED",
+          "Please accept the Privacy Policy to complete your reservation.",
+          400
+        );
+      }
+      const allowed = await enforceRateLimit(req, res, {
+        keyPrefix: "booking-create",
+        maxRequests: GUEST_BOOKINGS_PER_IP_PER_HOUR,
+        windowSeconds: 3600,
+      });
+      if (!allowed) return;
     }
 
     // Dates are calendar dates at the resort (WAT), never the server's timezone
@@ -225,15 +248,37 @@ export default withApi(
     // 3. Atomic insert with inventory lock (availability is re-checked inside the transaction)
     const initialStatus: BookingStatus = isWalkInAdminBooking ? "confirmed" : "pending";
     const bookingRef = generateBookingReference();
+    const guestEmail = payload.guest.email.toLowerCase().trim();
+
+    // Ownership: signed-in guests own their bookings; signed-out guests' bookings attach
+    // immediately to a verified account with the same email, otherwise stay unowned
+    let ownerId: string | null = null;
+    let channel: BookingChannel;
+    if (isWalkInAdminBooking) {
+      channel = "walk_in";
+    } else if (user) {
+      ownerId = user.id;
+      channel = "online_account";
+    } else {
+      channel = "online_guest";
+      const { data: verifiedAccount } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", guestEmail)
+        .eq("is_email_verified", true)
+        .maybeSingle();
+      ownerId = verifiedAccount?.id ?? null;
+    }
 
     const { data: newBooking, error: bookingError } = await supabase.rpc(
       "create_booking_with_lock",
       {
         p_reference: bookingRef,
-        p_user_id: isWalkInAdminBooking ? null : user.id,
+        p_user_id: ownerId,
         p_status: initialStatus,
+        p_channel: channel,
         p_guest_name: payload.guest.fullName,
-        p_guest_email: payload.guest.email.toLowerCase().trim(),
+        p_guest_email: guestEmail,
         p_guest_phone: payload.guest.phone,
         p_check_in: checkInStr,
         p_check_out: checkOutStr,
@@ -246,6 +291,8 @@ export default withApi(
         p_tax: quote.tax,
         p_total: quote.total,
         p_deal_id: appliedDeal?.id ?? null,
+        p_privacy_consent_at: isWalkInAdminBooking ? null : new Date().toISOString(),
+        p_max_pending_holds: MAX_LIVE_HOLDS_PER_EMAIL,
         p_line_items: quote.rooms.map((rm) => ({
           room_type_id: rm.roomTypeId,
           quantity: rm.quantity,
@@ -257,6 +304,14 @@ export default withApi(
     );
 
     if (bookingError || !newBooking) {
+      if (bookingError?.message?.includes("TOO_MANY_PENDING_HOLDS")) {
+        return fail(
+          res,
+          "TOO_MANY_PENDING_HOLDS",
+          `You already have ${MAX_LIVE_HOLDS_PER_EMAIL} unpaid reservations on hold. Please complete or cancel one, wait for it to expire, or contact us on WhatsApp.`,
+          429
+        );
+      }
       if (bookingError?.message?.includes("INSUFFICIENT_AVAILABILITY")) {
         const [roomTypeId, available] = String(bookingError.details || "").split(":");
         const rt = roomTypes.find((r) => r.id === roomTypeId);
@@ -282,12 +337,22 @@ export default withApi(
         currency: "NGN",
         status: "success",
         paid_at: new Date().toISOString(),
-        metadata: { createdByAdmin: user.id, paymentMethod: payload.paymentMethod },
+        metadata: { createdByAdmin: user!.id, paymentMethod: payload.paymentMethod },
       });
       if (paymentError) {
         logger.error("Failed to record walk-in payment", { error: paymentError });
       }
-      await sendBookingConfirmationEmail(supabase, newBooking);
+      runAfterResponse("walk-in confirmation email", () =>
+        sendBookingConfirmationEmail(supabase, newBooking)
+      );
+    }
+
+    // "Manage booking" access for online bookings: cookie for this browser + private link
+    let manageUrl: string | null = null;
+    if (!isWalkInAdminBooking) {
+      const accessToken = await issueBookingAccessToken(newBooking);
+      rememberBookingAccess(req, res, newBooking.reference, accessToken);
+      manageUrl = manageBookingUrl(newBooking.reference, accessToken);
     }
 
     return ok(
@@ -296,12 +361,13 @@ export default withApi(
         booking: newBooking,
         pricing: quote,
         paymentRequired: !isWalkInAdminBooking,
+        manageUrl,
+        linkedToAccount: Boolean(ownerId),
       },
       201
     );
   },
   {
     allowedMethods: ["GET", "POST"],
-    requireAuth: true,
   }
 );

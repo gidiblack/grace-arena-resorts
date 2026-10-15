@@ -11,6 +11,7 @@ export const ROUTES = {
   terms: "/terms",
   rooms: "/rooms",
   booking: "/booking",
+  manageBooking: "/manage-booking",
   account: "/account",
   login: "/login",
   register: "/register",

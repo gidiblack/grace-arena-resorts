@@ -75,6 +75,8 @@ export default withApi(
         getStayAvailability(supabase, { checkIn, checkOut: checkOutStr, resort: resortSlug }),
         getTaxRate(supabase),
       ]);
+      // Short private cache: date changes in the wizard re-query, identical repeats do not
+      res.setHeader("Cache-Control", "private, max-age=15");
       return ok(res, { checkIn, checkOut: checkOutStr, nights, taxRate, rooms });
     } catch (error) {
       logger.error("Availability lookup failed", {

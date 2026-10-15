@@ -15,7 +15,12 @@ export type BookingStatus =
 export type PaymentStatus =
   "pending" | "success" | "failed" | "refund_pending" | "refunded" | "partially_refunded";
 export type AuthTokenPurpose =
-  "email_verification" | "password_reset" | "newsletter_confirm" | "newsletter_unsubscribe";
+  | "email_verification"
+  | "password_reset"
+  | "newsletter_confirm"
+  | "newsletter_unsubscribe"
+  | "booking_access";
+export type BookingChannel = "online_guest" | "online_account" | "walk_in";
 export type DiscountType = "percentage" | "fixed";
 export type DealCategory = "room" | "dining" | "package" | "seasonal";
 export type MenuCategory = "starter" | "main" | "dessert" | "beverage";
@@ -246,6 +251,8 @@ export interface Database {
           status: BookingStatus;
           deal_id: string | null;
           hold_expires_at: string | null;
+          channel: BookingChannel;
+          privacy_consent_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -269,6 +276,8 @@ export interface Database {
           status?: BookingStatus;
           deal_id?: string | null;
           hold_expires_at?: string | null;
+          channel?: BookingChannel;
+          privacy_consent_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -703,6 +712,10 @@ export interface Database {
           attempts: number;
           last_attempt_at: string | null;
           error: string | null;
+          retry_handler: string | null;
+          retry_params: Json;
+          next_attempt_at: string | null;
+          sent_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -715,6 +728,10 @@ export interface Database {
           attempts?: number;
           last_attempt_at?: string | null;
           error?: string | null;
+          retry_handler?: string | null;
+          retry_params?: Json;
+          next_attempt_at?: string | null;
+          sent_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -727,6 +744,7 @@ export interface Database {
           token_hash: string;
           purpose: AuthTokenPurpose;
           user_id: string | null;
+          booking_id: string | null;
           email: string;
           expires_at: string;
           used_at: string | null;
@@ -737,6 +755,7 @@ export interface Database {
           token_hash: string;
           purpose: AuthTokenPurpose;
           user_id?: string | null;
+          booking_id?: string | null;
           email: string;
           expires_at: string;
           used_at?: string | null;
@@ -797,6 +816,7 @@ export interface Database {
           p_reference: string;
           p_user_id: string | null;
           p_status: BookingStatus;
+          p_channel: BookingChannel;
           p_guest_name: string;
           p_guest_email: string;
           p_guest_phone: string;
@@ -811,9 +831,34 @@ export interface Database {
           p_tax: number;
           p_total: number;
           p_deal_id: string | null;
+          p_privacy_consent_at: string | null;
           p_line_items: Json;
+          p_max_pending_holds?: number;
         };
         Returns: Database["public"]["Tables"]["bookings"]["Row"];
+      };
+      link_guest_bookings: {
+        Args: { p_user_id: string; p_email: string };
+        Returns: number;
+      };
+      get_stay_availability: {
+        Args: { p_check_in: string; p_check_out: string; p_resort?: string | null };
+        Returns: Array<{
+          id: string;
+          slug: string;
+          name: string;
+          tier: RoomTier;
+          base_price: number;
+          max_guests: number;
+          total_units: number;
+          status: RoomTypeStatus;
+          images: Json;
+          building_name: string;
+          resort_slug: string;
+          resort_name: string;
+          available_units: number;
+          seasonal_prices: Json;
+        }>;
       };
       expire_stale_pending_bookings: {
         Args: Record<string, never>;
