@@ -25,6 +25,7 @@ import {
 import { ROUTES } from "@/constants/ROUTES";
 import { FaLocationDot } from "react-icons/fa6";
 import Button from "../ui/button";
+import { getRecaptchaToken } from "@/lib/recaptcha/client";
 
 export const Footer = () => {
   const [newsletterEmail, setNewsletterEmail] = useState("");
@@ -40,10 +41,11 @@ export const Footer = () => {
     setNewsletterError(null);
 
     try {
+      const recaptchaToken = await getRecaptchaToken("newsletter");
       const res = await fetch("/api/v1/newsletter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: newsletterEmail }),
+        body: JSON.stringify({ email: newsletterEmail, recaptchaToken }),
       });
 
       const data = await res.json();
@@ -74,7 +76,7 @@ export const Footer = () => {
     { label: "Twitter", href: "https://x.com", icon: FaTwitter },
     {
       label: "WhatsApp",
-      href: "https://wa.me/2348123456789?text=Hello%20Grace%20Arena%20Resorts",
+      href: `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=Hello%20Grace%20Arena%20Resorts`,
       icon: FaWhatsapp,
     },
   ];
@@ -133,7 +135,12 @@ export const Footer = () => {
                   borderRadius="8px"
                   fontSize="14px"
                   minW={{ sm: "280px" }}
-                  _focus={{ borderColor: "accent.500", outline: "none" }}
+                  _placeholder={{ color: "gray.400", opacity: 1 }}
+                  _focus={{
+                    borderColor: "brand.gold",
+                    outline: "none",
+                    boxShadow: "0 0 0 1px #D4AF37",
+                  }}
                 />
                 <Button
                   type="submit"
@@ -360,6 +367,11 @@ export const Footer = () => {
           </Text>
 
           <HStack gap={4} flexWrap="wrap" justify="center">
+            <Link href={ROUTES.manageBooking}>
+              <Text fontSize="12px" color="gray.500" _hover={{ color: "accent.500" }}>
+                Manage a Booking
+              </Text>
+            </Link>
             <Link href={ROUTES.privacy}>
               <Text fontSize="12px" color="gray.500" _hover={{ color: "accent.500" }}>
                 Privacy Policy (NDPR)

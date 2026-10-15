@@ -36,7 +36,61 @@ a {
   text-decoration: none;
 }
 
+a:focus:not(:focus-visible),
+a:active {
+  outline: none;
+}
+
 main {
   min-height: 100vh;
   position: relative;
+}
+
+/* Form Inputs & Placeholders Visibility */
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+/* Date picker calendar icon visibility on dark backgrounds */
+input[type="date"] {
+  color-scheme: dark;
+}
+
+.auth-input[type="date"],
+[data-theme="light"] input[type="date"] {
+  color-scheme: light;
+}
+
+/* Ensure inputs on dark backgrounds have bright typed text */
+input:not(.auth-input):not([data-theme="light"] input),
+textarea:not(.auth-input):not([data-theme="light"] textarea),
+select:not(.auth-input):not([data-theme="light"] select) {
+  color: #f8fafc;
+}
+
+/* Ensure inputs in white cards/containers have high-contrast dark text */
+.auth-input,
+[data-theme="light"] input,
+[data-theme="light"] textarea {
+  color: #0f172a !important;
+}
+
+.auth-input::placeholder,
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+
+/* Chrome/Safari/Edge Autofill text visibility fix */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: inherit;
+  transition: background-color 5000s ease-in-out 0s;
 }

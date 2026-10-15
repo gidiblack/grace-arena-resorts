@@ -14,6 +14,7 @@ import PageWrapper from "@/components/layout/PageWrapper";
 import MapSection from "@/components/common/MapSection";
 import { generateContactPageJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
+import { getRecaptchaToken } from "@/lib/recaptcha/client";
 import {
   FaPhoneAlt,
   FaEnvelope,
@@ -39,6 +40,7 @@ export default function ContactPage() {
     setError(null);
 
     try {
+      const recaptchaToken = await getRecaptchaToken("contact");
       const res = await fetch("/api/v1/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -48,6 +50,7 @@ export default function ContactPage() {
           phoneNumber: phone,
           subject,
           message,
+          recaptchaToken,
         }),
       });
 
@@ -274,6 +277,12 @@ export default function ContactPage() {
                           p={3}
                           borderRadius="8px"
                           fontSize="14px"
+                          _placeholder={{ color: "gray.400", opacity: 1 }}
+                          _focus={{
+                            borderColor: "accent.500",
+                            outline: "none",
+                            boxShadow: "0 0 0 1px #D4AF37",
+                          }}
                         />
                       </Box>
 
@@ -294,6 +303,12 @@ export default function ContactPage() {
                             p={3}
                             borderRadius="8px"
                             fontSize="14px"
+                            _placeholder={{ color: "gray.400", opacity: 1 }}
+                            _focus={{
+                              borderColor: "accent.500",
+                              outline: "none",
+                              boxShadow: "0 0 0 1px #D4AF37",
+                            }}
                           />
                         </Box>
 
@@ -313,6 +328,12 @@ export default function ContactPage() {
                             p={3}
                             borderRadius="8px"
                             fontSize="14px"
+                            _placeholder={{ color: "gray.400", opacity: 1 }}
+                            _focus={{
+                              borderColor: "accent.500",
+                              outline: "none",
+                              boxShadow: "0 0 0 1px #D4AF37",
+                            }}
                           />
                         </Box>
                       </SimpleGrid>
@@ -332,6 +353,12 @@ export default function ContactPage() {
                           p={3}
                           borderRadius="8px"
                           fontSize="14px"
+                          _placeholder={{ color: "gray.400", opacity: 1 }}
+                          _focus={{
+                            borderColor: "accent.500",
+                            outline: "none",
+                            boxShadow: "0 0 0 1px #D4AF37",
+                          }}
                         />
                       </Box>
 
@@ -351,6 +378,12 @@ export default function ContactPage() {
                           borderRadius="8px"
                           fontSize="13px"
                           rows={4}
+                          _placeholder={{ color: "gray.400", opacity: 1 }}
+                          _focus={{
+                            borderColor: "accent.500",
+                            outline: "none",
+                            boxShadow: "0 0 0 1px #D4AF37",
+                          }}
                         />
                       </Box>
 

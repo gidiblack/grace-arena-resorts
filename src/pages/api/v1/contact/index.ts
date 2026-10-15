@@ -1,70 +1,89 @@
-import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
+import { withApi } from "../_shared/handler";
+import { verifyRecaptcha } from "../_shared/recaptcha";
+import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
-import { sendEmail } from "@/services/email/sendgrid";
+import { env } from "@/config/env";
+import { sendEmail } from "@/services/email";
+import { notifyStaffOfSubmission } from "@/services/email/staff-alert";
 import { logger } from "@/lib/logger";
-import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 
 const contactSchema = z.object({
-  fullName: z.string().min(2, "Full name is required"),
+  fullName: z.string().trim().min(2, "Full name is required").max(120),
   email: z.string().email("Valid email required"),
-  phoneNumber: z.string().optional(),
-  subject: z.string().min(3, "Subject is required"),
-  message: z.string().min(10, "Message must be at least 10 characters"),
+  phoneNumber: z.string().trim().max(20).optional(),
+  subject: z.string().trim().min(3, "Subject is required").max(200),
+  message: z.string().trim().min(10, "Message must be at least 10 characters").max(5000),
+  recaptchaToken: z.string().optional(),
 });
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return fail(res, "METHOD_NOT_ALLOWED", "Method not allowed", 405);
-  }
+export default withApi(
+  async (req, res, ctx) => {
+    const { fullName, email, phoneNumber, subject, message, recaptchaToken } = req.body as z.infer<
+      typeof contactSchema
+    >;
 
-  // Rate limiting: 3 submissions per hour per IP
-  const clientIp = getClientIp(req);
-  const rateLimit = checkRateLimit(`contact:${clientIp}`, 3, 3600);
-  if (!rateLimit.success) {
-    res.setHeader("Retry-After", Math.ceil((rateLimit.resetAt - Date.now()) / 1000).toString());
-    return fail(
-      res,
-      "RATE_LIMIT_EXCEEDED",
-      "Too many contact submissions from this IP. Please try again later.",
-      429
-    );
-  }
+    const recaptcha = await verifyRecaptcha(recaptchaToken, "contact");
+    if (!recaptcha.success) {
+      return fail(res, "RECAPTCHA_FAILED", "Spam protection check failed. Please try again.", 400);
+    }
 
-  const parsed = contactSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return fail(res, "VALIDATION_ERROR", "Invalid contact form data", 400, parsed.error.format());
-  }
+    let ticketId = `TKT-${Date.now().toString(36).toUpperCase()}`;
 
-  const { fullName, email, subject, message } = parsed.data;
+    if (!env.NEXT_PUBLIC_USE_MOCK_DATA) {
+      const { data, error } = await getSupabaseAdminClient()
+        .from("contact_submissions")
+        .insert({
+          user_id: ctx.user?.id ?? null,
+          name: fullName,
+          email: email.toLowerCase().trim(),
+          phone: phoneNumber || null,
+          subject,
+          message,
+        })
+        .select("id")
+        .single();
 
-  logger.info("Received public contact message", {
-    sender: email,
-    subject,
-    messageLength: message.length,
-  });
+      if (error || !data) {
+        logger.error("Failed to save contact submission", { error });
+        return fail(
+          res,
+          "SUBMISSION_FAILED",
+          "We could not send your message right now. Please try again or reach us on WhatsApp.",
+          500
+        );
+      }
+      ticketId = `TKT-${data.id.slice(0, 8).toUpperCase()}`;
 
-  // Dispatch acknowledgment email to guest
-  try {
+      await notifyStaffOfSubmission({
+        kind: "contact",
+        name: fullName,
+        email,
+        phone: phoneNumber,
+        subject,
+        details: message,
+      });
+    }
+
     await sendEmail({
       to: email,
       templateId: "inquiry_acknowledgment",
-      templateData: {
-        name: fullName,
-        subject,
-      },
+      templateData: { name: fullName, subject },
     });
-  } catch (error) {
-    logger.warn("Failed to dispatch contact acknowledgment email", { error, email });
-  }
 
-  return ok(
-    res,
-    {
-      ticketId: `TKT-${Date.now().toString(36).toUpperCase()}`,
-      message:
-        "Thank you for reaching out. We have received your message and will respond shortly.",
-    },
-    201
-  );
-}
+    return ok(
+      res,
+      {
+        ticketId,
+        message:
+          "Thank you for reaching out. We have received your message and will respond shortly.",
+      },
+      201
+    );
+  },
+  {
+    allowedMethods: ["POST"],
+    bodySchema: contactSchema,
+    rateLimit: { keyPrefix: "contact", maxRequests: 3, windowSeconds: 3600 },
+  }
+);

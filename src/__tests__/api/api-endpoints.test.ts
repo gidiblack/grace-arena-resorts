@@ -22,9 +22,19 @@ import mediaHandler from "@/pages/api/v1/media/index";
 import contentHandler from "@/pages/api/v1/content/[page]";
 import { resetRateLimits } from "@/lib/security/rate-limit";
 
+import { sendEmail } from "@/services/email";
+import { newsletterUnsubscribeToken } from "@/services/newsletter/tokens";
+import { FakeSupabase } from "@/test-utils/fake-supabase";
+
 // Mock sendEmail to prevent network calls during testing
-vi.mock("@/services/email/sendgrid", () => ({
+vi.mock("@/services/email", () => ({
   sendEmail: vi.fn().mockResolvedValue({ success: true, messageId: "mock-id" }),
+}));
+
+const db = vi.hoisted(() => ({ current: null as unknown as FakeSupabase }));
+vi.mock("@/lib/supabase/server", () => ({
+  getSupabaseAdminClient: () => db.current.client,
+  createSupabaseAuthClient: () => db.current.authClient,
 }));
 
 function createMockReqRes(options: {
@@ -37,7 +47,7 @@ function createMockReqRes(options: {
     method: options.method || "GET",
     query: options.query || {},
     body: options.body || {},
-    headers: options.headers || {},
+    headers: options.headers || { "sec-fetch-site": "same-origin" },
     socket: { remoteAddress: "127.0.0.1" },
   } as unknown as NextApiRequest;
 
@@ -77,6 +87,7 @@ describe("Public Content API Endpoints (Step 6)", () => {
   beforeEach(() => {
     resetRateLimits();
     vi.clearAllMocks();
+    db.current = new FakeSupabase();
   });
 
   describe("GET /api/v1/amenities", () => {
@@ -285,33 +296,61 @@ describe("Public Content API Endpoints (Step 6)", () => {
   });
 
   describe("Newsletter Double Opt-In Flow", () => {
-    it("handles subscribe, confirm, and unsubscribe end-to-end", async () => {
-      // 1. Subscribe
-      const subMock = createMockReqRes({
-        method: "POST",
-        body: { email: "guest@example.com" },
-      });
+    it("handles subscribe, confirm, and unsubscribe end-to-end with single-use tokens", async () => {
+      // 1. Subscribe: row stored unconfirmed, confirmation link emailed
+      const subMock = createMockReqRes({ method: "POST", body: { email: "Guest@Example.com" } });
       await newsletterSubscribeHandler(subMock.req, subMock.res);
       expect(subMock.getStatusCode()).toBe(200);
+      const [subscriber] = db.current.rows("newsletter_subscribers");
+      expect(subscriber.email).toBe("guest@example.com");
+      expect(subscriber.is_confirmed).toBeFalsy();
 
-      // 2. Confirm with generated token
-      const token = Buffer.from("guest@example.com:1234567890").toString("base64url");
-      const confirmMock = createMockReqRes({
-        method: "GET",
-        query: { token },
-      });
+      const confirmUrl = vi.mocked(sendEmail).mock.calls[0][0].templateData.confirmUrl as string;
+      const token = new URL(confirmUrl).searchParams.get("token")!;
+
+      // 2. Confirm with the emailed token
+      const confirmMock = createMockReqRes({ method: "GET", query: { token } });
       await newsletterConfirmHandler(confirmMock.req, confirmMock.res);
       expect(confirmMock.getStatusCode()).toBe(200);
       expect(confirmMock.getData().data.confirmed).toBe(true);
+      expect(db.current.rows("newsletter_subscribers")[0].is_confirmed).toBe(true);
 
-      // 3. Unsubscribe
+      // Token is single-use
+      const replayMock = createMockReqRes({ method: "GET", query: { token } });
+      await newsletterConfirmHandler(replayMock.req, replayMock.res);
+      expect(replayMock.getStatusCode()).toBe(400);
+
+      // 3. Unsubscribe requires the signed token
+      const forgedMock = createMockReqRes({
+        method: "POST",
+        body: { email: "guest@example.com", token: "forged" },
+      });
+      await newsletterUnsubscribeHandler(forgedMock.req, forgedMock.res);
+      expect(forgedMock.getStatusCode()).toBe(400);
+
       const unsubMock = createMockReqRes({
         method: "POST",
-        body: { email: "guest@example.com" },
+        body: {
+          email: "guest@example.com",
+          token: newsletterUnsubscribeToken("guest@example.com"),
+        },
       });
       await newsletterUnsubscribeHandler(unsubMock.req, unsubMock.res);
       expect(unsubMock.getStatusCode()).toBe(200);
       expect(unsubMock.getData().data.unsubscribed).toBe(true);
+      expect(db.current.rows("newsletter_subscribers")[0].unsubscribed_at).toBeTruthy();
+    });
+
+    it("rejects forged base64 confirmation tokens and escapes HTML output", async () => {
+      const forged = Buffer.from("<script>alert(1)</script>:1").toString("base64url");
+      const mock = createMockReqRes({
+        method: "GET",
+        query: { token: forged },
+        headers: { accept: "text/html" },
+      });
+      await newsletterConfirmHandler(mock.req, mock.res);
+      expect(mock.getStatusCode()).toBe(400);
+      expect(String(mock.getData())).not.toContain("<script>");
     });
   });
 

@@ -11,8 +11,12 @@ export const ROUTES = {
   terms: "/terms",
   rooms: "/rooms",
   booking: "/booking",
+  manageBooking: "/manage-booking",
   account: "/account",
   login: "/login",
   register: "/register",
+  forgotPassword: "/forgot-password",
+  resetPassword: "/reset-password",
+  verifyEmail: "/verify-email",
   admin: "/admin",
 };

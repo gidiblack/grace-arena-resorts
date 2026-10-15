@@ -19,6 +19,7 @@ import village from "@/assets/gar-village.jpg";
 import hut from "@/assets/hut.jpg";
 import dining from "@/assets/dining.jpg";
 import { FaChurch, FaRing, FaUsers, FaCamera, FaCheckCircle } from "react-icons/fa";
+import { getRecaptchaToken } from "@/lib/recaptcha/client";
 
 export default function EventsPage() {
   const [eventType, setEventType] = useState("Church / Leadership Retreat");
@@ -39,6 +40,7 @@ export default function EventsPage() {
 
     try {
       const parsedGuestCount = parseInt(guestCount, 10);
+      const recaptchaToken = await getRecaptchaToken("event_inquiry");
       const res = await fetch("/api/v1/events/inquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -50,6 +52,7 @@ export default function EventsPage() {
           estimatedGuests: isNaN(parsedGuestCount) ? undefined : parsedGuestCount,
           preferredDate: eventDate || undefined,
           notes: specialNeeds || undefined,
+          recaptchaToken,
         }),
       });
 
@@ -234,9 +237,10 @@ export default function EventsPage() {
                         padding: "10px",
                         backgroundColor: "#1E293B",
                         border: "1px solid #334155",
-                        color: "white",
+                        color: "#F8FAFC",
                         borderRadius: "8px",
                         fontSize: "14px",
+                        outline: "none",
                       }}
                     >
                       <option value="Church / Leadership Retreat">
@@ -271,6 +275,13 @@ export default function EventsPage() {
                         p={2.5}
                         borderRadius="8px"
                         fontSize="14px"
+                        style={{ colorScheme: "dark" }}
+                        _placeholder={{ color: "gray.400", opacity: 1 }}
+                        _focus={{
+                          borderColor: "accent.500",
+                          outline: "none",
+                          boxShadow: "0 0 0 1px #D4AF37",
+                        }}
                       />
                     </Box>
 
@@ -290,6 +301,12 @@ export default function EventsPage() {
                         p={2.5}
                         borderRadius="8px"
                         fontSize="14px"
+                        _placeholder={{ color: "gray.400", opacity: 1 }}
+                        _focus={{
+                          borderColor: "accent.500",
+                          outline: "none",
+                          boxShadow: "0 0 0 1px #D4AF37",
+                        }}
                       />
                     </Box>
                   </SimpleGrid>
@@ -310,6 +327,12 @@ export default function EventsPage() {
                         p={2.5}
                         borderRadius="8px"
                         fontSize="14px"
+                        _placeholder={{ color: "gray.400", opacity: 1 }}
+                        _focus={{
+                          borderColor: "accent.500",
+                          outline: "none",
+                          boxShadow: "0 0 0 1px #D4AF37",
+                        }}
                       />
                     </Box>
 
@@ -329,6 +352,12 @@ export default function EventsPage() {
                         p={2.5}
                         borderRadius="8px"
                         fontSize="14px"
+                        _placeholder={{ color: "gray.400", opacity: 1 }}
+                        _focus={{
+                          borderColor: "accent.500",
+                          outline: "none",
+                          boxShadow: "0 0 0 1px #D4AF37",
+                        }}
                       />
                     </Box>
                   </SimpleGrid>
@@ -349,6 +378,12 @@ export default function EventsPage() {
                       p={2.5}
                       borderRadius="8px"
                       fontSize="14px"
+                      _placeholder={{ color: "gray.400", opacity: 1 }}
+                      _focus={{
+                        borderColor: "accent.500",
+                        outline: "none",
+                        boxShadow: "0 0 0 1px #D4AF37",
+                      }}
                     />
                   </Box>
 
@@ -367,6 +402,12 @@ export default function EventsPage() {
                       borderRadius="8px"
                       fontSize="13px"
                       rows={3}
+                      _placeholder={{ color: "gray.400", opacity: 1 }}
+                      _focus={{
+                        borderColor: "accent.500",
+                        outline: "none",
+                        boxShadow: "0 0 0 1px #D4AF37",
+                      }}
                     />
                   </Box>
 
