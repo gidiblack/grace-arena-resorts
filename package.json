@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "ci": "npm run lint && npm run format:check && npm run typecheck && npm run test && npm run build"
+    "ci": "npm run lint && npm run format:check && npm run typecheck && npm run test && npm run build",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@chakra-ui/cli": "^3.34.0",
@@ -52,6 +53,7 @@
     "eslint-config-next": "16.2.1",
     "eslint-config-prettier": "^10.1.8",
     "jsdom": "^29.1.1",
+    "patch-package": "^8.0.1",
     "prettier": "^3.9.10",
     "typescript": "^5",
     "vitest": "^5.0.4"
