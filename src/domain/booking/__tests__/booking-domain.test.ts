@@ -39,19 +39,19 @@ describe("Step 8: Booking Engine Domain & Pricing Engine", () => {
       expect(canMarkNoShow(beforeCheckIn, checkInDate)).toBe(false);
 
       // 10 hours after check-in (2026-06-02 00:00): not allowed
-      const tenHoursAfter = new Date("2026-06-02T00:00:00");
+      const tenHoursAfter = new Date("2026-06-02T00:00:00+01:00");
       expect(canMarkNoShow(tenHoursAfter, checkInDate)).toBe(false);
 
       // 23 hours after check-in (2026-06-02 13:00): not allowed
-      const twentyThreeHoursAfter = new Date("2026-06-02T13:00:00");
+      const twentyThreeHoursAfter = new Date("2026-06-02T13:00:00+01:00");
       expect(canMarkNoShow(twentyThreeHoursAfter, checkInDate)).toBe(false);
 
       // Exactly 24 hours after check-in (2026-06-02 14:00): allowed
-      const twentyFourHoursAfter = new Date("2026-06-02T14:00:00");
+      const twentyFourHoursAfter = new Date("2026-06-02T14:00:00+01:00");
       expect(canMarkNoShow(twentyFourHoursAfter, checkInDate)).toBe(true);
 
       // 48 hours after: allowed
-      const fortyEightHoursAfter = new Date("2026-06-03T14:00:00");
+      const fortyEightHoursAfter = new Date("2026-06-03T14:00:00+01:00");
       expect(canMarkNoShow(fortyEightHoursAfter, checkInDate)).toBe(true);
     });
   });
@@ -61,7 +61,7 @@ describe("Step 8: Booking Engine Domain & Pricing Engine", () => {
     const checkInDate = "2026-06-10"; // 14:00
 
     it("gives 100% full refund when cancelled >= 72 hours before check-in", () => {
-      const cancellationDate = new Date("2026-06-07T13:00:00"); // 73 hours prior
+      const cancellationDate = new Date("2026-06-07T13:00:00+01:00"); // 73 hours prior
       const result = calculateCancellationRefund(totalPaid, checkInDate, cancellationDate);
 
       expect(result.tier).toBe("full");
@@ -70,7 +70,7 @@ describe("Step 8: Booking Engine Domain & Pricing Engine", () => {
     });
 
     it("gives 50% half refund when cancelled between 24 and 72 hours before check-in", () => {
-      const cancellationDate = new Date("2026-06-08T15:00:00"); // 47 hours prior
+      const cancellationDate = new Date("2026-06-08T15:00:00+01:00"); // 47 hours prior
       const result = calculateCancellationRefund(totalPaid, checkInDate, cancellationDate);
 
       expect(result.tier).toBe("half");
@@ -79,7 +79,7 @@ describe("Step 8: Booking Engine Domain & Pricing Engine", () => {
     });
 
     it("gives 0% no refund when cancelled < 24 hours before check-in", () => {
-      const cancellationDate = new Date("2026-06-09T18:00:00"); // 20 hours prior
+      const cancellationDate = new Date("2026-06-09T18:00:00+01:00"); // 20 hours prior
       const result = calculateCancellationRefund(totalPaid, checkInDate, cancellationDate);
 
       expect(result.tier).toBe("none");

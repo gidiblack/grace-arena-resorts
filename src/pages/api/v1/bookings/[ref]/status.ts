@@ -4,8 +4,7 @@ import { assertTransition, canMarkNoShow } from "@/domain/booking/state-machine"
 import { recordAuditLog } from "@/pages/api/v1/_shared/audit-log";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
-import { sendEmail } from "@/services/email/sendgrid";
-import { generateBookingPdfBuffer } from "@/services/pdf/booking-pdf";
+import { sendBookingConfirmationEmail } from "@/services/booking/notifications";
 import { logger } from "@/lib/logger";
 import type { BookingStatus } from "@/types/db";
 
@@ -55,7 +54,7 @@ export default withApi(
 
     // 3. Enforce 24-hour guard for no-show status
     if (targetStatus === "no_show") {
-      const isAllowed = canMarkNoShow(new Date(), booking.check_in_date, 14);
+      const isAllowed = canMarkNoShow(new Date(), booking.check_in_date);
       if (!isAllowed) {
         return fail(
           res,
@@ -76,65 +75,24 @@ export default withApi(
       .update({
         status: targetStatus,
         special_requests: updatedNotes,
-        updated_at: new Date().toISOString(),
+        hold_expires_at: null,
       })
       .eq("id", booking.id)
+      .eq("status", currentStatus)
       .select()
       .single();
 
-    if (updateError || !updatedBooking) {
+    if (updateError) {
       logger.error("Failed to update booking status", { error: updateError });
       return fail(res, "UPDATE_FAILED", "Failed to update booking status", 500);
+    }
+    if (!updatedBooking) {
+      return fail(res, "CONFLICT", "The booking was modified concurrently. Please reload.", 409);
     }
 
     // 5. If transitioning to Confirmed: dispatch confirmation email with PDF
     if (targetStatus === "confirmed" && currentStatus === "pending") {
-      try {
-        const { data: lineItems } = await supabase
-          .from("booking_line_items")
-          .select("*")
-          .eq("booking_id", booking.id);
-
-        const pdfBuffer = await generateBookingPdfBuffer({
-          reference: booking.reference,
-          status: "CONFIRMED",
-          guestName: booking.guest_name,
-          guestEmail: booking.guest_email,
-          guestPhone: booking.guest_phone,
-          checkInDate: booking.check_in_date,
-          checkOutDate: booking.check_out_date,
-          nights: booking.nights,
-          rooms: (lineItems || []).map((bli) => ({
-            name: "Room Suite",
-            quantity: bli.quantity,
-            unitPrice: bli.unit_price,
-            lineTotal: bli.line_total,
-          })),
-          subtotal: booking.subtotal,
-          dealDiscount: booking.deal_discount,
-          tax: booking.tax,
-          total: booking.total,
-          createdAt: booking.created_at,
-        });
-
-        await sendEmail({
-          to: booking.guest_email,
-          templateId: "booking_confirmation",
-          templateData: {
-            reference: booking.reference,
-            name: booking.guest_name,
-          },
-          attachments: [
-            {
-              content: pdfBuffer.toString("base64"),
-              filename: `GraceArenaResorts-${booking.reference}.pdf`,
-              type: "application/pdf",
-            },
-          ],
-        });
-      } catch (err) {
-        logger.error("Failed to generate or send confirmation email", { err });
-      }
+      await sendBookingConfirmationEmail(supabase, updatedBooking);
     }
 
     // 6. Record admin audit log

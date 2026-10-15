@@ -4,10 +4,12 @@ import NextLink from "next/link";
 import { Box, Button, Flex, Input, Stack, Text } from "@chakra-ui/react";
 import AuthLayout from "@/features/auth/components/AuthLayout";
 import { ROUTES } from "@/constants/ROUTES";
+import { safeRedirectPath } from "@/lib/http/redirect";
+import { getRecaptchaToken } from "@/lib/recaptcha/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const redirectUrl = (router.query.redirect as string) || "/account";
+  const redirectUrl = safeRedirectPath(router.query.redirect);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,15 +23,21 @@ export default function LoginPage() {
     setErrorMsg(null);
 
     try {
+      // reCAPTCHA is enforced server-side after 3 failed attempts
+      const recaptchaToken = await getRecaptchaToken("login");
       const res = await fetch("/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, rememberMe }),
+        body: JSON.stringify({ email, password, rememberMe, recaptchaToken }),
       });
 
       const data = await res.json();
 
       if (!res.ok || !data.success) {
+        if (data.error?.code === "EMAIL_NOT_VERIFIED") {
+          router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+          return;
+        }
         setErrorMsg(data.error?.message || "Invalid credentials. Please verify your details.");
         setIsLoading(false);
         return;
@@ -90,7 +98,11 @@ export default function LoginPage() {
               border="1px solid"
               borderColor="gray.300"
               _placeholder={{ color: "gray.500", opacity: 1 }}
-              _focus={{ borderColor: "yellow.600", outline: "none", boxShadow: "0 0 0 1px #D97706" }}
+              _focus={{
+                borderColor: "yellow.600",
+                outline: "none",
+                boxShadow: "0 0 0 1px #D97706",
+              }}
             />
           </Box>
 
@@ -120,7 +132,11 @@ export default function LoginPage() {
               border="1px solid"
               borderColor="gray.300"
               _placeholder={{ color: "gray.500", opacity: 1 }}
-              _focus={{ borderColor: "yellow.600", outline: "none", boxShadow: "0 0 0 1px #D97706" }}
+              _focus={{
+                borderColor: "yellow.600",
+                outline: "none",
+                boxShadow: "0 0 0 1px #D97706",
+              }}
             />
           </Box>
 

@@ -1,9 +1,7 @@
 import { withApi } from "@/pages/api/v1/_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
-import { sendEmail } from "@/services/email/sendgrid";
-import { generateBookingPdfBuffer } from "@/services/pdf/booking-pdf";
-import { logger } from "@/lib/logger";
+import { sendBookingConfirmationEmail } from "@/services/booking/notifications";
 
 export default withApi(
   async (req, res, ctx) => {
@@ -29,63 +27,34 @@ export default withApi(
       return fail(res, "NOT_FOUND", "Booking not found", 404);
     }
 
-    try {
-      const { data: lineItems } = await supabase
-        .from("booking_line_items")
-        .select("*")
-        .eq("booking_id", booking.id);
+    if (!["confirmed", "checked_in", "checked_out"].includes(booking.status)) {
+      return fail(
+        res,
+        "NOT_CONFIRMED",
+        "A confirmation can only be sent for confirmed bookings",
+        400
+      );
+    }
 
-      const pdfBuffer = await generateBookingPdfBuffer({
-        reference: booking.reference,
-        status: booking.status.toUpperCase(),
-        guestName: booking.guest_name,
-        guestEmail: booking.guest_email,
-        guestPhone: booking.guest_phone,
-        checkInDate: booking.check_in_date,
-        checkOutDate: booking.check_out_date,
-        nights: booking.nights,
-        rooms: (lineItems || []).map((bli) => ({
-          name: "Room Suite",
-          quantity: bli.quantity,
-          unitPrice: bli.unit_price,
-          lineTotal: bli.line_total,
-        })),
-        subtotal: booking.subtotal,
-        dealDiscount: booking.deal_discount,
-        tax: booking.tax,
-        total: booking.total,
-        createdAt: booking.created_at,
-      });
-
-      await sendEmail({
-        to: booking.guest_email,
-        templateId: "booking_confirmation",
-        templateData: {
-          reference: booking.reference,
-          name: booking.guest_name,
-        },
-        attachments: [
-          {
-            content: pdfBuffer.toString("base64"),
-            filename: `GraceArenaResorts-${booking.reference}.pdf`,
-            type: "application/pdf",
-          },
-        ],
-      });
-
-      return ok(res, { message: `Confirmation email dispatched to ${booking.guest_email}` });
-    } catch (err) {
-      logger.error("Failed to resend confirmation email", { err });
+    const sent = await sendBookingConfirmationEmail(supabase, booking);
+    if (!sent) {
       return fail(
         res,
         "EMAIL_DISPATCH_FAILED",
         "Unable to send confirmation email at this time",
-        500
+        502
       );
     }
+
+    return ok(res, { message: `Confirmation email dispatched to ${booking.guest_email}` });
   },
   {
     allowedMethods: ["POST"],
     requireAuth: true,
+    rateLimit: {
+      keyPrefix: "booking-confirmation-resend",
+      maxRequests: 3,
+      windowSeconds: 3600,
+    },
   }
 );

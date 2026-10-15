@@ -6,12 +6,16 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type UserRole = "guest" | "content_manager" | "resort_admin" | "super_admin";
-export type RoomTier = "budget" | "standard" | "deluxe" | "executive" | "presidential" | "royal";
+export type RoomTier =
+  "budget" | "standard" | "deluxe" | "premium" | "executive" | "presidential" | "royal";
 export type RoomTypeStatus = "available" | "under_construction";
 export type RoomUnitStatus = "available" | "occupied" | "maintenance";
 export type BookingStatus =
   "pending" | "confirmed" | "checked_in" | "checked_out" | "cancelled" | "no_show";
-export type PaymentStatus = "pending" | "success" | "failed" | "refunded" | "partially_refunded";
+export type PaymentStatus =
+  "pending" | "success" | "failed" | "refund_pending" | "refunded" | "partially_refunded";
+export type AuthTokenPurpose =
+  "email_verification" | "password_reset" | "newsletter_confirm" | "newsletter_unsubscribe";
 export type DiscountType = "percentage" | "fixed";
 export type DealCategory = "room" | "dining" | "package" | "seasonal";
 export type MenuCategory = "starter" | "main" | "dessert" | "beverage";
@@ -29,7 +33,6 @@ export interface Database {
         Row: {
           id: string;
           email: string;
-          password_hash: string | null;
           full_name: string;
           phone: string | null;
           role: UserRole;
@@ -43,7 +46,6 @@ export interface Database {
         Insert: {
           id: string;
           email: string;
-          password_hash?: string | null;
           full_name: string;
           phone?: string | null;
           role?: UserRole;
@@ -105,6 +107,7 @@ export interface Database {
         Row: {
           id: string;
           building_id: string;
+          slug: string;
           name: string;
           tier: RoomTier;
           description: string;
@@ -120,6 +123,7 @@ export interface Database {
         Insert: {
           id?: string;
           building_id: string;
+          slug: string;
           name: string;
           tier: RoomTier;
           description: string;
@@ -241,6 +245,7 @@ export interface Database {
           total: number;
           status: BookingStatus;
           deal_id: string | null;
+          hold_expires_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -263,6 +268,7 @@ export interface Database {
           total: number;
           status?: BookingStatus;
           deal_id?: string | null;
+          hold_expires_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -476,8 +482,8 @@ export interface Database {
           contact_name: string;
           contact_email: string;
           contact_phone: string;
-          preferred_date: string;
-          estimated_guests: number;
+          preferred_date: string | null;
+          estimated_guests: number | null;
           budget_range: string | null;
           special_requirements: string | null;
           status: InquiryStatus;
@@ -491,8 +497,8 @@ export interface Database {
           contact_name: string;
           contact_email: string;
           contact_phone: string;
-          preferred_date: string;
-          estimated_guests: number;
+          preferred_date?: string | null;
+          estimated_guests?: number | null;
           budget_range?: string | null;
           special_requirements?: string | null;
           status?: InquiryStatus;
@@ -715,6 +721,58 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["failed_emails"]["Insert"]>;
         Relationships: [];
       };
+      auth_tokens: {
+        Row: {
+          id: string;
+          token_hash: string;
+          purpose: AuthTokenPurpose;
+          user_id: string | null;
+          email: string;
+          expires_at: string;
+          used_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          token_hash: string;
+          purpose: AuthTokenPurpose;
+          user_id?: string | null;
+          email: string;
+          expires_at: string;
+          used_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["auth_tokens"]["Insert"]>;
+        Relationships: [];
+      };
+      webhook_events: {
+        Row: {
+          id: string;
+          provider: string;
+          event_key: string;
+          event_type: string;
+          payload: Json;
+          attempts: number;
+          processed_at: string | null;
+          last_error: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          provider: string;
+          event_key: string;
+          event_type: string;
+          payload?: Json;
+          attempts?: number;
+          processed_at?: string | null;
+          last_error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["webhook_events"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -729,6 +787,37 @@ export interface Database {
       generate_booking_reference: {
         Args: Record<string, never>;
         Returns: string;
+      };
+      booking_hold_minutes: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      create_booking_with_lock: {
+        Args: {
+          p_reference: string;
+          p_user_id: string | null;
+          p_status: BookingStatus;
+          p_guest_name: string;
+          p_guest_email: string;
+          p_guest_phone: string;
+          p_check_in: string;
+          p_check_out: string;
+          p_nights: number;
+          p_adults: number;
+          p_children: number;
+          p_special_requests: string | null;
+          p_subtotal: number;
+          p_deal_discount: number;
+          p_tax: number;
+          p_total: number;
+          p_deal_id: string | null;
+          p_line_items: Json;
+        };
+        Returns: Database["public"]["Tables"]["bookings"]["Row"];
+      };
+      expire_stale_pending_bookings: {
+        Args: Record<string, never>;
+        Returns: number;
       };
     };
     CompositeTypes: Record<string, never>;

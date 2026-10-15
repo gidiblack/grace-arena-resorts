@@ -1,75 +1,57 @@
 import { withApi } from "../../_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
+import { env } from "@/config/env";
 import { MOCK_DEALS } from "@/data/mock/resort-data";
+import { isValidCalendarDate, resortToday } from "@/domain/booking/time";
+import { normalizePromoCode } from "@/services/booking/booking-data";
 
 export default withApi(
   async (req, res) => {
-    const { code } = req.query;
+    const { code, checkIn } = req.query;
 
-    if (!code || typeof code !== "string") {
+    if (!code || typeof code !== "string" || code.length > 40) {
       return fail(res, "MISSING_PROMO_CODE", "Promo code is required", 400);
     }
 
-    const normalizedCode = code.toUpperCase().trim();
-    const supabase = getSupabaseAdminClient();
-    const today = new Date().toISOString().slice(0, 10);
+    const normalizedCode = normalizePromoCode(code);
+    // Deals are validated against the check-in date when known (same rule as booking creation)
+    const onDate = isValidCalendarDate(checkIn) ? checkIn : resortToday();
 
-    let deal: {
-      id: string;
-      title: string;
-      slug: string;
-      promo_code: string;
-      discount_type: "percentage" | "fixed";
-      discount_value: number;
-      applicable_room_type_ids: string[];
-      terms: string[];
-    } | null = null;
-
-    try {
-      const { data, error } = await supabase
-        .from("deals")
-        .select(
-          "id, title, slug, description, discount_type, discount_value, promo_code, start_date, end_date, is_active, applicable_room_type_ids, terms"
-        )
-        .ilike("promo_code", normalizedCode)
-        .eq("is_active", true)
-        .lte("start_date", today)
-        .gte("end_date", today)
-        .maybeSingle();
-
-      if (!error && data) {
-        deal = {
-          id: data.id,
-          title: data.title,
-          slug: data.slug,
-          promo_code: data.promo_code || normalizedCode,
-          discount_type: data.discount_type as "percentage" | "fixed",
-          discount_value: data.discount_value,
-          applicable_room_type_ids: Array.isArray(data.applicable_room_type_ids)
-            ? (data.applicable_room_type_ids as unknown as string[])
-            : [],
-          terms: data.terms ? [data.terms] : [],
-        };
+    if (env.NEXT_PUBLIC_USE_MOCK_DATA) {
+      const mock = MOCK_DEALS.find((d) => d.promoCode.toUpperCase() === normalizedCode);
+      if (!mock || mock.validFrom > onDate || mock.validTo < onDate) {
+        return fail(
+          res,
+          "INVALID_PROMO_CODE",
+          "The promo code entered is invalid or has expired",
+          404
+        );
       }
-    } catch {
-      // Fallback below
+      return ok(res, {
+        id: mock.id,
+        title: mock.title,
+        code: mock.promoCode,
+        discountType: mock.discountType,
+        discountValue: mock.discountValue,
+        applicableRoomTypeIds: mock.applicableRooms,
+        terms: mock.terms,
+      });
     }
 
-    if (!deal) {
-      const mock = MOCK_DEALS.find((d) => d.promoCode.toUpperCase() === normalizedCode);
-      if (mock && mock.validFrom <= today && mock.validTo >= today) {
-        deal = {
-          id: mock.id,
-          title: mock.title,
-          slug: mock.slug,
-          promo_code: mock.promoCode,
-          discount_type: mock.discountType,
-          discount_value: mock.discountValue,
-          applicable_room_type_ids: mock.applicableRooms,
-          terms: mock.terms,
-        };
-      }
+    const { data: deal, error } = await getSupabaseAdminClient()
+      .from("deals")
+      .select(
+        "id, title, slug, discount_type, discount_value, promo_code, applicable_room_type_ids, terms"
+      )
+      .eq("promo_code", normalizedCode)
+      .eq("is_active", true)
+      .lte("start_date", onDate)
+      .gte("end_date", onDate)
+      .maybeSingle();
+
+    if (error) {
+      return fail(res, "DEALS_UNAVAILABLE", "Unable to validate promo codes right now", 503);
     }
 
     if (!deal) {
@@ -84,15 +66,21 @@ export default withApi(
     return ok(res, {
       id: deal.id,
       title: deal.title,
-      slug: deal.slug,
-      promoCode: deal.promo_code,
+      code: deal.promo_code,
       discountType: deal.discount_type,
       discountValue: deal.discount_value,
-      applicableRoomTypeIds: deal.applicable_room_type_ids,
-      terms: deal.terms,
+      applicableRoomTypeIds: Array.isArray(deal.applicable_room_type_ids)
+        ? (deal.applicable_room_type_ids as string[])
+        : [],
+      terms: deal.terms ? [deal.terms] : [],
     });
   },
   {
     allowedMethods: ["GET"],
+    rateLimit: {
+      keyPrefix: "deal-validate",
+      maxRequests: 20,
+      windowSeconds: 300,
+    },
   }
 );

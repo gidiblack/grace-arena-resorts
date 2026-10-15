@@ -1,168 +1,92 @@
 import { withApi } from "../_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
+import { env } from "@/config/env";
 import { MOCK_ROOMS } from "@/data/mock/resort-data";
+import {
+  addCalendarDays,
+  isValidCalendarDate,
+  nightsBetween,
+  resortToday,
+} from "@/domain/booking/time";
+import { getStayAvailability, type StayAvailabilityRoom } from "@/services/booking/availability";
+import { getTaxRate } from "@/services/booking/booking-data";
+import { logger } from "@/lib/logger";
+
+function mockAvailability(nights: number, resort?: string): StayAvailabilityRoom[] {
+  return MOCK_ROOMS.filter((r) => !resort || r.campus === resort).map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    name: r.name,
+    tier: r.tier.toLowerCase(),
+    campus: r.campus,
+    campusTitle: r.campusTitle,
+    buildingName: r.buildingName,
+    maxGuests: r.maxGuests ?? 2,
+    totalUnits: 5,
+    availableUnits: r.isUnderConstruction ? 0 : 5,
+    isAvailable: !r.isUnderConstruction,
+    status: r.isUnderConstruction ? "under_construction" : "available",
+    basePrice: r.basePriceNgn ?? 0,
+    stayPrice: (r.basePriceNgn ?? 0) * nights,
+    averageNightlyRate: r.basePriceNgn ?? 0,
+    images: r.images,
+  }));
+}
 
 export default withApi(
   async (req, res) => {
     const { checkIn, nights: nightsParam, checkOut: checkOutParam, resort } = req.query;
 
-    if (!checkIn) {
-      return fail(res, "MISSING_PARAM", "checkIn date (YYYY-MM-DD) is required", 400);
+    if (!isValidCalendarDate(checkIn)) {
+      return fail(res, "INVALID_DATE", "checkIn date (YYYY-MM-DD) is required", 400);
     }
-
-    const checkInDate = new Date(checkIn as string);
-    if (isNaN(checkInDate.getTime())) {
-      return fail(res, "INVALID_DATE", "Invalid checkIn date format", 400);
+    if (checkIn < resortToday()) {
+      return fail(res, "PAST_DATE", "Check-in date cannot be in the past", 400);
     }
 
     let nights = 1;
-    if (nightsParam) {
-      nights = Math.max(1, parseInt(nightsParam as string, 10) || 1);
-    } else if (checkOutParam) {
-      const checkOutDate = new Date(checkOutParam as string);
-      const diff = checkOutDate.getTime() - checkInDate.getTime();
-      nights = Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)));
+    if (typeof nightsParam === "string") {
+      nights = parseInt(nightsParam, 10);
+    } else if (isValidCalendarDate(checkOutParam)) {
+      nights = nightsBetween(checkIn, checkOutParam);
+    }
+    if (!Number.isInteger(nights) || nights < 1 || nights > 30) {
+      return fail(res, "INVALID_NIGHTS", "Stay length must be between 1 and 30 nights", 400);
     }
 
-    const checkOutDate = new Date(checkInDate.getTime() + nights * 24 * 60 * 60 * 1000);
-    const checkInStr = checkInDate.toISOString().slice(0, 10);
-    const checkOutStr = checkOutDate.toISOString().slice(0, 10);
+    const resortSlug =
+      typeof resort === "string" && ["elysian", "village"].includes(resort) ? resort : undefined;
+    const checkOutStr = addCalendarDays(checkIn, nights);
 
-    const supabase = getSupabaseAdminClient();
-
-    // 1. Fetch room types, optionally filtered by resort campus
-    let roomTypes: Array<{
-      id: string;
-      name: string;
-      tier: string;
-      base_price: number | null;
-      max_guests: number | null;
-      total_units: number;
-      status: string;
-      amenities: unknown;
-      images: string[];
-      buildings?: unknown;
-    }> = [];
-
-    try {
-      let roomTypesQuery = supabase
-        .from("room_types")
-        .select(
-          "id, name, tier, base_price, max_guests, total_units, status, amenities, images, buildings(id, name, resorts(id, name, slug))"
-        );
-
-      if (resort && typeof resort === "string") {
-        roomTypesQuery = roomTypesQuery.eq("buildings.resorts.slug", resort);
-      }
-
-      const { data, error: rtError } = await roomTypesQuery;
-      if (!rtError && data && data.length > 0) {
-        roomTypes = data as unknown as typeof roomTypes;
-      }
-    } catch {
-      // Fallback below
-    }
-
-    if (roomTypes.length === 0) {
-      let filtered = [...MOCK_ROOMS];
-      if (resort && typeof resort === "string") {
-        filtered = filtered.filter((r) => r.campus.toLowerCase() === resort.toLowerCase());
-      }
-      roomTypes = filtered.map((r) => ({
-        id: r.id,
-        name: r.name,
-        tier: r.tier,
-        base_price: r.basePriceNgn,
-        max_guests: r.maxGuests,
-        total_units: 5,
-        status: r.isUnderConstruction ? "under_construction" : "available",
-        amenities: r.amenities,
-        images: r.images,
-        buildings: {
-          id: r.buildingId,
-          name: r.buildingName,
-          resorts: {
-            id: r.campus,
-            name: r.campusTitle,
-            slug: r.campus,
-          },
-        },
-      }));
-    }
-
-    // 2. Fetch active overlapping bookings
-    const { data: overlappingBookings } = await supabase
-      .from("bookings")
-      .select("id, status, created_at")
-      .lt("check_in_date", checkOutStr)
-      .gt("check_out_date", checkInStr)
-      .in("status", ["confirmed", "checked_in", "pending"]);
-
-    // Calculate booked units per room type
-    const bookedMap: Record<string, number> = {};
-    const now = Date.now();
-    const expiryWindowMs = 30 * 60 * 1000;
-
-    const validBookingIds = (overlappingBookings || [])
-      .filter((b) => {
-        if (b.status === "pending") {
-          const createdAt = new Date(b.created_at).getTime();
-          return now - createdAt <= expiryWindowMs;
-        }
-        return true;
-      })
-      .map((b) => b.id);
-
-    if (validBookingIds.length > 0) {
-      const { data: items } = await supabase
-        .from("booking_line_items")
-        .select("room_type_id, quantity")
-        .in("booking_id", validBookingIds);
-
-      (items || []).forEach((item) => {
-        bookedMap[item.room_type_id] = (bookedMap[item.room_type_id] || 0) + item.quantity;
+    if (env.NEXT_PUBLIC_USE_MOCK_DATA) {
+      return ok(res, {
+        checkIn,
+        checkOut: checkOutStr,
+        nights,
+        taxRate: 0.075,
+        rooms: mockAvailability(nights, resortSlug),
       });
     }
 
-    // 3. Fetch maintenance units per room type
-    const { data: maintenanceRooms } = await supabase
-      .from("rooms")
-      .select("room_type_id")
-      .eq("status", "maintenance");
-
-    const maintenanceMap: Record<string, number> = {};
-    (maintenanceRooms || []).forEach((r) => {
-      maintenanceMap[r.room_type_id] = (maintenanceMap[r.room_type_id] || 0) + 1;
-    });
-
-    // 4. Calculate available count for each room type
-    const results = roomTypes.map((rt) => {
-      if (rt.status === "under_construction") {
-        return {
-          ...rt,
-          availableUnits: 0,
-          isAvailable: false,
-        };
-      }
-
-      const bookedCount = bookedMap[rt.id] || 0;
-      const maintenanceCount = maintenanceMap[rt.id] || 0;
-      const availableUnits = Math.max(0, rt.total_units - bookedCount - maintenanceCount);
-
-      return {
-        ...rt,
-        availableUnits,
-        isAvailable: availableUnits > 0,
-      };
-    });
-
-    return ok(res, {
-      checkIn: checkInStr,
-      checkOut: checkOutStr,
-      nights,
-      rooms: results,
-    });
+    const supabase = getSupabaseAdminClient();
+    try {
+      const [rooms, taxRate] = await Promise.all([
+        getStayAvailability(supabase, { checkIn, checkOut: checkOutStr, resort: resortSlug }),
+        getTaxRate(supabase),
+      ]);
+      return ok(res, { checkIn, checkOut: checkOutStr, nights, taxRate, rooms });
+    } catch (error) {
+      logger.error("Availability lookup failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return fail(
+        res,
+        "AVAILABILITY_UNAVAILABLE",
+        "Live availability is temporarily unavailable. Please try again or contact us on WhatsApp.",
+        503
+      );
+    }
   },
   {
     allowedMethods: ["GET"],

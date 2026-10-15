@@ -32,6 +32,13 @@ const envSchema = z.object({
   VERCEL_KV_REST_API_URL: z.string().url().optional(),
   VERCEL_KV_REST_API_TOKEN: z.string().min(1).optional(),
   NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
+
+  // Serve bundled mock data from booking APIs instead of Supabase (local UI preview/tests only)
+  NEXT_PUBLIC_USE_MOCK_DATA: z
+    .enum(["true", "false"])
+    .optional()
+    .default("false")
+    .transform((v) => v === "true"),
 });
 
 const parsed = envSchema.safeParse(process.env);

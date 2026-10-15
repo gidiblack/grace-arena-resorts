@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getAuthUser } from "@/pages/api/v1/_shared/auth";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { generateBookingPdfBuffer } from "@/services/pdf/booking-pdf";
+import { buildBookingPdfInput } from "@/services/booking/booking-data";
 import { fail } from "@/lib/http/response";
 import { logger } from "@/lib/logger";
 
@@ -17,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // 1. Authenticate user
-  const user = await getAuthUser(req);
+  const user = await getAuthUser(req, res);
   if (!user) {
     return fail(res, "UNAUTHORIZED", "Authentication required to download booking PDF", 401);
   }
@@ -38,43 +39,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return fail(res, "NOT_FOUND", "Booking reservation not found or access denied", 404);
   }
 
-  // 3. Fetch line items and payments
-  const { data: lineItems } = await supabase
-    .from("booking_line_items")
-    .select("*")
-    .eq("booking_id", booking.id);
-
-  const { data: payments } = await supabase
-    .from("payments")
-    .select("*")
-    .eq("booking_id", booking.id);
-
-  // 4. Generate PDF buffer
+  // 3. Generate PDF buffer (real room names, settled payment method)
   try {
-    const payment = payments?.find((p) => p.status === "success");
-
-    const pdfBuffer = await generateBookingPdfBuffer({
-      reference: booking.reference,
-      status: booking.status.toUpperCase(),
-      guestName: booking.guest_name,
-      guestEmail: booking.guest_email,
-      guestPhone: booking.guest_phone,
-      checkInDate: booking.check_in_date,
-      checkOutDate: booking.check_out_date,
-      nights: booking.nights,
-      rooms: (lineItems || []).map((bli) => ({
-        name: "Suite",
-        quantity: bli.quantity,
-        unitPrice: bli.unit_price,
-        lineTotal: bli.line_total,
-      })),
-      subtotal: booking.subtotal,
-      dealDiscount: booking.deal_discount,
-      tax: booking.tax,
-      total: booking.total,
-      createdAt: booking.created_at,
-      paymentGateway: payment?.gateway ? String(payment.gateway).toUpperCase() : undefined,
-    });
+    const pdfBuffer = await generateBookingPdfBuffer(await buildBookingPdfInput(supabase, booking));
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(

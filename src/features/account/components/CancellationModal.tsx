@@ -64,7 +64,7 @@ export default function CancellationModal({
     setError(null);
     try {
       const res = await fetch(`/api/v1/bookings/${bookingReference}/cancel`, {
-        method: "POST",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason: reason || "Guest requested cancellation" }),
       });
@@ -227,7 +227,11 @@ export default function CancellationModal({
                 borderRadius="8px"
                 rows={2}
                 _placeholder={{ color: "gray.400", opacity: 1 }}
-                _focus={{ borderColor: "brand.gold", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
+                _focus={{
+                  borderColor: "brand.gold",
+                  outline: "none",
+                  boxShadow: "0 0 0 1px #D4AF37",
+                }}
               />
             </Box>
           </Stack>

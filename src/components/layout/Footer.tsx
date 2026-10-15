@@ -25,6 +25,7 @@ import {
 import { ROUTES } from "@/constants/ROUTES";
 import { FaLocationDot } from "react-icons/fa6";
 import Button from "../ui/button";
+import { getRecaptchaToken } from "@/lib/recaptcha/client";
 
 export const Footer = () => {
   const [newsletterEmail, setNewsletterEmail] = useState("");
@@ -40,10 +41,11 @@ export const Footer = () => {
     setNewsletterError(null);
 
     try {
+      const recaptchaToken = await getRecaptchaToken("newsletter");
       const res = await fetch("/api/v1/newsletter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: newsletterEmail }),
+        body: JSON.stringify({ email: newsletterEmail, recaptchaToken }),
       });
 
       const data = await res.json();
@@ -134,7 +136,11 @@ export const Footer = () => {
                   fontSize="14px"
                   minW={{ sm: "280px" }}
                   _placeholder={{ color: "gray.400", opacity: 1 }}
-                  _focus={{ borderColor: "brand.gold", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
+                  _focus={{
+                    borderColor: "brand.gold",
+                    outline: "none",
+                    boxShadow: "0 0 0 1px #D4AF37",
+                  }}
                 />
                 <Button
                   type="submit"

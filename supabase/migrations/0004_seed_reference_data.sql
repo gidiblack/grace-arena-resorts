@@ -4,167 +4,74 @@
 -- 1. Resorts
 INSERT INTO public.resorts (id, name, slug, description, features)
 VALUES
-  ('11111111-1111-1111-1111-111111111111', 'GAR Elysian', 'gar-elysian', 'Our flagship luxury resort campus offering modern elegance, world-class amenities, and serene comfort.', '["Fine Dining", "Modern Mall", "Recreation Park", "Swimming Pool", "High-speed WiFi"]'::jsonb),
-  ('22222222-2222-2222-2222-222222222222', 'GAR Village', 'gar-village', 'An authentic African thatched sanctuary where cultural architecture harmonizes with peaceful prayer and relaxation.', '["Village Cuisine", "Thatched Huts", "Prayer Hut", "Love Garden", "Fire Pit"]'::jsonb)
+  ('11111111-1111-1111-1111-111111111111', 'GAR Elysian', 'elysian', 'Our flagship luxury resort campus offering modern elegance, world-class amenities, and serene comfort.', '["Fine Dining", "Modern Mall", "Recreation Park", "Swimming Pool", "High-speed WiFi"]'::jsonb),
+  ('22222222-2222-2222-2222-222222222222', 'GAR Village', 'village', 'An authentic African thatched sanctuary where cultural architecture harmonizes with peaceful prayer and relaxation.', '["Village Cuisine", "Thatched Huts", "Prayer Hut", "Love Garden", "Fire Pit"]'::jsonb)
 ON CONFLICT (id) DO NOTHING;
 
--- 2. Buildings
+-- 2. Buildings (generated from src/data/mock/resort-data.ts MOCK_BUILDINGS)
 INSERT INTO public.buildings (id, resort_id, name, description)
 VALUES
-  ('33333333-3333-3333-3333-333333333331', '11111111-1111-1111-1111-111111111111', 'The Fountain Haven', 'Modern luxury suites overlooking the serenity central fountain.'),
-  ('33333333-3333-3333-3333-333333333332', '11111111-1111-1111-1111-111111111111', 'Elysian Suites Tower', 'High-ceiling suites featuring contemporary architecture and panoramic resort views.'),
-  ('33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', 'Village Thatched Enclave', 'Authentic eco-friendly thatched huts nested around lush gardens.'),
-  ('33333333-3333-3333-3333-333333333334', '22222222-2222-2222-2222-222222222222', 'Presidential Court', 'Grand signature thatched estates currently under bespoke architectural completion.')
+  ('33333333-3333-3333-3333-333333333301', '11111111-1111-1111-1111-111111111111', 'The Fountain Haven', 'Centrally positioned suites surrounding the tranquil courtyard fountain and private gardens.'),
+  ('33333333-3333-3333-3333-333333333302', '11111111-1111-1111-1111-111111111111', 'The Oasis Villa', 'Self-contained luxury apartment suites with private kitchenettes, balconies, and quiet living spaces.'),
+  ('33333333-3333-3333-3333-333333333303', '11111111-1111-1111-1111-111111111111', 'The Cabana', 'Elevated suites boasting panoramic resort views, sun terraces, and VIP concierge privileges.'),
+  ('33333333-3333-3333-3333-333333333304', '22222222-2222-2222-2222-222222222222', 'Executive Huts', 'Handcrafted authentic thatched huts combining Yoruba heritage architecture with air-conditioned modern comfort.'),
+  ('33333333-3333-3333-3333-333333333305', '22222222-2222-2222-2222-222222222222', 'Presidential Huts', 'Exclusive thatched pavilions with private plunge pools, currently undergoing architectural finishing.'),
+  ('33333333-3333-3333-3333-333333333306', '22222222-2222-2222-2222-222222222222', 'Royal Huts', 'Imperial thatched heritage lodges designed for dignitaries, state guests, and royal retreats.')
 ON CONFLICT (id) DO NOTHING;
 
--- 3. Room Types
-INSERT INTO public.room_types (id, building_id, name, tier, description, base_price, max_guests, total_units, status, amenities, images)
+-- 3. Room Types (generated from MOCK_ROOMS; slug is the shared key with the public catalog)
+INSERT INTO public.room_types (id, building_id, slug, name, tier, description, base_price, max_guests, total_units, status, amenities, images)
 VALUES
-  -- Village Rooms
-  (
-    '44444444-4444-4444-4444-444444444401',
-    '33333333-3333-3333-3333-333333333333',
-    'Standard Thatched Hut',
-    'standard',
-    'Comfortable rustic thatched hut designed for couples and solo retreat guests seeking authentic tranquility.',
-    45000,
-    2,
-    10,
-    'available',
-    '[
-      {"name": "King Bed", "category": "in-room", "isConditional": false},
-      {"name": "En-Suite Walk-in Shower", "category": "in-room", "isConditional": false},
-      {"name": "Air Conditioning", "category": "in-room", "isConditional": false},
-      {"name": "Prayer & Meditation Hut Access", "category": "resort-level", "isConditional": true},
-      {"name": "Complimentary Breakfast", "category": "resort-level", "isConditional": false}
-    ]'::jsonb,
-    '["/images/rooms/village-standard.jpg"]'::jsonb
-  ),
-  (
-    '44444444-4444-4444-4444-444444444402',
-    '33333333-3333-3333-3333-333333333333',
-    'Executive Thatched Hut',
-    'executive',
-    'Spacious thatched accommodation with dedicated lounge, garden terrace, and premium finishes.',
-    75000,
-    3,
-    8,
-    'available',
-    '[
-      {"name": "King Bed + Daybed", "category": "in-room", "isConditional": false},
-      {"name": "Private Garden Terrace", "category": "in-room", "isConditional": false},
-      {"name": "Smart TV & Satellite Channels", "category": "in-room", "isConditional": false},
-      {"name": "Prayer & Meditation Hut Access", "category": "resort-level", "isConditional": true},
-      {"name": "Resort Wide High-Speed WiFi", "category": "resort-level", "isConditional": false}
-    ]'::jsonb,
-    '["/images/rooms/village-executive.jpg"]'::jsonb
-  ),
-  (
-    '44444444-4444-4444-4444-444444444403',
-    '33333333-3333-3333-3333-333333333334',
-    'Presidential Thatched Hut',
-    'presidential',
-    'Majestic multi-room traditional palatial hut featuring private courtyard, plunge pool, and dedicated butler service.',
-    0,
-    4,
-    2,
-    'under_construction',
-    '[
-      {"name": "Master Suite + Guest Suite", "category": "in-room", "isConditional": false},
-      {"name": "Private Heated Plunge Pool", "category": "in-room", "isConditional": false},
-      {"name": "Executive Lounge & Dining Room", "category": "in-room", "isConditional": false},
-      {"name": "Dedicated Butler Service", "category": "resort-level", "isConditional": true}
-    ]'::jsonb,
-    '["/images/rooms/village-presidential.jpg"]'::jsonb
-  ),
-  (
-    '44444444-4444-4444-4444-444444444404',
-    '33333333-3333-3333-3333-333333333334',
-    'Royal Thatched Hut',
-    'royal',
-    'The pinnacle of African royal hospitality with sprawling indoor-outdoor spaces, state room, and private chapel garden.',
-    0,
-    6,
-    1,
-    'under_construction',
-    '[
-      {"name": "Three En-Suite Bedrooms", "category": "in-room", "isConditional": false},
-      {"name": "Private Chapel Garden", "category": "in-room", "isConditional": false},
-      {"name": "Bespoke Chef & Concierge Service", "category": "resort-level", "isConditional": true}
-    ]'::jsonb,
-    '["/images/rooms/village-royal.jpg"]'::jsonb
-  ),
-  -- Elysian Rooms
-  (
-    '44444444-4444-4444-4444-444444444405',
-    '33333333-3333-3333-3333-333333333331',
-    'Standard Suite',
-    'standard',
-    'Modern stylish suite equipped with ergonomic workstation, luxury bath, and serene courtyard views.',
-    60000,
-    2,
-    12,
-    'available',
-    '[
-      {"name": "Queen Bed", "category": "in-room", "isConditional": false},
-      {"name": "Workstation & High-Speed WiFi", "category": "in-room", "isConditional": false},
-      {"name": "Rain Shower", "category": "in-room", "isConditional": false},
-      {"name": "Gym & Pool Access", "category": "resort-level", "isConditional": false}
-    ]'::jsonb,
-    '["/images/rooms/elysian-standard.jpg"]'::jsonb
-  ),
-  (
-    '44444444-4444-4444-4444-444444444406',
-    '33333333-3333-3333-3333-333333333331',
-    'Deluxe Suite',
-    'deluxe',
-    'Expansive suite with private balcony, deep soaking tub, mini bar, and espresso machine.',
-    90000,
-    2,
-    10,
-    'available',
-    '[
-      {"name": "King Bed", "category": "in-room", "isConditional": false},
-      {"name": "Private Fountain-View Balcony", "category": "in-room", "isConditional": false},
-      {"name": "Soaking Bathtub & Robes", "category": "in-room", "isConditional": false},
-      {"name": "Modern Mall & Spa Privileges", "category": "resort-level", "isConditional": true}
-    ]'::jsonb,
-    '["/images/rooms/elysian-deluxe.jpg"]'::jsonb
-  ),
-  (
-    '44444444-4444-4444-4444-444444444407',
-    '33333333-3333-3333-3333-333333333332',
-    'Executive Suite',
-    'executive',
-    'Corner penthouse suite boasting wraparound windows, separate conference lounge, and personalized concierge.',
-    130000,
-    4,
-    6,
-    'available',
-    '[
-      {"name": "Master King Suite + Living Room", "category": "in-room", "isConditional": false},
-      {"name": "Dining Area for 6", "category": "in-room", "isConditional": false},
-      {"name": "Whirlpool Jacuzzi", "category": "in-room", "isConditional": false},
-      {"name": "Priority Table at Elysian Restaurant", "category": "resort-level", "isConditional": true}
-    ]'::jsonb,
-    '["/images/rooms/elysian-executive.jpg"]'::jsonb
-  )
+  ('44444444-4444-4444-4444-444444444401', '33333333-3333-3333-3333-333333333301', 'elysian-fountain-standard', 'Standard Room', 'standard', 'Cozy refined room with comfortable king bed, vanity setup, and garden views.', 60000, 2, 6, 'available', '{"inRoom":["King-size bed 6×6","Air conditioner & Standing Fan","Mini refrigerator","Vanity table & mirror","Complimentary breakfast for one","Bath amenities vanity kit","Water heater","Tea & coffee making facilities","Cable TV (DStv) / Netflix","Intercom phone","Welcome bottle of water"],"resort":["Dedicated Prayer Hut","Swimming Pool & Sundeck","Fitness Center access","24/7 Security"]}'::jsonb, '["/assets/suite2.jpg","/assets/suite.jpg"]'::jsonb),
+  ('44444444-4444-4444-4444-444444444402', '33333333-3333-3333-3333-333333333301', 'elysian-fountain-deluxe', 'Deluxe Room', 'deluxe', 'Spacious deluxe comfort featuring relaxation chairs, upgraded vanity, and lush garden vistas.', 70000, 2, 6, 'available', '{"inRoom":["King-size bed & Bed lamps","Air conditioning & standing fan","Relaxation chairs & coffee table","Mini refrigerator","Deluxe vanity kit (soap, bath gel, body cream, shampoo)","Water heater","Complimentary breakfast for one","Tea & coffee facilities","Cable TV (DStv)","Intercom phone","Welcome pack (water, drink & biscuits)"],"resort":["The Prayer Hut","Gym & Pool access","Full resort grounds access","Daily room service"]}'::jsonb, '["/assets/suite.jpg","/assets/suite2.jpg"]'::jsonb),
+  ('44444444-4444-4444-4444-444444444403', '33333333-3333-3333-3333-333333333302', 'elysian-oasis-deluxe-suite', 'Deluxe Suite with Kitchenette', 'deluxe', 'Downstairs private apartment featuring dedicated kitchenette, microwave, and living area.', 80000, 2, 4, 'available', '{"inRoom":["Exclusive suite with bedroom & kitchenette","Kitchenette (sink, cupboard, small cooktop)","Microwave & mini refrigerator","King-size bed","Air conditioner & standing fan","Vanity table / full-length mirror","Complimentary breakfast for one","Satellite TV","Intercom phone","Welcome drink"],"resort":["Prayer Hut reservation","Pool & Fitness Center","Laundry & Ironing services"]}'::jsonb, '["/assets/suite2.jpg","/assets/suite.jpg"]'::jsonb),
+  ('44444444-4444-4444-4444-444444444404', '33333333-3333-3333-3333-333333333302', 'elysian-oasis-premium-suite', 'Premium Suite Apartment', 'premium', 'Elevated apartment with independent living room, private kitchenette, and scenic balcony view.', 90000, 2, 4, 'available', '{"inRoom":["Separate living room & bedroom","Kitchenette with cooktop & microwave","King-size plush bedding","Air conditioner in both rooms","Smart TV with streaming","Complimentary breakfast for one","Premium bath products"],"resort":["The Prayer Hut","Modern Mall access","Recreation Park tennis","Swimming pool"]}'::jsonb, '["/assets/suite.jpg","/assets/pool.jpg"]'::jsonb),
+  ('44444444-4444-4444-4444-444444444405', '33333333-3333-3333-3333-333333333303', 'elysian-cabana-premium', 'The Cabana Premium Suite', 'premium', 'Our flagship luxury cabana suite offering panoramic resort views and bespoke interior styling.', 120000, 2, 3, 'available', '{"inRoom":["Expansive cabana terrace","Super king bed","High-power AC & mood lighting","Fully stocked minibar (non-alcoholic)","Nespresso coffee machine","Luxury bathrobes and slippers","Smart 55-inch TV"],"resort":["VIP Prayer Hut slots","Pool cabana reservation","Concierge dining support"]}'::jsonb, '["/assets/gar-elysian.jpg","/assets/suite.jpg"]'::jsonb),
+  ('44444444-4444-4444-4444-444444444406', '33333333-3333-3333-3333-333333333303', 'elysian-cabana-executive', 'The Cabana Executive Twin Suite', 'executive', 'Grand twin suite ideal for families or retreat leaders. Accommodates up to 4 guests with luxury amenities.', 180000, 4, 3, 'available', '{"inRoom":["Twin double bedrooms with en-suite baths","Expansive communal lounge","Dining table for four","Full kitchenette & microwave","Air conditioning throughout","Complimentary breakfast for guests"],"resort":["Prayer Hut access","Love Garden access","Spa priority bookings","Pool deck"]}'::jsonb, '["/assets/suite.jpg","/assets/suite2.jpg"]'::jsonb),
+  ('44444444-4444-4444-4444-444444444407', '33333333-3333-3333-3333-333333333304', 'village-executive-hut', 'Executive Thatched Hut', 'executive', 'Handcrafted traditional thatched hut equipped with ultra-modern interior luxuries and serene privacy.', 100000, 2, 10, 'available', '{"inRoom":["Naturally insulated thatched architecture","King bed with artisanal wooden frame","Split AC and ceiling fan","Modern luxury bathroom & rain shower","Mini refrigerator & electric kettle","Complimentary breakfast","Flat-screen satellite TV","Private outdoor veranda"],"resort":["Direct Prayer Hut path","Village Mall cuisine","Recreation Park","Fire pit evening gatherings"]}'::jsonb, '["/assets/hut.jpg","/assets/gar-village.jpg"]'::jsonb),
+  ('44444444-4444-4444-4444-444444444408', '33333333-3333-3333-3333-333333333305', 'village-presidential-hut', 'Presidential Thatched Hut', 'presidential', 'Grand presidential pavilion featuring dual master bedrooms, private dipping pool, and butler pantry.', 0, 2, 4, 'under_construction', '{"inRoom":["Multi-room luxury thatched pavilion","Private plunge pool and sun lounge","Chef preparation pantry","Walk-in dressing rooms and marble tubs"],"resort":["Priority access to all GAR facilities","Dedicated Prayer Hut reservation"]}'::jsonb, '["/assets/gar-village.jpg","/assets/hut.jpg"]'::jsonb),
+  ('44444444-4444-4444-4444-444444444409', '33333333-3333-3333-3333-333333333306', 'village-royal-hut', 'Royal Thatched Hut', 'royal', 'The pinnacle of African royal heritage. Designed for dignitaries, executive retreats, and family royalty.', 0, 2, 2, 'under_construction', '{"inRoom":["Sprawling imperial thatched lodge","Private meeting salon and dining hall","Full security quarter connectivity"],"resort":["All-inclusive resort access","Private Prayer Hut sanctuary"]}'::jsonb, '["/assets/hut.jpg","/assets/gar-village.jpg"]'::jsonb)
 ON CONFLICT (id) DO NOTHING;
 
--- 4. Individual Room Units
+-- 4. Individual Room Units (under-construction room types have no bookable units yet)
 INSERT INTO public.rooms (room_type_id, unit_number, floor, status)
 VALUES
-  ('44444444-4444-4444-4444-444444444401', 'V-ST-101', 'Ground', 'available'),
-  ('44444444-4444-4444-4444-444444444401', 'V-ST-102', 'Ground', 'available'),
-  ('44444444-4444-4444-4444-444444444401', 'V-ST-103', 'Ground', 'available'),
-  ('44444444-4444-4444-4444-444444444401', 'V-ST-104', 'Ground', 'maintenance'),
-  ('44444444-4444-4444-4444-444444444402', 'V-EX-201', 'Ground', 'available'),
-  ('44444444-4444-4444-4444-444444444402', 'V-EX-202', 'Ground', 'available'),
-  ('44444444-4444-4444-4444-444444444405', 'E-ST-101', '1st Floor', 'available'),
-  ('44444444-4444-4444-4444-444444444405', 'E-ST-102', '1st Floor', 'available'),
-  ('44444444-4444-4444-4444-444444444406', 'E-DL-201', '2nd Floor', 'available'),
-  ('44444444-4444-4444-4444-444444444406', 'E-DL-202', '2nd Floor', 'available'),
-  ('44444444-4444-4444-4444-444444444407', 'E-EX-301', 'Penthouse', 'available')
+  ('44444444-4444-4444-4444-444444444401', 'EFS-01', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444401', 'EFS-02', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444401', 'EFS-03', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444401', 'EFS-04', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444401', 'EFS-05', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444401', 'EFS-06', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444402', 'EFD-01', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444402', 'EFD-02', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444402', 'EFD-03', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444402', 'EFD-04', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444402', 'EFD-05', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444402', 'EFD-06', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444403', 'EODS-01', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444403', 'EODS-02', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444403', 'EODS-03', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444403', 'EODS-04', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444404', 'EOPS-01', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444404', 'EOPS-02', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444404', 'EOPS-03', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444404', 'EOPS-04', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444405', 'ECP-01', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444405', 'ECP-02', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444405', 'ECP-03', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444406', 'ECE-01', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444406', 'ECE-02', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444406', 'ECE-03', '1st Floor', 'available'),
+  ('44444444-4444-4444-4444-444444444407', 'VEH-01', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444407', 'VEH-02', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444407', 'VEH-03', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444407', 'VEH-04', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444407', 'VEH-05', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444407', 'VEH-06', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444407', 'VEH-07', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444407', 'VEH-08', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444407', 'VEH-09', 'Ground', 'available'),
+  ('44444444-4444-4444-4444-444444444407', 'VEH-10', 'Ground', 'available')
 ON CONFLICT (room_type_id, unit_number) DO NOTHING;
 
 -- 5. Resort-level Amenities (Entity)
@@ -185,16 +92,49 @@ INSERT INTO public.room_type_amenities (room_type_id, amenity_id)
 VALUES
   ('44444444-4444-4444-4444-444444444401', '55555555-5555-5555-5555-555555555501'),
   ('44444444-4444-4444-4444-444444444401', '55555555-5555-5555-5555-555555555502'),
+  ('44444444-4444-4444-4444-444444444401', '55555555-5555-5555-5555-555555555503'),
+  ('44444444-4444-4444-4444-444444444401', '55555555-5555-5555-5555-555555555506'),
+  ('44444444-4444-4444-4444-444444444401', '55555555-5555-5555-5555-555555555508'),
   ('44444444-4444-4444-4444-444444444402', '55555555-5555-5555-5555-555555555501'),
   ('44444444-4444-4444-4444-444444444402', '55555555-5555-5555-5555-555555555502'),
+  ('44444444-4444-4444-4444-444444444402', '55555555-5555-5555-5555-555555555503'),
+  ('44444444-4444-4444-4444-444444444402', '55555555-5555-5555-5555-555555555506'),
+  ('44444444-4444-4444-4444-444444444402', '55555555-5555-5555-5555-555555555508'),
+  ('44444444-4444-4444-4444-444444444403', '55555555-5555-5555-5555-555555555501'),
+  ('44444444-4444-4444-4444-444444444403', '55555555-5555-5555-5555-555555555502'),
+  ('44444444-4444-4444-4444-444444444403', '55555555-5555-5555-5555-555555555503'),
+  ('44444444-4444-4444-4444-444444444403', '55555555-5555-5555-5555-555555555506'),
+  ('44444444-4444-4444-4444-444444444403', '55555555-5555-5555-5555-555555555508'),
+  ('44444444-4444-4444-4444-444444444404', '55555555-5555-5555-5555-555555555501'),
+  ('44444444-4444-4444-4444-444444444404', '55555555-5555-5555-5555-555555555502'),
+  ('44444444-4444-4444-4444-444444444404', '55555555-5555-5555-5555-555555555503'),
+  ('44444444-4444-4444-4444-444444444404', '55555555-5555-5555-5555-555555555506'),
+  ('44444444-4444-4444-4444-444444444404', '55555555-5555-5555-5555-555555555508'),
   ('44444444-4444-4444-4444-444444444405', '55555555-5555-5555-5555-555555555501'),
+  ('44444444-4444-4444-4444-444444444405', '55555555-5555-5555-5555-555555555502'),
   ('44444444-4444-4444-4444-444444444405', '55555555-5555-5555-5555-555555555503'),
+  ('44444444-4444-4444-4444-444444444405', '55555555-5555-5555-5555-555555555506'),
+  ('44444444-4444-4444-4444-444444444405', '55555555-5555-5555-5555-555555555508'),
   ('44444444-4444-4444-4444-444444444406', '55555555-5555-5555-5555-555555555501'),
+  ('44444444-4444-4444-4444-444444444406', '55555555-5555-5555-5555-555555555502'),
   ('44444444-4444-4444-4444-444444444406', '55555555-5555-5555-5555-555555555503'),
-  ('44444444-4444-4444-4444-444444444406', '55555555-5555-5555-5555-555555555504'),
+  ('44444444-4444-4444-4444-444444444406', '55555555-5555-5555-5555-555555555506'),
+  ('44444444-4444-4444-4444-444444444406', '55555555-5555-5555-5555-555555555508'),
   ('44444444-4444-4444-4444-444444444407', '55555555-5555-5555-5555-555555555501'),
+  ('44444444-4444-4444-4444-444444444407', '55555555-5555-5555-5555-555555555502'),
   ('44444444-4444-4444-4444-444444444407', '55555555-5555-5555-5555-555555555503'),
-  ('44444444-4444-4444-4444-444444444407', '55555555-5555-5555-5555-555555555507')
+  ('44444444-4444-4444-4444-444444444407', '55555555-5555-5555-5555-555555555506'),
+  ('44444444-4444-4444-4444-444444444407', '55555555-5555-5555-5555-555555555508'),
+  ('44444444-4444-4444-4444-444444444408', '55555555-5555-5555-5555-555555555501'),
+  ('44444444-4444-4444-4444-444444444408', '55555555-5555-5555-5555-555555555502'),
+  ('44444444-4444-4444-4444-444444444408', '55555555-5555-5555-5555-555555555503'),
+  ('44444444-4444-4444-4444-444444444408', '55555555-5555-5555-5555-555555555506'),
+  ('44444444-4444-4444-4444-444444444408', '55555555-5555-5555-5555-555555555508'),
+  ('44444444-4444-4444-4444-444444444409', '55555555-5555-5555-5555-555555555501'),
+  ('44444444-4444-4444-4444-444444444409', '55555555-5555-5555-5555-555555555502'),
+  ('44444444-4444-4444-4444-444444444409', '55555555-5555-5555-5555-555555555503'),
+  ('44444444-4444-4444-4444-444444444409', '55555555-5555-5555-5555-555555555506'),
+  ('44444444-4444-4444-4444-444444444409', '55555555-5555-5555-5555-555555555508')
 ON CONFLICT (room_type_id, amenity_id) DO NOTHING;
 
 -- 7. Restaurants & Menu Items
@@ -243,39 +183,12 @@ VALUES
   ('99999999-9999-9999-9999-999999999904', 'team_bonding', 'Executive retreats, church leadership offsites, and team building activities in quiet seclusion.', '["Recreation Park", "Modern Mall Conference Hall", "Retreat Huts"]'::jsonb, '15 to 80 Participants', '[{"name": "Two-Day Leadership Retreat", "price": "From ₦1,800,000"}]'::jsonb)
 ON CONFLICT (id) DO NOTHING;
 
--- 11. Deals
+-- 11. Deals (generated from MOCK_DEALS; promo codes match the public /deals page)
 INSERT INTO public.deals (id, title, slug, description, discount_type, discount_value, promo_code, start_date, end_date, is_active, category, applicable_room_type_ids, terms)
 VALUES
-  (
-    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
-    'Easter Retreat Special',
-    'easter-retreat-special',
-    'Celebrate the sacred season with 10% off your peaceful stay across all standard and executive rooms.',
-    'percentage',
-    10,
-    'EASTER10',
-    CURRENT_DATE - INTERVAL '10 days',
-    CURRENT_DATE + INTERVAL '60 days',
-    true,
-    'room',
-    '["44444444-4444-4444-4444-444444444401", "44444444-4444-4444-4444-444444444402", "44444444-4444-4444-4444-444444444405", "44444444-4444-4444-4444-444444444406"]'::jsonb,
-    'Valid on stays of 2 nights or more. Cannot be combined with other promotional deals.'
-  ),
-  (
-    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
-    'Welcome Discovery Voucher',
-    'welcome-discovery-voucher',
-    'Enjoy an instant ₦5,000 deduction on your first direct booking.',
-    'fixed',
-    5000,
-    'WELCOME5K',
-    CURRENT_DATE - INTERVAL '5 days',
-    CURRENT_DATE + INTERVAL '90 days',
-    true,
-    'room',
-    '[]'::jsonb,
-    'Applies to entire booking total for verified guests.'
-  )
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa01', 'Serenity Weekend Retreat Package', 'serenity-weekend-retreat', 'Enjoy 2 nights in an Executive Thatched Hut or Elysian Suite, complete with daily complimentary breakfast, dinner at The Grand Palm, and priority Prayer Hut meditation access.', 'percentage', 15, 'SERENITY15', '2026-01-01', '2026-12-31', true, 'room', '["44444444-4444-4444-4444-444444444407","44444444-4444-4444-4444-444444444401","44444444-4444-4444-4444-444444444402"]'::jsonb, 'Requires 2 nights minimum stay Valid for weekend check-ins (Friday - Sunday) Subject to room availability'),
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02', 'Family Heritage Getaway', 'family-heritage-getaway', 'Book two adjoining suites or huts and receive a 20% discount on the second room, plus complimentary kids pool activities and guided heritage trail walk.', 'percentage', 20, 'FAMILY20', '2026-01-01', '2026-12-31', true, 'room', '["44444444-4444-4444-4444-444444444402","44444444-4444-4444-4444-444444444403","44444444-4444-4444-4444-444444444404"]'::jsonb, 'Applies when booking 2 or more rooms Non-refundable deposit of 30% Advance reservation required'),
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa03', 'Midweek Fasting & Prayer Package', 'midweek-fasting-prayer', 'Tailored for pastors, ministers, and seekers desiring intentional quiet time. Includes room service of fruit juices, light breaking-fast broth, and guaranteed tranquility.', 'fixed', 25000, 'PEACE25', '2026-01-01', '2026-12-31', true, 'room', '["44444444-4444-4444-4444-444444444407","44444444-4444-4444-4444-444444444401"]'::jsonb, 'Check-in Tuesday, check-out Thursday Quiet policy strictly observed')
 ON CONFLICT (id) DO NOTHING;
 
 -- 12. System Settings
@@ -288,5 +201,6 @@ VALUES
   ('whatsapp_number', '2348012345678'),
   ('contact_email', 'info@gracearenaresorts.com'),
   ('contact_phone', '+234 801 234 5678'),
-  ('map_coordinates', '6.5244,3.3792')
+  ('map_coordinates', '6.5244,3.3792'),
+  ('paystack_downtime', 'false')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;

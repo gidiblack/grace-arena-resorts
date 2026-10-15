@@ -90,7 +90,7 @@ describe("Step 11: Guest Account & Booking Management", () => {
 
       expect(screen.getByText("GAR-CANCEL1")).toBeInTheDocument();
       expect(screen.getByText("Cancelled")).toBeInTheDocument();
-      expect(screen.getByText(/3–5 business days timeline/i)).toBeInTheDocument();
+      expect(screen.getByText(/₦129,000 refunded/i)).toBeInTheDocument();
     });
 
     it("renders checked-out booking with Download Receipt button", () => {

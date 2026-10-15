@@ -1,23 +1,26 @@
-import bcrypt from "bcryptjs";
-import { stringifySetCookie } from "cookie";
 import { withApi } from "@/pages/api/v1/_shared/handler";
-import { loginSchema } from "@/features/auth/schemas";
-import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { loginSchema, type LoginInput } from "@/features/auth/schemas";
+import { getSupabaseAdminClient, createSupabaseAuthClient } from "@/lib/supabase/server";
 import { verifyRecaptcha } from "@/pages/api/v1/_shared/recaptcha";
+import { setSessionCookies } from "@/services/auth/session";
 import { ok, fail } from "@/lib/http/response";
 import { logger } from "@/lib/logger";
 
+const MAX_FAILED_ATTEMPTS = 5;
+const RECAPTCHA_AFTER_ATTEMPTS = 3;
+const LOCKOUT_MS = 15 * 60 * 1000;
+
 export default withApi(
   async (req, res) => {
-    const { email, password, rememberMe, recaptchaToken } = req.body;
+    const { email, password, rememberMe, recaptchaToken } = req.body as LoginInput;
     const normalizedEmail = email.toLowerCase().trim();
     const supabase = getSupabaseAdminClient();
 
-    // 1. Fetch user by email
+    // 1. Lockout state lives in our profile table
     const { data: user, error } = await supabase
       .from("users")
       .select(
-        "id, email, password_hash, full_name, phone, role, is_email_verified, is_locked, failed_login_attempts, locked_until"
+        "id, email, full_name, phone, role, is_email_verified, is_locked, failed_login_attempts, locked_until"
       )
       .eq("email", normalizedEmail)
       .maybeSingle();
@@ -27,35 +30,25 @@ export default withApi(
       return fail(res, "INTERNAL_ERROR", "Login failed. Please try again.", 500);
     }
 
-    if (!user || !user.password_hash) {
+    if (!user) {
       return fail(res, "INVALID_CREDENTIALS", "Invalid email or password", 401);
     }
 
-    // 2. Check account lockout status (5 failed attempts locks for 15 mins)
+    // 2. Account lockout (5 failed attempts locks for 15 minutes)
     const now = new Date();
-    if (user.is_locked && user.locked_until) {
-      const lockedUntil = new Date(user.locked_until);
-      if (now < lockedUntil) {
-        return fail(
-          res,
-          "ACCOUNT_LOCKED",
-          "Your account has been temporarily locked due to too many failed attempts. Please try again in 15 minutes or reset your password.",
-          423,
-          { lockedUntil: user.locked_until }
-        );
-      } else {
-        // Lockout expired, auto-unlock
-        await supabase
-          .from("users")
-          .update({ is_locked: false, failed_login_attempts: 0, locked_until: null })
-          .eq("id", user.id);
-        user.is_locked = false;
-        user.failed_login_attempts = 0;
-      }
+    if (user.is_locked && user.locked_until && now < new Date(user.locked_until)) {
+      return fail(
+        res,
+        "ACCOUNT_LOCKED",
+        "Your account has been temporarily locked due to too many failed attempts. Please try again in 15 minutes or reset your password.",
+        423,
+        { lockedUntil: user.locked_until }
+      );
     }
+    const failedAttempts = user.is_locked ? 0 : user.failed_login_attempts || 0;
 
-    // 3. Enforce reCAPTCHA if >= 3 failed attempts
-    if (user.failed_login_attempts >= 3) {
+    // 3. reCAPTCHA required after 3 failures
+    if (failedAttempts >= RECAPTCHA_AFTER_ATTEMPTS) {
       const recaptchaResult = await verifyRecaptcha(recaptchaToken, "login");
       if (!recaptchaResult.success) {
         return fail(
@@ -68,13 +61,36 @@ export default withApi(
       }
     }
 
-    // 4. Verify password with bcrypt
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    // 4. Verify credentials with Supabase Auth on a per-request client (never the admin singleton)
+    const { data: authData, error: authError } =
+      await createSupabaseAuthClient().auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
 
-    if (!isPasswordValid) {
-      const newFailedCount = (user.failed_login_attempts || 0) + 1;
-      const isLocking = newFailedCount >= 5;
-      const lockedUntil = isLocking ? new Date(now.getTime() + 15 * 60 * 1000).toISOString() : null;
+    if (authError || !authData.session) {
+      if (authError?.code === "email_not_confirmed") {
+        // Accounts created before the auth fix were left unconfirmed in Supabase Auth
+        return fail(
+          res,
+          "EMAIL_NOT_VERIFIED",
+          "Please verify your email address before signing in. You can request a new link below.",
+          403,
+          { requiresVerification: true }
+        );
+      }
+
+      if (authError && authError.code !== "invalid_credentials") {
+        logger.error("Supabase sign-in failed unexpectedly", {
+          code: authError.code,
+          status: authError.status,
+        });
+        return fail(res, "AUTH_UNAVAILABLE", "Sign-in is temporarily unavailable", 503);
+      }
+
+      const newFailedCount = failedAttempts + 1;
+      const isLocking = newFailedCount >= MAX_FAILED_ATTEMPTS;
+      const lockedUntil = isLocking ? new Date(now.getTime() + LOCKOUT_MS).toISOString() : null;
 
       await supabase
         .from("users")
@@ -97,62 +113,19 @@ export default withApi(
 
       return fail(res, "INVALID_CREDENTIALS", "Invalid email or password", 401, {
         failedAttempts: newFailedCount,
-        requiresRecaptcha: newFailedCount >= 3,
+        requiresRecaptcha: newFailedCount >= RECAPTCHA_AFTER_ATTEMPTS,
       });
     }
 
-    // 5. Successful login: reset failed counters
-    await supabase
-      .from("users")
-      .update({
-        failed_login_attempts: 0,
-        is_locked: false,
-        locked_until: null,
-      })
-      .eq("id", user.id);
-
-    // 6. Generate access & refresh tokens
-    const refreshMaxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 7;
-    const accessMaxAge = 60 * 15;
-
-    let accessToken = `gar_jwt_${Buffer.from(JSON.stringify({ sub: user.id, role: user.role, exp: Date.now() + accessMaxAge * 1000 })).toString("base64url")}`;
-    let refreshToken = `gar_rt_${crypto.randomUUID()}`;
-
-    try {
-      const { data: authSession } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password,
-      });
-      if (authSession?.session) {
-        accessToken = authSession.session.access_token;
-        refreshToken = authSession.session.refresh_token;
-      }
-    } catch {
-      // In offline/mock mode fallback to signed gar token
+    // 5. Success: reset counters and issue session cookies
+    if (failedAttempts > 0 || user.is_locked) {
+      await supabase
+        .from("users")
+        .update({ failed_login_attempts: 0, is_locked: false, locked_until: null })
+        .eq("id", user.id);
     }
 
-    // Set secure HttpOnly cookies using stringifySetCookie
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax" as const,
-      path: "/",
-    };
-
-    res.setHeader("Set-Cookie", [
-      stringifySetCookie({
-        name: "gar_access_token",
-        value: accessToken,
-        ...cookieOptions,
-        maxAge: accessMaxAge,
-      }),
-      stringifySetCookie({
-        name: "gar_refresh_token",
-        value: refreshToken,
-        ...cookieOptions,
-        maxAge: refreshMaxAge,
-      }),
-    ]);
+    setSessionCookies(res, authData.session, rememberMe);
 
     return ok(res, {
       user: {
@@ -163,8 +136,7 @@ export default withApi(
         role: user.role,
         isEmailVerified: user.is_email_verified,
       },
-      accessToken,
-      expiresIn: accessMaxAge,
+      expiresIn: authData.session.expires_in,
     });
   },
   {

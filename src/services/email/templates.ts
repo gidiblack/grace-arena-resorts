@@ -6,7 +6,8 @@ export type EmailTemplateId =
   | "inquiry_acknowledgment"
   | "room_notify_alert"
   | "booking_refund_initiated"
-  | "booking_refund_completed";
+  | "booking_refund_completed"
+  | "staff_submission_alert";
 
 export interface EmailRenderedContent {
   subject: string;
@@ -14,10 +15,34 @@ export interface EmailRenderedContent {
   text: string;
 }
 
+/**
+ * Escapes user-supplied values before they are interpolated into email HTML.
+ */
+export function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Only http(s) links are allowed in email buttons.
+ */
+function safeUrl(value: unknown): string {
+  const url = String(value ?? "");
+  return /^https?:\/\//i.test(url) ? escapeHtml(url) : "#";
+}
+
 export function renderEmailTemplate(
   templateId: EmailTemplateId,
-  data: Record<string, unknown>
+  rawData: Record<string, unknown>
 ): EmailRenderedContent {
+  // Every interpolated value is HTML-escaped; URLs are additionally restricted to http(s)
+  const data: Record<string, string> = Object.fromEntries(
+    Object.entries(rawData).map(([k, v]) => [k, /url$/i.test(k) ? safeUrl(v) : escapeHtml(v)])
+  );
   switch (templateId) {
     case "newsletter_confirmation": {
       const confirmUrl = data.confirmUrl || "#";
@@ -155,6 +180,23 @@ export function renderEmailTemplate(
           </div>
         `,
         text: `Your refund of ₦${Number(amount).toLocaleString()} for reservation ${ref} has been processed.`,
+      };
+    }
+
+    case "staff_submission_alert": {
+      return {
+        subject: `New ${rawData.kind || "website"} submission: ${rawData.subject || rawData.name || ""}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1a202c;">
+            <h2 style="color: #2b6cb0;">New ${data.kind || "website"} submission</h2>
+            <p><strong>From:</strong> ${data.name} &lt;${data.email}&gt; ${data.phone ? `(${data.phone})` : ""}</p>
+            ${data.subject ? `<p><strong>Subject:</strong> ${data.subject}</p>` : ""}
+            <p style="white-space: pre-wrap;">${data.details || ""}</p>
+          </div>
+        `,
+        text: `New ${rawData.kind || "website"} submission from ${rawData.name} <${rawData.email}>
+
+${rawData.details || ""}`,
       };
     }
 

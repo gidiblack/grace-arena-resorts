@@ -1,78 +1,48 @@
-import bcrypt from "bcryptjs";
 import { withApi } from "../_shared/handler";
-import { resetPasswordSchema } from "@/features/auth/schemas";
+import { resetPasswordSchema, type ResetPasswordInput } from "@/features/auth/schemas";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { consumeToken } from "@/services/auth/tokens";
 import { ok, fail } from "@/lib/http/response";
 import { logger } from "@/lib/logger";
 
 export default withApi(
   async (req, res) => {
-    const { token, newPassword } = req.body;
+    const { token, newPassword } = req.body as ResetPasswordInput;
 
-    // Decode and validate token payload
-    let userId: string;
-    let expiresAt: number;
-
-    try {
-      const decoded = Buffer.from(token, "base64url").toString("utf8");
-      const [parsedId, parsedTime] = decoded.split(":");
-      userId = parsedId;
-      expiresAt = parseInt(parsedTime, 10);
-
-      if (!userId || isNaN(expiresAt)) {
-        throw new Error("Malformed token");
-      }
-    } catch {
-      return fail(res, "INVALID_TOKEN", "The password reset token is invalid or corrupted", 400);
-    }
-
-    if (Date.now() > expiresAt) {
+    const consumed = await consumeToken("password_reset", token);
+    if (!consumed?.userId) {
       return fail(
         res,
-        "TOKEN_EXPIRED",
-        "The password reset link has expired. Please request a new one.",
+        "INVALID_TOKEN",
+        "This password reset link is invalid, expired, or has already been used. Please request a new one.",
         400
       );
     }
 
     const supabase = getSupabaseAdminClient();
 
-    // Check user exists
-    const { data: user, error: userError } = await supabase
+    const { error: authError } = await supabase.auth.admin.updateUserById(consumed.userId, {
+      password: newPassword,
+    });
+
+    if (authError) {
+      logger.error("Failed to update password in Supabase Auth", {
+        code: authError.code,
+        status: authError.status,
+      });
+      return fail(
+        res,
+        "UPDATE_FAILED",
+        "Failed to update password. Please request a new reset link.",
+        500
+      );
+    }
+
+    // A successful reset also clears any lockout
+    await supabase
       .from("users")
-      .select("id, email")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (userError || !user) {
-      return fail(res, "USER_NOT_FOUND", "Account not found", 404);
-    }
-
-    // Hash new password with bcrypt (cost factor >= 12)
-    const newHash = await bcrypt.hash(newPassword, 12);
-
-    // Update in database and reset lockout/failed attempts
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({
-        password_hash: newHash,
-        failed_login_attempts: 0,
-        is_locked: false,
-        locked_until: null,
-      })
-      .eq("id", userId);
-
-    if (updateError) {
-      logger.error("Failed to update password in database", { error: updateError });
-      return fail(res, "UPDATE_FAILED", "Failed to update password", 500);
-    }
-
-    // Also update in Supabase Auth if user exists there
-    try {
-      await supabase.auth.admin.updateUserById(userId, { password: newPassword });
-    } catch {
-      // In offline/mock mode ignore
-    }
+      .update({ failed_login_attempts: 0, is_locked: false, locked_until: null })
+      .eq("id", consumed.userId);
 
     return ok(res, {
       message: "Password reset successful. You may now log in with your new password.",
@@ -81,5 +51,10 @@ export default withApi(
   {
     allowedMethods: ["POST"],
     bodySchema: resetPasswordSchema,
+    rateLimit: {
+      keyPrefix: "auth-reset-password",
+      maxRequests: 10,
+      windowSeconds: 900,
+    },
   }
 );

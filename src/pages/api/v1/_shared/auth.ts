@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { getSupabaseAdminClient, createSupabaseAuthClient } from "@/lib/supabase/server";
+import { ACCESS_COOKIE, REFRESH_COOKIE, setSessionCookies } from "@/services/auth/session";
 import { fail } from "@/lib/http/response";
 import type { UserRole } from "@/types/db";
 
@@ -22,31 +23,49 @@ export function extractToken(req: NextApiRequest): string | null {
   }
 
   const cookies = req.cookies || {};
-  if (cookies["gar_access_token"]) {
-    return cookies["gar_access_token"];
-  }
-  if (cookies["sb-access-token"]) {
-    return cookies["sb-access-token"];
-  }
+  return cookies[ACCESS_COOKIE] || null;
+}
 
-  return null;
+/**
+ * Exchanges the refresh cookie for a new session and rewrites both cookies.
+ * Returns the new access token, or null if there is no valid refresh token.
+ */
+async function refreshSessionFromCookie(
+  req: NextApiRequest,
+  res: NextApiResponse
+): Promise<string | null> {
+  const refreshToken = req.cookies?.[REFRESH_COOKIE];
+  if (!refreshToken) return null;
+
+  const { data, error } = await createSupabaseAuthClient().auth.refreshSession({
+    refresh_token: refreshToken,
+  });
+  if (error || !data.session) return null;
+
+  setSessionCookies(res, data.session);
+  return data.session.access_token;
 }
 
 /**
  * Validates token and returns authenticated user and role, or null if unauthenticated.
+ * When `res` is supplied and the access token is missing or expired, the session is
+ * transparently refreshed from the refresh cookie.
  */
-export async function getAuthUser(req: NextApiRequest): Promise<AuthUser | null> {
-  const token = extractToken(req);
-  if (!token) return null;
-
+export async function getAuthUser(
+  req: NextApiRequest,
+  res?: NextApiResponse
+): Promise<AuthUser | null> {
   try {
     const supabase = getSupabaseAdminClient();
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(token);
+    let token = extractToken(req);
+    let user = token ? (await supabase.auth.getUser(token)).data.user : null;
 
-    if (error || !user) {
+    if (!user && res && !req.headers.authorization) {
+      token = await refreshSessionFromCookie(req, res);
+      user = token ? (await supabase.auth.getUser(token)).data.user : null;
+    }
+
+    if (!user) {
       return null;
     }
 
@@ -57,20 +76,18 @@ export async function getAuthUser(req: NextApiRequest): Promise<AuthUser | null>
       .eq("id", user.id)
       .maybeSingle();
 
-    if (profile?.is_locked) {
+    // No profile means no account in our system; never derive roles from user-editable metadata
+    if (!profile || profile.is_locked) {
       return null;
     }
 
-    const role: UserRole =
-      (profile?.role as UserRole) || (user.user_metadata?.role as UserRole) || "guest";
-
     return {
       id: user.id,
-      email: user.email || profile?.email || "",
-      fullName: profile?.full_name || (user.user_metadata?.full_name as string) || "Guest",
-      phone: profile?.phone || (user.user_metadata?.phone as string) || null,
-      role,
-      isEmailVerified: profile?.is_email_verified ?? Boolean(user.email_confirmed_at),
+      email: profile.email,
+      fullName: profile.full_name,
+      phone: profile.phone,
+      role: profile.role as UserRole,
+      isEmailVerified: profile.is_email_verified,
     };
   } catch {
     return null;
@@ -84,7 +101,7 @@ export async function requireAuth(
   req: NextApiRequest,
   res: NextApiResponse
 ): Promise<AuthUser | null> {
-  const user = await getAuthUser(req);
+  const user = await getAuthUser(req, res);
   if (!user) {
     fail(res, "UNAUTHORIZED", "Authentication required to access this resource", 401);
     return null;

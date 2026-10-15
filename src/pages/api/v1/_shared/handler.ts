@@ -89,7 +89,7 @@ export function withApi<TBody = unknown, TQuery = unknown>(
         if (!user) return;
         ctx.user = user;
       } else {
-        const user = await getAuthUser(req);
+        const user = await getAuthUser(req, res);
         if (!user) {
           return fail(res, "UNAUTHORIZED", "Authentication required to access this resource", 401);
         }
@@ -97,7 +97,7 @@ export function withApi<TBody = unknown, TQuery = unknown>(
       }
     } else {
       // Optional authentication: resolve user if present
-      const optionalUser = await getAuthUser(req);
+      const optionalUser = await getAuthUser(req, res);
       if (optionalUser) {
         ctx.user = optionalUser;
       }

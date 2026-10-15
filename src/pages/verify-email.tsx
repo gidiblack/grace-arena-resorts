@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import NextLink from "next/link";
-import { Box, Button, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Input, Stack, Text } from "@chakra-ui/react";
 import AuthLayout from "@/features/auth/components/AuthLayout";
 import { ROUTES } from "@/constants/ROUTES";
 
@@ -12,18 +12,54 @@ export default function VerifyEmailPage() {
   const [isResending, setIsResending] = useState(false);
   const [resendStatus, setResendStatus] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [emailInput, setEmailInput] = useState("");
+  const resendEmail = typeof email === "string" && email ? email : emailInput.trim();
 
-  // If token is provided in query, attempt auto-verification
+  // A ?token= link from the verification email is confirmed server-side; the page never
+  // claims success unless the API accepted the token.
   useEffect(() => {
-    if (token && email) {
-      // In production/staging, can post token to an internal verify handler or confirm
-      setIsVerified(true);
+    if (typeof token !== "string" || !token) return;
+    let cancelled = false;
+
+    async function verify() {
+      setIsVerifying(true);
+      setErrorMsg(null);
+      try {
+        const res = await fetch("/api/v1/auth/verify-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (res.ok && data.success) {
+          setIsVerified(true);
+        } else {
+          setErrorMsg(
+            data.error?.message ||
+              "This verification link is invalid or has expired. Request a new one below."
+          );
+        }
+      } catch {
+        if (!cancelled) setErrorMsg("Unable to reach the verification service. Please try again.");
+      } finally {
+        if (!cancelled) setIsVerifying(false);
+      }
     }
-  }, [token, email]);
+
+    verify();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const handleResend = async () => {
-    if (!email) return;
+    if (!resendEmail) {
+      setErrorMsg("Enter the email address you registered with.");
+      return;
+    }
     setIsResending(true);
     setResendStatus(null);
     setErrorMsg(null);
@@ -32,7 +68,7 @@ export default function VerifyEmailPage() {
       const res = await fetch("/api/v1/auth/resend-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: String(email) }),
+        body: JSON.stringify({ email: resendEmail }),
       });
 
       const data = await res.json();
@@ -54,7 +90,9 @@ export default function VerifyEmailPage() {
       subtitle={
         isVerified
           ? "Your email address has been successfully confirmed"
-          : `We sent a confirmation link to ${email || "your email address"}`
+          : isVerifying
+            ? "Confirming your email address…"
+            : `We sent a confirmation link to ${email || "your email address"}`
       }
     >
       <Stack gap={6} textAlign="center">
@@ -88,11 +126,29 @@ export default function VerifyEmailPage() {
               </Box>
             )}
 
+            {!email && (
+              <Input
+                type="email"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                placeholder="you@example.com"
+                aria-label="Email address for a new verification link"
+                size="lg"
+                mb={3}
+                borderRadius="lg"
+                color="gray.900"
+                bg="white"
+                borderColor="gray.300"
+                _placeholder={{ color: "gray.500", opacity: 1 }}
+              />
+            )}
+
             <Button
               variant="outline"
               colorPalette="blue"
               size="lg"
               w="full"
+              disabled={isVerifying}
               loading={isResending}
               onClick={handleResend}
               borderRadius="lg"
