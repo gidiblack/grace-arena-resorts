@@ -623,12 +623,55 @@ export default function BookingPage() {
     return availableRooms;
   }, [availableRooms, campusFilter]);
 
+  const scrollToWizardTop = () => {
+    if (typeof window === "undefined") return;
+    const el = document.getElementById("booking-wizard-top");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleNextFromStep1 = () => {
+    const parsed = step1DatesGuestsSchema.safeParse({
+      checkInDate,
+      nights,
+      adults,
+      children: childrenCount,
+    });
+    if (parsed.success) {
+      setCurrentStep(2);
+      scrollToWizardTop();
+    }
+  };
+
+  const handleNextFromStep2 = () => {
+    if (selectedRooms.length > 0) {
+      setCurrentStep(3);
+      scrollToWizardTop();
+    }
+  };
+
+  const handleNextFromStep3 = () => {
+    if (validateGuestDetails()) {
+      setCurrentStep(4);
+      scrollToWizardTop();
+    }
+  };
+
   return (
     <PageWrapper
       title="Reserve Your Stay — Grace Arena Resorts"
       description="Select your campus, dates, and accommodation at Grace Arena Resorts. Faith, hospitality, and serene retreat."
     >
-      <Box bg="#0B132B" color="white" minH="90vh" py={{ base: 8, md: 14 }}>
+      <Box
+        bg="#0B132B"
+        color="white"
+        minH="90vh"
+        pt={{ base: "110px", md: "140px" }}
+        pb={{ base: 12, md: 16 }}
+      >
         <Box maxW="1200px" mx="auto" px={{ base: 4, sm: 6, lg: 8 }}>
           {/* Header */}
           <Box textAlign="center" mb={{ base: 8, md: 12 }}>
@@ -701,7 +744,12 @@ export default function BookingPage() {
             />
           ) : (
             /* Wizard Steps 1 to 4 */
-            <SimpleGrid columns={{ base: 1, lg: 12 }} gap={8}>
+            <SimpleGrid
+              id="booking-wizard-top"
+              scrollMarginTop={{ base: "90px", md: "120px" }}
+              columns={{ base: 1, lg: 12 }}
+              gap={8}
+            >
               {/* Main Steps Content (8 Columns) */}
               <Box gridColumn={{ base: "span 1", lg: "span 8" }}>
                 {/* Responsive Step Indicator Banner */}
@@ -898,21 +946,7 @@ export default function BookingPage() {
                     </Stack>
 
                     <Flex justify="flex-end" mt={8}>
-                      <Button
-                        variant="primary"
-                        size="md"
-                        onClick={() => {
-                          const parsed = step1DatesGuestsSchema.safeParse({
-                            checkInDate,
-                            nights,
-                            adults,
-                            children: childrenCount,
-                          });
-                          if (parsed.success) {
-                            setCurrentStep(2);
-                          }
-                        }}
-                      >
+                      <Button variant="primary" size="md" onClick={handleNextFromStep1}>
                         Select Rooms &rarr;
                       </Button>
                     </Flex>
@@ -1123,7 +1157,7 @@ export default function BookingPage() {
                         variant="primary"
                         size="md"
                         disabled={selectedRooms.length === 0}
-                        onClick={() => setCurrentStep(3)}
+                        onClick={handleNextFromStep2}
                       >
                         Guest Information &rarr;
                       </Button>
@@ -1355,15 +1389,7 @@ export default function BookingPage() {
                     </Stack>
 
                     <Flex justify="flex-end" mt={8}>
-                      <Button
-                        variant="primary"
-                        size="md"
-                        onClick={() => {
-                          if (validateGuestDetails()) {
-                            setCurrentStep(4);
-                          }
-                        }}
-                      >
+                      <Button variant="primary" size="md" onClick={handleNextFromStep3}>
                         Review &amp; Payment &rarr;
                       </Button>
                     </Flex>
@@ -1682,6 +1708,42 @@ export default function BookingPage() {
                       ₦{pricing.total.toLocaleString()}
                     </Text>
                   </Flex>
+
+                  {/* Summary Next Step Action Button */}
+                  {currentStep < 4 ? (
+                    <Button
+                      variant="primary"
+                      size="md"
+                      w="full"
+                      mb={4}
+                      disabled={currentStep === 2 && selectedRooms.length === 0}
+                      onClick={() => {
+                        if (currentStep === 1) handleNextFromStep1();
+                        else if (currentStep === 2) handleNextFromStep2();
+                        else if (currentStep === 3) handleNextFromStep3();
+                      }}
+                    >
+                      {currentStep === 1 && "Select Rooms \u2192"}
+                      {currentStep === 2 &&
+                        (selectedRooms.length === 0
+                          ? "Select a Room to Continue"
+                          : "Guest Information \u2192")}
+                      {currentStep === 3 && "Review & Payment \u2192"}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      size="md"
+                      w="full"
+                      mb={4}
+                      disabled={selectedRooms.length === 0 || isProcessingPayment}
+                      onClick={handleProceedToPayment}
+                    >
+                      {isProcessingPayment
+                        ? "Securing Reservation..."
+                        : `Pay \u20A6${pricing.total.toLocaleString()} with Paystack`}
+                    </Button>
+                  )}
 
                   {/* Help banner */}
                   <Box bg="#1E293B" p={3.5} borderRadius="10px">

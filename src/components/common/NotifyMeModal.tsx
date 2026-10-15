@@ -206,7 +206,11 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
                       borderRadius="8px"
                       fontSize="14px"
                       _placeholder={{ color: "gray.400", opacity: 1 }}
-                      _focus={{ borderColor: "brand.gold", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
+                      _focus={{
+                        borderColor: "brand.gold",
+                        outline: "none",
+                        boxShadow: "0 0 0 1px #D4AF37",
+                      }}
                     />
                   </Box>
 
@@ -227,7 +231,11 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
                       borderRadius="8px"
                       fontSize="14px"
                       _placeholder={{ color: "gray.400", opacity: 1 }}
-                      _focus={{ borderColor: "brand.gold", outline: "none", boxShadow: "0 0 0 1px #D4AF37" }}
+                      _focus={{
+                        borderColor: "brand.gold",
+                        outline: "none",
+                        boxShadow: "0 0 0 1px #D4AF37",
+                      }}
                     />
                   </Box>
 

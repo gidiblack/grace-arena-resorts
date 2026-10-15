@@ -14,10 +14,11 @@ export default function AuthLayout({ title, subtitle, children }: AuthLayoutProp
   return (
     <PageWrapper title={`${title} — Grace Arena Resorts`} description={subtitle}>
       <Flex
-        minH="85vh"
+        minH="100vh"
         align="center"
         justify="center"
-        py={12}
+        pt={{ base: "110px", md: "140px" }}
+        pb={{ base: 12, md: 16 }}
         px={4}
         bg="linear-gradient(180deg, #F7FAFC 0%, #EDF2F7 100%)"
       >

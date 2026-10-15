@@ -36,6 +36,11 @@ a {
   text-decoration: none;
 }
 
+a:focus:not(:focus-visible),
+a:active {
+  outline: none;
+}
+
 main {
   min-height: 100vh;
   position: relative;

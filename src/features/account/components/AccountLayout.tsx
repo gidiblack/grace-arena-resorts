@@ -52,16 +52,22 @@ export default function AccountLayout({ children, title, activeTab }: AccountLay
   const handleSignOut = async () => {
     try {
       await fetch("/api/v1/auth/logout", { method: "POST" });
-      router.push("/login");
+      router.push("/");
     } catch {
-      router.push("/login");
+      router.push("/");
     }
   };
 
   if (loading) {
     return (
       <PageWrapper title={`${title} — Grace Arena Resorts`}>
-        <Flex minH="60vh" align="center" justify="center" bg="#0B132B">
+        <Flex
+          minH="80vh"
+          align="center"
+          justify="center"
+          bg="#0B132B"
+          pt={{ base: "110px", md: "140px" }}
+        >
           <Spinner color="accent.500" size="xl" />
         </Flex>
       </PageWrapper>
@@ -74,7 +80,13 @@ export default function AccountLayout({ children, title, activeTab }: AccountLay
 
   return (
     <PageWrapper title={`${title} — Grace Arena Resorts`}>
-      <Box bg="#0B132B" color="white" minH="85vh" py={{ base: 8, md: 12 }}>
+      <Box
+        bg="#0B132B"
+        color="white"
+        minH="85vh"
+        pt={{ base: "110px", md: "140px" }}
+        pb={{ base: 12, md: 16 }}
+      >
         <Box maxW="1200px" mx="auto" px={{ base: 4, sm: 6, lg: 8 }}>
           {/* Header Profile Bar */}
           <Flex
