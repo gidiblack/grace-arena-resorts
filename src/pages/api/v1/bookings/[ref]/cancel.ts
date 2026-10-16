@@ -1,4 +1,5 @@
 import type { NextApiRequest } from "next";
+import { z } from "zod";
 import { withApi } from "@/pages/api/v1/_shared/handler";
 import type { AuthUser } from "@/pages/api/v1/_shared/auth";
 import { canTransition } from "@/domain/booking/state-machine";
@@ -15,7 +16,7 @@ import { authorizeBookingAccess } from "@/services/booking/access";
 import { runAfterResponse } from "@/services/booking/notifications";
 import { ok, fail } from "@/lib/http/response";
 import { logger } from "@/lib/logger";
-import type { BookingStatus, Database, Json } from "@/types/db";
+import type { BookingStatus, Database, Json, RefundMethod } from "@/types/db";
 
 type PaymentRow = Database["public"]["Tables"]["payments"]["Row"];
 
@@ -24,6 +25,13 @@ const POLICY_TIER = {
   half: "partial_refund",
   none: "no_refund",
 } as const;
+
+const cancelRequestSchema = z.object({
+  refundAmountOverride: z.number().int().min(0).optional(),
+  overrideReason: z.string().trim().min(3).optional(),
+  refundMethod: z.enum(["bank_transfer", "cash", "pos_reversal"]).optional(),
+  forceManualRefund: z.boolean().optional(),
+}).optional();
 
 function describePolicy(refund: RefundCalculationResult, paid: number): string {
   if (paid === 0) return "No payment has been taken for this booking, so nothing will be refunded.";
@@ -96,14 +104,56 @@ export default withApi(
       );
     }
 
+    const bodyParsed = cancelRequestSchema.safeParse(req.body || {});
+    const payload = bodyParsed.success ? bodyParsed.data : undefined;
+    const isAdmin = Boolean(user && ["resort_admin", "super_admin"].includes(user.role));
+
+    // Handle Admin Refund Override
+    let finalRefundAmount = refund.refundAmount;
+    if (payload?.refundAmountOverride !== undefined) {
+      if (!isAdmin) {
+        return fail(res, "FORBIDDEN", "Only administrators can override refund amounts", 403);
+      }
+      if (!payload.overrideReason || !payload.overrideReason.trim()) {
+        return fail(res, "MISSING_REASON", "A mandatory reason is required to override refund amounts", 400);
+      }
+      if (payload.refundAmountOverride < 0 || payload.refundAmountOverride > totalPaid) {
+        return fail(
+          res,
+          "INVALID_OVERRIDE_AMOUNT",
+          `Refund override must be between ₦0 and amount paid (₦${totalPaid.toLocaleString()})`,
+          400
+        );
+      }
+      finalRefundAmount = payload.refundAmountOverride;
+    }
+
     const supabase = getSupabaseAdminClient();
     let refundStatus: "none" | "initiated" | "manual" = "none";
+    let chosenRefundMethod: RefundMethod = "paystack";
 
-    // 1. Refund first: if the gateway refuses, the booking stays as it was so the guest can retry
-    if (payment && refund.refundAmount > 0) {
+    // 1. Process or stage refund
+    if (payment && finalRefundAmount > 0) {
+      const isPaystack = payment.gateway === "paystack" && payment.gateway_reference;
+      const isManualForced = Boolean(payload?.forceManualRefund);
+
+      chosenRefundMethod = payload?.refundMethod || (
+        payment.gateway === "bank_transfer"
+          ? "bank_transfer"
+          : payment.gateway === "pos"
+            ? "pos_reversal"
+            : payment.gateway === "cash"
+              ? "cash"
+              : "bank_transfer"
+      );
+
       const { data: claimed } = await supabase
         .from("payments")
-        .update({ status: "refund_pending", refund_amount: refund.refundAmount })
+        .update({
+          status: "refund_pending",
+          refund_amount: finalRefundAmount,
+          refund_method: !isPaystack || isManualForced ? chosenRefundMethod : "paystack",
+        })
         .eq("id", payment.id)
         .eq("status", "success")
         .select()
@@ -113,13 +163,15 @@ export default withApi(
         return fail(res, "CONFLICT", "This booking is already being cancelled", 409);
       }
 
-      if (payment.gateway === "paystack" && payment.gateway_reference) {
+      if (isPaystack && !isManualForced) {
         try {
           const gatewayRefund = await initiatePaystackRefund({
-            transactionReferenceOrId: payment.gateway_reference,
-            amountKobo: refund.refundAmount * 100,
+            transactionReferenceOrId: payment.gateway_reference!,
+            amountKobo: finalRefundAmount * 100,
             customerNote: `Cancellation refund for reservation ${booking.reference}`,
-            merchantNote: `Guest cancellation (${refund.tier})`,
+            merchantNote: isAdmin && payload?.overrideReason
+              ? `Admin override (${payload.overrideReason})`
+              : `Guest cancellation (${refund.tier})`,
           });
           await supabase
             .from("payments")
@@ -127,7 +179,7 @@ export default withApi(
               metadata: {
                 ...((payment.metadata as Record<string, Json>) || {}),
                 refundId: String(gatewayRefund.refundId),
-                refundReason: "GUEST_CANCELLATION",
+                refundReason: isAdmin ? "ADMIN_CANCELLATION" : "GUEST_CANCELLATION",
               },
             })
             .eq("id", payment.id);
@@ -147,10 +199,10 @@ export default withApi(
               .from("payments")
               .update({
                 status: "refund_pending",
-                refund_amount: refund.refundAmount,
+                refund_amount: finalRefundAmount,
                 metadata: {
                   ...((payment.metadata as Record<string, Json>) || {}),
-                  refundReason: "GUEST_CANCELLATION",
+                  refundReason: isAdmin ? "ADMIN_CANCELLATION" : "GUEST_CANCELLATION",
                   alreadyRefundedOnGateway: true,
                 },
               })
@@ -161,26 +213,31 @@ export default withApi(
               reference: booking.reference,
               error: error instanceof Error ? error.message : String(error),
             });
+
+            // Revert payment status
             await supabase
               .from("payments")
               .update({ status: "success", refund_amount: null })
               .eq("id", payment.id);
+
             return fail(
               res,
               "REFUND_FAILED",
-              "We could not process your refund right now, so the booking has not been cancelled. Please try again or contact us on WhatsApp.",
-              502
+              "We could not process your refund right now with Paystack. Administrators can select 'Refund manually instead' to proceed with cancellation.",
+              502,
+              { allowManualRefund: isAdmin }
             );
           }
         }
       } else {
-        // Cash/POS walk-in payments are refunded at the front desk
+        // Offline payments or manual override: no Paystack call, tracked as manual refund
         await supabase
           .from("payments")
           .update({
             metadata: {
               ...((payment.metadata as Record<string, Json>) || {}),
               manualRefundRequired: true,
+              overrideReason: payload?.overrideReason || null,
             },
           })
           .eq("id", payment.id);
@@ -188,10 +245,20 @@ export default withApi(
       }
     }
 
-    // 2. Cancel (conditional on the status we read, to avoid racing admin/system updates)
+    // 2. Cancel booking and record audit trail
+    const cancellationReason = isAdmin ? "admin_cancelled" : "guest_request";
+    const nowIso = new Date().toISOString();
+
     const { data: updatedBooking, error: updateError } = await supabase
       .from("bookings")
-      .update({ status: "cancelled", hold_expires_at: null })
+      .update({
+        status: "cancelled",
+        hold_expires_at: null,
+        cancellation_reason: cancellationReason,
+        cancelled_at: nowIso,
+        cancelled_by: user?.id || null,
+        status_changed_by: user?.id || null,
+      })
       .eq("id", booking.id)
       .eq("status", booking.status)
       .select()
@@ -212,19 +279,32 @@ export default withApi(
       entity: "booking",
       entityId: booking.id,
       previousData: { status: booking.status },
-      newData: { status: "cancelled", refund: refund as unknown as Json, refundStatus },
+      newData: {
+        status: "cancelled",
+        cancellationReason,
+        refundAmount: finalRefundAmount,
+        refundStatus,
+        overrideReason: payload?.overrideReason,
+        chosenRefundMethod,
+      },
       req,
     });
 
-    if (refundStatus === "initiated") {
+    if (finalRefundAmount > 0) {
+      const emailMessage =
+        refundStatus === "manual" || chosenRefundMethod === "bank_transfer"
+          ? "Your refund will be sent by bank transfer. Our resort staff will contact you to confirm transfer details."
+          : "Your refund will reflect in your account within 5–10 business days.";
+
       runAfterResponse("refund initiated email", () =>
         sendEmail({
           to: booking.guest_email,
           templateId: "booking_refund_initiated",
           templateData: {
             reference: booking.reference,
-            amount: refund.refundAmount,
-            message: "Your refund will reflect in your account within 5–10 business days.",
+            amount: finalRefundAmount,
+            refundMethod: chosenRefundMethod,
+            message: emailMessage,
           },
         })
       );
@@ -232,11 +312,15 @@ export default withApi(
 
     return ok(res, {
       booking: updatedBooking,
-      refund,
+      refund: {
+        ...refund,
+        refundAmount: finalRefundAmount,
+        overrideApplied: finalRefundAmount !== refund.refundAmount,
+      },
       refundStatus,
       message:
-        refund.refundAmount > 0
-          ? `Booking cancelled. A refund of ₦${refund.refundAmount.toLocaleString()} (${Math.round(refund.refundPercentage * 100)}%) has been initiated and will reflect in 5–10 business days.`
+        finalRefundAmount > 0
+          ? `Booking cancelled. A refund of ₦${finalRefundAmount.toLocaleString()} has been initiated (${refundStatus === "manual" ? "manual processing queue" : "gateway"}).`
           : totalPaid > 0
             ? "Booking cancelled. Per resort policy, no refund applies for cancellations within 24 hours of check-in."
             : "Booking cancelled.",

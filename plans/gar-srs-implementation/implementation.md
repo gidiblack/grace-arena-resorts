@@ -1152,32 +1152,32 @@ git commit -m "feat: guest account, booking management, profile and password cha
 
 ### Explicit File Paths
 
-- [ ] supabase/migrations/0009_admin_operations.sql
-- [ ] src/types/db.ts (regenerated)
-- [ ] src/proxy.ts
-- [ ] src/lib/auth/admin-guard.ts
-- [ ] src/components/admin/AdminLayout.tsx
-- [ ] src/components/admin/AdminSidebar.tsx
-- [ ] src/components/admin/AdminTopbar.tsx
-- [ ] src/components/admin/AdminBreadcrumb.tsx
-- [ ] src/components/admin/IdleTimeout.tsx
-- [ ] src/pages/admin/index.tsx
-- [ ] src/pages/admin/bookings/index.tsx
-- [ ] src/pages/admin/bookings/[ref].tsx
-- [ ] src/pages/admin/bookings/new.tsx
-- [ ] src/pages/admin/rooms/index.tsx
-- [ ] src/pages/api/v1/bookings/index.ts
-- [ ] src/pages/api/v1/bookings/[ref]/status.ts
-- [ ] src/pages/api/v1/bookings/[ref]/cancel.ts
-- [ ] src/pages/api/v1/bookings/[ref]/offline-payment.ts
-- [ ] src/pages/api/v1/payments/[id]/refund.ts
-- [ ] src/pages/api/v1/payments/webhook.ts
-- [ ] src/pages/api/v1/rooms/[id].ts
-- [ ] src/pages/api/v1/rooms/[id]/units/index.ts
-- [ ] src/pages/api/v1/rooms/[id]/units/[unitId].ts
-- [ ] src/services/notify-me/send-room-available.ts
-- [ ] src/services/email/templates.ts
-- [ ] scripts/create-admin-user.ts
+- [x] supabase/migrations/0009_admin_operations.sql
+- [x] src/types/db.ts (regenerated)
+- [x] src/proxy.ts
+- [x] src/lib/auth/admin-guard.ts
+- [x] src/components/admin/AdminLayout.tsx
+- [x] src/components/admin/AdminSidebar.tsx
+- [x] src/components/admin/AdminTopbar.tsx
+- [x] src/components/admin/AdminBreadcrumb.tsx
+- [x] src/components/admin/IdleTimeout.tsx
+- [x] src/pages/admin/index.tsx
+- [x] src/pages/admin/bookings/index.tsx
+- [x] src/pages/admin/bookings/[ref].tsx
+- [x] src/pages/admin/bookings/new.tsx
+- [x] src/pages/admin/rooms/index.tsx
+- [x] src/pages/api/v1/bookings/index.ts
+- [x] src/pages/api/v1/bookings/[ref]/status.ts
+- [x] src/pages/api/v1/bookings/[ref]/cancel.ts
+- [x] src/pages/api/v1/bookings/[ref]/offline-payment.ts
+- [x] src/pages/api/v1/payments/[id]/refund.ts
+- [x] src/pages/api/v1/payments/webhook.ts
+- [x] src/pages/api/v1/rooms/[id].ts
+- [x] src/pages/api/v1/rooms/[id]/units/index.ts
+- [x] src/pages/api/v1/rooms/[id]/units/[unitId].ts
+- [x] src/services/notify-me/send-room-available.ts
+- [x] src/services/email/templates.ts
+- [x] scripts/create-admin-user.ts
 
 ### Commands
 
@@ -1192,20 +1192,20 @@ npm run test
 
 ### Verification Checklist
 
-- [ ] Admin shell renders desktop-first without public navbar/footer; usable at 768px
-- [ ] Unauthenticated → `/login?redirect=/admin`; guest-role user → redirected; Content Manager sees read-only bookings with no action buttons, and every booking mutation returns 403
-- [ ] Bookings table filters by status, channel, payment status, date range, and resort, and searches by reference, name, and email
-- [ ] Check-In requires unit assignment and marks units occupied; Check-Out releases them; No-Show respects the 24-hour rule
-- [ ] `PUT /status` with `cancelled` or `pending → confirmed` is rejected
-- [ ] Bank-transfer offline payment confirms a pending booking and emails the confirmation; an expired hold returns 409; a duplicate reference is rejected
-- [ ] Admin booking with `bank_transfer` creates a Confirmed `walk_in` booking with the real transfer reference
-- [ ] Admin cancellation of a bank-transfer booking makes **no Paystack call**, sets `refund_pending`, and appears under "Refunds to process"; marking it processed sets `refunded` / `partially_refunded` and emails the guest; marking it failed sets `refund_failed`
-- [ ] Refund override requires a reason and is audit-logged
-- [ ] Paystack `refund.failed` webhook → `refund_failed`; "Refund manually instead" works after a Paystack rejection
-- [ ] Status timeline shows webhook and cron transitions ("System") as well as admin actions
-- [ ] Room unit status persists; `occupied` cannot be set manually
-- [ ] RoomType `under_construction` → `available` sends Notify-Me emails exactly once; failures land in `failed_emails`
-- [ ] Admin session expires after 30 minutes of inactivity
+- [x] Admin shell renders desktop-first without public navbar/footer; usable at 768px
+- [x] Unauthenticated → `/login?redirect=/admin`; guest-role user → redirected; Content Manager sees read-only bookings with no action buttons, and every booking mutation returns 403
+- [x] Bookings table filters by status, channel, payment status, date range, and resort, and searches by reference, name, and email
+- [x] Check-In requires unit assignment and marks units occupied; Check-Out releases them; No-Show respects the 24-hour rule
+- [x] `PUT /status` with `cancelled` or `pending → confirmed` is rejected
+- [x] Bank-transfer offline payment confirms a pending booking and emails the confirmation; an expired hold returns 409; a duplicate reference is rejected
+- [x] Admin booking with `bank_transfer` creates a Confirmed `walk_in` booking with the real transfer reference
+- [x] Admin cancellation of a bank-transfer booking makes **no Paystack call**, sets `refund_pending`, and appears under "Refunds to process"; marking it processed sets `refunded` / `partially_refunded` and emails the guest; marking it failed sets `refund_failed`
+- [x] Refund override requires a reason and is audit-logged
+- [x] Paystack `refund.failed` webhook → `refund_failed`; "Refund manually instead" works after a Paystack rejection
+- [x] Status timeline shows webhook and cron transitions ("System") as well as admin actions
+- [x] Room unit status persists; `occupied` cannot be set manually
+- [x] RoomType `under_construction` → `available` sends Notify-Me emails exactly once; failures land in `failed_emails`
+- [x] Admin session expires after 30 minutes of inactivity
 
 ### STOP & COMMIT
 
@@ -1222,35 +1222,35 @@ git commit -m "feat: admin shell, RBAC guards, bookings operations, offline paym
 
 ### Step Checklist
 
-- [ ] Analytics endpoints (`/api/v1/analytics/bookings`, `/revenue`, `/occupancy`) are **Resort Admin+** (SRS §7)
-- [ ] `GET /api/v1/admin/summary` (all staff roles; plan addition): non-financial KPIs, unread counts, activity feed, bell counts. The Content Manager dashboard uses only this endpoint and never receives revenue fields
-- [ ] Metric cards (SRS 3.14.2): bookings (today / week / month), revenue (today / week / month; Resort Admin+), occupancy (today), pending bookings, unread contact submissions (`new`), unread event inquiries (`new`)
-- [ ] Recharts bookings chart: count and revenue over the last 30 days
-- [ ] Occupancy heatmap: current and next month
-- [ ] SRS 4.6 metrics: average stay duration, deal redemptions, revenue by room type, contact submissions by status/subject, newsletter total and growth. **Page Views (GA) deferred to Step 15** (GA4 Data API)
-- [ ] Metric definitions:
+- [x] Analytics endpoints (`/api/v1/analytics/bookings`, `/revenue`, `/occupancy`) are **Resort Admin+** (SRS §7)
+- [x] `GET /api/v1/admin/summary` (all staff roles; plan addition): non-financial KPIs, unread counts, activity feed, bell counts. The Content Manager dashboard uses only this endpoint and never receives revenue fields
+- [x] Metric cards (SRS 3.14.2): bookings (today / week / month), revenue (today / week / month; Resort Admin+), occupancy (today), pending bookings, unread contact submissions (`new`), unread event inquiries (`new`)
+- [x] Recharts bookings chart: count and revenue over the last 30 days
+- [x] Occupancy heatmap: current and next month
+- [x] SRS 4.6 metrics: average stay duration, deal redemptions, revenue by room type, contact submissions by status/subject, newsletter total and growth. **Page Views (GA) deferred to Step 15** (GA4 Data API)
+- [x] Metric definitions:
   - Revenue = successful payments by `paid_at` (all gateways, including `bank_transfer`, `cash`, `pos`) minus processed refunds by `refunded_at`, with a breakdown by gateway
   - Bookings counted by `created_at`, excluding `payment_timeout` cancellations (shown as "expired holds")
   - Occupancy = confirmed + checked-in units / bookable units per night, excluding `under_construction` room types and `maintenance` units
   - All buckets in WAT
-- [ ] Activity feed: last 10 events from `booking_status_history`, admin `audit_logs`, contact submissions, event inquiries
-- [ ] Notification bell: new bookings, new contact submissions, new event inquiries, refunds to process
-- [ ] Quick actions: "Create Booking" → `/admin/bookings/new`; "Add Deal" and "Upload Media" disabled ("Coming Soon", Step 15)
-- [ ] Optional (not SRS): average daily rate and revenue by campus, only if time permits
-- [ ] Analytics queries implemented as SQL views/RPCs; p95 < 300 ms at seed volume
+- [x] Activity feed: last 10 events from `booking_status_history`, admin `audit_logs`, contact submissions, event inquiries
+- [x] Notification bell: new bookings, new contact submissions, new event inquiries, refunds to process
+- [x] Quick actions: "Create Booking" → `/admin/bookings/new`; "Add Deal" and "Upload Media" disabled ("Coming Soon", Step 15)
+- [x] Optional (not SRS): average daily rate and revenue by campus, only if time permits
+- [x] Analytics queries implemented as SQL views/RPCs; p95 < 300 ms at seed volume
 
 ### Explicit File Paths
 
-- [ ] src/pages/admin/index.tsx
-- [ ] src/components/admin/dashboard/MetricCard.tsx
-- [ ] src/components/admin/dashboard/BookingsRevenueChart.tsx
-- [ ] src/components/admin/dashboard/OccupancyHeatmap.tsx
-- [ ] src/components/admin/dashboard/ActivityFeed.tsx
-- [ ] src/components/admin/dashboard/QuickActions.tsx
-- [ ] src/pages/api/v1/analytics/bookings.ts
-- [ ] src/pages/api/v1/analytics/revenue.ts
-- [ ] src/pages/api/v1/analytics/occupancy.ts
-- [ ] src/pages/api/v1/admin/summary.ts
+- [x] src/pages/admin/index.tsx
+- [x] src/components/admin/dashboard/MetricCard.tsx
+- [x] src/components/admin/dashboard/BookingsRevenueChart.tsx
+- [x] src/components/admin/dashboard/OccupancyHeatmap.tsx
+- [x] src/components/admin/dashboard/ActivityFeed.tsx
+- [x] src/components/admin/dashboard/QuickActions.tsx
+- [x] src/pages/api/v1/analytics/bookings.ts
+- [x] src/pages/api/v1/analytics/revenue.ts
+- [x] src/pages/api/v1/analytics/occupancy.ts
+- [x] src/pages/api/v1/admin/summary.ts
 
 ### Commands
 
@@ -1263,12 +1263,12 @@ npm run test
 
 ### Verification Checklist
 
-- [ ] Content Manager gets 403 on all analytics endpoints and sees no revenue cards; `/admin/summary` returns no financial fields for that role
-- [ ] Resort Admin and Super Admin see revenue cards, the 30-day chart, and the heatmap
-- [ ] Revenue includes offline payments and nets out processed refunds
-- [ ] Expired holds are excluded from booking and cancellation counts
-- [ ] Occupancy excludes under-construction room types and maintenance units
-- [ ] Activity feed and bell show bookings, contact submissions, inquiries, and refunds to process
+- [x] Content Manager gets 403 on all analytics endpoints and sees no revenue cards; `/admin/summary` returns no financial fields for that role
+- [x] Resort Admin and Super Admin see revenue cards, the 30-day chart, and the heatmap
+- [x] Revenue includes offline payments and nets out processed refunds
+- [x] Expired holds are excluded from booking and cancellation counts
+- [x] Occupancy excludes under-construction room types and maintenance units
+- [x] Activity feed and bell show bookings, contact submissions, inquiries, and refunds to process
 
 ### STOP & COMMIT
 

@@ -126,9 +126,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       case "refund.failed": {
+        const txRef = payload.data.transaction_reference || payload.data.reference;
         logger.error("Paystack refund failed event received", {
-          reference: payload.data.transaction_reference || payload.data.reference,
+          reference: txRef,
         });
+        if (txRef) {
+          await supabase
+            .from("payments")
+            .update({
+              status: "refund_failed",
+              refund_note: "Paystack webhook reported refund.failed",
+            })
+            .eq("gateway", "paystack")
+            .eq("gateway_reference", txRef);
+        }
         break;
       }
 
