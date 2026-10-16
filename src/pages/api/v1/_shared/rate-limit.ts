@@ -7,6 +7,7 @@ export interface RateLimitOptions {
   maxRequests: number;
   windowSeconds: number;
   identifierExtractor?: (req: NextApiRequest) => string;
+  methods?: string[];
 }
 
 /**

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import type { GetServerSideProps } from "next";
+import NextLink from "next/link";
 import {
   Box,
   Flex,
@@ -210,14 +211,21 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
       user={adminUser}
       breadcrumbs={[{ label: "Rooms & Suites" }]}
     >
-      <Box mb={6}>
-        <Heading as="h1" size="lg" color="gray.800">
-          Room Status & Unit Operations
-        </Heading>
-        <Text fontSize="sm" color="gray.600">
-          Toggle under-construction status to trigger Notify-Me broadcasts, or manage physical unit maintenance.
-        </Text>
-      </Box>
+      <Flex mb={6} justify="space-between" align="center" flexWrap="wrap" gap={3}>
+        <Box>
+          <Heading as="h1" size="lg" color="gray.800">
+            Room Status & Unit Operations
+          </Heading>
+          <Text fontSize="sm" color="gray.600">
+            Toggle under-construction status to trigger Notify-Me broadcasts, or manage physical unit maintenance.
+          </Text>
+        </Box>
+        <NextLink href="/admin/rooms/new" passHref legacyBehavior>
+          <Button as="a" size="sm" colorScheme="blue">
+            + Add Room Suite
+          </Button>
+        </NextLink>
+      </Flex>
 
       {feedback && (
         <Box
@@ -361,7 +369,7 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
                         </Badge>
                       </Table.Cell>
                       <Table.Cell>
-                        <HStack gap={2}>
+                        <HStack gap={1} flexWrap="wrap">
                           <Button
                             size="xs"
                             colorScheme={isUC ? "green" : "yellow"}
@@ -381,6 +389,16 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
                           >
                             Units
                           </Button>
+                          <NextLink href={`/admin/rooms/${room.id}/pricing`} passHref legacyBehavior>
+                            <Button as="a" size="xs" variant="ghost">
+                              Pricing
+                            </Button>
+                          </NextLink>
+                          <NextLink href={`/admin/rooms/${room.id}/edit`} passHref legacyBehavior>
+                            <Button as="a" size="xs" variant="ghost" colorScheme="blue">
+                              Edit
+                            </Button>
+                          </NextLink>
                         </HStack>
                       </Table.Cell>
                     </Table.Row>

@@ -61,7 +61,7 @@ const SIDEBAR_NAV: NavItem[] = [
     href: "/admin/content",
     icon: FaFileAlt,
     roles: ["content_manager", "resort_admin", "super_admin"],
-    isReady: false,
+    isReady: true,
   },
   {
     id: "restaurants",
@@ -69,7 +69,7 @@ const SIDEBAR_NAV: NavItem[] = [
     href: "/admin/restaurants",
     icon: FaUtensils,
     roles: ["content_manager", "resort_admin", "super_admin"],
-    isReady: false,
+    isReady: true,
   },
   {
     id: "facilities",
@@ -77,7 +77,7 @@ const SIDEBAR_NAV: NavItem[] = [
     href: "/admin/facilities",
     icon: FaSwimmingPool,
     roles: ["content_manager", "resort_admin", "super_admin"],
-    isReady: false,
+    isReady: true,
   },
   {
     id: "gems",
@@ -85,7 +85,7 @@ const SIDEBAR_NAV: NavItem[] = [
     href: "/admin/gems",
     icon: FaGem,
     roles: ["content_manager", "resort_admin", "super_admin"],
-    isReady: false,
+    isReady: true,
   },
   {
     id: "events",
@@ -93,7 +93,7 @@ const SIDEBAR_NAV: NavItem[] = [
     href: "/admin/events",
     icon: FaGlassCheers,
     roles: ["content_manager", "resort_admin", "super_admin"],
-    isReady: false,
+    isReady: true,
   },
   {
     id: "deals",
@@ -101,7 +101,7 @@ const SIDEBAR_NAV: NavItem[] = [
     href: "/admin/deals",
     icon: FaTags,
     roles: ["content_manager", "resort_admin", "super_admin"],
-    isReady: false,
+    isReady: true,
   },
   {
     id: "contact",
@@ -109,7 +109,7 @@ const SIDEBAR_NAV: NavItem[] = [
     href: "/admin/contact",
     icon: FaEnvelope,
     roles: ["content_manager", "resort_admin", "super_admin"],
-    isReady: false,
+    isReady: true,
   },
   {
     id: "newsletter",
@@ -117,7 +117,7 @@ const SIDEBAR_NAV: NavItem[] = [
     href: "/admin/newsletter",
     icon: FaNewspaper,
     roles: ["content_manager", "resort_admin", "super_admin"],
-    isReady: false,
+    isReady: true,
   },
   {
     id: "media",
@@ -125,7 +125,7 @@ const SIDEBAR_NAV: NavItem[] = [
     href: "/admin/media",
     icon: FaPhotoVideo,
     roles: ["content_manager", "resort_admin", "super_admin"],
-    isReady: false,
+    isReady: true,
   },
   {
     id: "users",
@@ -133,7 +133,7 @@ const SIDEBAR_NAV: NavItem[] = [
     href: "/admin/users",
     icon: FaUsers,
     roles: ["super_admin"],
-    isReady: false,
+    isReady: true,
   },
   {
     id: "settings",
@@ -141,7 +141,7 @@ const SIDEBAR_NAV: NavItem[] = [
     href: "/admin/settings",
     icon: FaCogs,
     roles: ["super_admin"],
-    isReady: false,
+    isReady: true,
   },
 ];
 

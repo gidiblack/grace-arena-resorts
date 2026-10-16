@@ -88,7 +88,7 @@ describe("Step 7 Rooms & Catalog API Endpoints", () => {
     });
 
     it("rejects non-GET methods with 405", async () => {
-      const { req, res, getStatusCode } = createMockReqRes({ method: "POST" });
+      const { req, res, getStatusCode } = createMockReqRes({ method: "DELETE" });
       await buildingsHandler(req, res);
       expect(getStatusCode()).toBe(405);
     });

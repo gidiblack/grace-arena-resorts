@@ -81,33 +81,25 @@ export function QuickActions({ userRole, refundsToProcessCount = 0 }: QuickActio
             </NextLink>
           )}
 
-          {/* Add Deal (Disabled with Coming Soon tooltip) */}
-          <Button
-            size="sm"
-            variant="outline"
-            colorScheme="gray"
-            disabled
-            title="Deals and promotional pricing CMS coming in Step 15"
-          >
-            <HStack gap={1.5}>
-              <Icon as={FaTag} boxSize={3} />
-              <Text>Add Deal</Text>
-            </HStack>
-          </Button>
+          {/* Add Deal */}
+          <NextLink href="/admin/deals" style={{ textDecoration: "none" }}>
+            <Button size="sm" variant="outline" colorScheme="blue">
+              <HStack gap={1.5}>
+                <Icon as={FaTag} boxSize={3} />
+                <Text>Add Deal</Text>
+              </HStack>
+            </Button>
+          </NextLink>
 
-          {/* Upload Media (Disabled with Coming Soon tooltip) */}
-          <Button
-            size="sm"
-            variant="outline"
-            colorScheme="gray"
-            disabled
-            title="Media library manager coming in Step 15"
-          >
-            <HStack gap={1.5}>
-              <Icon as={FaPhotoVideo} boxSize={3} />
-              <Text>Upload Media</Text>
-            </HStack>
-          </Button>
+          {/* Upload Media */}
+          <NextLink href="/admin/media" style={{ textDecoration: "none" }}>
+            <Button size="sm" variant="outline" colorScheme="blue">
+              <HStack gap={1.5}>
+                <Icon as={FaPhotoVideo} boxSize={3} />
+                <Text>Upload Media</Text>
+              </HStack>
+            </Button>
+          </NextLink>
         </HStack>
       </Flex>
     </Box>
