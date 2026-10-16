@@ -1,7 +1,7 @@
 # Software Requirements Specification — Grace Arena Resorts (GAR) Website
 
-**Version:** 1.3
-**Date:** October 15, 2026
+**Version:** 1.4
+**Date:** October 16, 2026
 **Status:** Draft (Revised)
 **Prepared by:** Software Architecture Team
 **Audience:** Developers, Designers, QA Engineers, Project Stakeholders
@@ -1121,9 +1121,20 @@ For each restaurant/dining outlet:
 
 - **Bookings Table:** Paginated table with columns: reference, guest name, check-in, check-out, rooms, total, status, created date. Filterable by status, date range, resort. Searchable by reference, guest name, or email.
 - **Booking Detail View** (`/admin/bookings/{ref}`): Full booking details including guest info, rooms, pricing breakdown, payment status, deal applied, special requests, and status history (audit trail of status changes with timestamps and who changed it).
-- **Status Actions:** Buttons to change booking status according to the state machine: Mark as Checked-In, Mark as Checked-Out, Mark as No-Show, Cancel Booking (with refund amount calculator displayed).
-- **Admin-Initiated Booking:** "Create Booking" form for walk-in guests (same fields as public booking but without payment — marks booking as Confirmed directly, `userId` remains null). Used for phone/WhatsApp bookings processed by staff.
-- **Refund Management:** When cancelling a confirmed booking, display calculated refund amount per policy. "Process Refund" button initiates Paystack refund API call. Refund status tracked: Pending → Processed → Failed.
+- **Status Actions:** Buttons to change booking status according to the state machine: Mark as Checked-In (staff assign a specific room unit for each booked room; assigned units become `occupied`), Mark as Checked-Out (assigned units are released), Mark as No-Show, Cancel Booking (with refund amount calculator displayed). Cancellation always runs through the cancellation and refund flow below. It is never a bare status change.
+- **Admin-Initiated Booking:** "Create Booking" form for walk-in guests (same fields as public booking but without online payment). It marks the booking as Confirmed directly, with `userId` null and `channel = walk_in`. Used for front-desk, phone, and WhatsApp concierge bookings processed by staff. Staff select the booking source (front desk / phone / WhatsApp) and the payment method (cash, POS, or bank transfer). A payment reference is required for bank transfer.
+- **Record Offline Payment:** For a Pending booking whose guest pays outside Paystack, for example by bank transfer arranged through the WhatsApp concierge (including the payment-gateway fallback in Section 8.1). Staff record the method (bank transfer / cash / POS), amount, payment reference, and payment date.
+  - The amount must equal the booking total; part-payments are not supported in v1.0.
+  - Bank-transfer references must be unique.
+  - Recording the payment confirms the booking and sends the confirmation email with PDF.
+  - If the booking's hold has already expired, the payment cannot be recorded against it, and staff create a new admin-initiated booking instead.
+- **Refund Management:** When cancelling a confirmed booking, display the calculated refund amount per policy. Resort Admin and Super Admin may override the refund amount (between zero and the amount paid) with a mandatory reason, which is recorded in the audit log.
+  - **Paystack payments:** the refund is initiated through the Paystack Refunds API. If Paystack rejects the refund, staff may choose "Refund manually instead" and continue with the manual process below.
+  - **Offline payments (bank transfer, cash, POS) — manual refund:** no Paystack call is made. The booking is cancelled, and the refund is recorded as Pending with the refund method (bank transfer, cash, or POS reversal) and amount. The guest is emailed that the refund will be paid by bank transfer and that staff may contact them for account details. Staff then pay the refund outside the system and record the outcome:
+    - **Processed:** with the refund reference and date. The guest is emailed that the refund is complete.
+    - **Failed:** the refund stays in the queue for another attempt.
+  - Only the destination bank name and the last 4 digits of the account number may be stored; full account numbers are never stored.
+  - Refund status is tracked as Pending → Processed → Failed for both Paystack and manual refunds. A "Refunds to process" filter lists all Pending and Failed refunds, including those created when a guest self-cancels an offline-paid booking.
 
 #### 3.14.5 Content Pages Management
 
@@ -1288,17 +1299,19 @@ Each follows a standard CRUD pattern:
 
 **Endpoints:**
 
-| Method | Route                                 | Description                                                |
-| ------ | ------------------------------------- | ---------------------------------------------------------- |
-| GET    | `/api/v1/availability`                | Check room availability for a specific date range          |
-| GET    | `/api/v1/availability/calendar`       | Get per-day availability map for a month (for date picker) |
-| POST   | `/api/v1/bookings`                    | Create a new booking                                       |
-| GET    | `/api/v1/bookings/{ref}`              | Get booking by reference number                            |
-| GET    | `/api/v1/bookings`                    | List bookings (admin: all; guest: own)                     |
-| PUT    | `/api/v1/bookings/{ref}/cancel`       | Cancel a booking                                           |
-| PUT    | `/api/v1/bookings/{ref}/status`       | Update booking status (admin)                              |
-| POST   | `/api/v1/bookings/{ref}/confirmation` | Resend confirmation email                                  |
-| GET    | `/api/v1/bookings/{ref}/pdf`          | Download booking confirmation / receipt as PDF             |
+| Method | Route                                    | Description                                                       |
+| ------ | ---------------------------------------- | ----------------------------------------------------------------- |
+| GET    | `/api/v1/availability`                   | Check room availability for a specific date range                 |
+| GET    | `/api/v1/availability/calendar`          | Get per-day availability map for a month (for date picker)        |
+| POST   | `/api/v1/bookings`                       | Create a new booking                                              |
+| GET    | `/api/v1/bookings/{ref}`                 | Get booking by reference number                                   |
+| GET    | `/api/v1/bookings`                       | List bookings (admin: all; guest: own)                            |
+| PUT    | `/api/v1/bookings/{ref}/cancel`          | Cancel a booking                                                  |
+| PUT    | `/api/v1/bookings/{ref}/status`          | Update booking status (admin)                                     |
+| POST   | `/api/v1/bookings/{ref}/offline-payment` | Record an offline payment and confirm a pending booking (admin)   |
+| POST   | `/api/v1/bookings/{ref}/confirmation`    | Resend confirmation email                                         |
+| GET    | `/api/v1/bookings/{ref}/pdf`             | Download booking confirmation / receipt as PDF                    |
+| POST   | `/api/v1/payments/{id}/refund`           | Record a manual refund outcome or retry a Paystack refund (admin) |
 
 **Calendar Availability Endpoint:**
 
@@ -1349,7 +1362,7 @@ Cancelled  Cancelled
 ```
 
 - **Pending** — Created but payment not yet received
-- **Confirmed** — Payment verified successfully
+- **Confirmed** — Payment verified successfully (online via Paystack, or an offline payment recorded by an admin)
 - **Checked-In** — Guest has arrived (admin marks)
 - **Checked-Out** — Guest has departed (admin marks)
 - **Cancelled** — Cancelled by guest or admin (refund rules apply)
@@ -1392,11 +1405,13 @@ Cancelled  Cancelled
 - Full refund if cancelled ≥72 hours before check-in time (14:00 on check-in date)
 - 50% refund if cancelled 24–72 hours before check-in time
 - No refund if cancelled <24 hours before check-in time
-- Refunds are processed automatically via the Paystack Refunds API upon cancellation by guest or admin
+- For bookings paid through Paystack, refunds are processed automatically via the Paystack Refunds API upon cancellation by guest or admin
 - For partial refunds (50%), the Paystack Refunds API supports partial refund amounts
 - Refund processing timeline: initiated immediately, reflected in guest's account within 5–10 business days (per Paystack's processing time)
-- Guest is notified via email when a refund is initiated (with refund amount and estimated timeline) and again when the refund is completed (via Paystack webhook notification)
-- The `Payment` entity status is updated to `refunded` (full) or `partially_refunded` upon successful refund webhook
+- For bookings paid offline (bank transfer, cash, POS), refunds are **manual**. No Paystack call is made. The refund is recorded as `refund_pending`, paid by staff outside the system (normally by bank transfer), and then marked processed or failed by an admin (Section 3.14.4). This applies whether the guest or an admin cancels.
+- Admins (Resort Admin and Super Admin) may override the policy refund amount, up to the amount paid, with a mandatory reason recorded in the audit log
+- Guest is notified via email when a refund is initiated (with refund amount and estimated timeline, or for manual refunds, that the refund will be paid by bank transfer) and again when the refund is completed (via Paystack webhook notification, or when an admin marks a manual refund processed)
+- The `Payment` entity status moves to `refund_pending` when a refund is initiated. It becomes `refunded` (full) or `partially_refunded` on completion: a successful Paystack refund webhook, or an admin marking a manual refund processed. It becomes `refund_failed` if the Paystack refund fails or an admin marks a manual refund failed.
 
 **No-Show Policy:**
 
@@ -1407,7 +1422,8 @@ Cancelled  Cancelled
 
 - Confirmation email (with PDF attachment) sent automatically on status change to Confirmed
 - Multi-room bookings create one Booking record with multiple BookingLineItem records
-- Admin-initiated bookings (walk-in, phone, WhatsApp) bypass payment flow — created with status "Confirmed" directly, `userId` is null, payment record is optional (marked as "cash" or "pos" gateway)
+- Admin-initiated bookings (walk-in, phone, WhatsApp concierge) bypass the online payment flow. They are created with status "Confirmed" directly, `userId` is null, and `channel` is `walk_in`. The payment record is optional and uses the "cash", "pos", or "bank_transfer" gateway; a payment reference is required for bank transfer.
+- A Pending online booking may be confirmed by an admin recording an offline payment (bank transfer, cash, POS) for the full booking total while the booking's hold is still live (Section 3.14.4). Admins cannot otherwise move a booking from Pending to Confirmed without a verified payment.
 
 ### 4.4 Content Management (CMS)
 
@@ -1511,16 +1527,16 @@ Cancelled  Cancelled
 
 ### 5.1 Performance
 
-| Metric                              | Target                                                   |
-| ----------------------------------- | -------------------------------------------------------- |
-| Largest Contentful Paint (LCP)      | < 2.5 seconds on 4G                                      |
-| First Input Delay (FID)             | < 100 milliseconds                                       |
-| Cumulative Layout Shift (CLS)       | < 0.1                                                    |
-| Time to First Byte (TTFB)           | < 600 milliseconds                                       |
-| API response time (95th percentile) | < 300 milliseconds                                       |
-| Concurrent users supported          | 500+ simultaneous                                        |
-| Image loading strategy              | Lazy loading with blur placeholder                       |
-| Video loading strategy              | Lazy load, poster image, prefers-reduced-motion fallback |
+| Metric                              | Target                                                                                                                          |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Largest Contentful Paint (LCP)      | < 2.5 seconds on 4G                                                                                                             |
+| Interaction to Next Paint (INP)     | < 200 milliseconds (field data; replaces First Input Delay, retired by Chrome in 2024; lab proxy: Total Blocking Time < 200 ms) |
+| Cumulative Layout Shift (CLS)       | < 0.1                                                                                                                           |
+| Time to First Byte (TTFB)           | < 600 milliseconds                                                                                                              |
+| API response time (95th percentile) | < 300 milliseconds                                                                                                              |
+| Concurrent users supported          | 500+ simultaneous                                                                                                               |
+| Image loading strategy              | Lazy loading with blur placeholder                                                                                              |
+| Video loading strategy              | Lazy load, poster image, prefers-reduced-motion fallback                                                                        |
 
 ### 5.2 Scalability
 
@@ -1595,32 +1611,32 @@ Cancelled  Cancelled
 
 ### Entity-Relationship Summary
 
-| Entity                   | Key Attributes                                                                                                                                                                                                                                                                                                                                                                                                          | Relationships                                                                                   |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| **User**                 | `id`, `email`, `passwordHash`, `fullName`, `phone`, `role` (guest/content_manager/resort_admin/super_admin), `isEmailVerified`, `isLocked`, `failedLoginAttempts`, `lockedUntil`, `createdAt`, `updatedAt`                                                                                                                                                                                                              | Has many Bookings; Has many ContactSubmissions                                                  |
-| **Resort**               | `id`, `name` (e.g., "GAR Elysian"), `slug`, `description`, `heroImageId`, `features` (JSON), `createdAt`, `updatedAt`                                                                                                                                                                                                                                                                                                   | Has many Buildings; Has many Facilities; Has many Restaurants                                   |
-| **Building**             | `id`, `resortId` (FK), `name` (e.g., "The Fountain Haven"), `description`                                                                                                                                                                                                                                                                                                                                               | Belongs to Resort; Has many RoomTypes                                                           |
-| **RoomType**             | `id`, `buildingId` (FK), `name`, `tier` (enum), `description`, `basePrice` (integer, NGN), `maxGuests`, `totalUnits`, `status` (available/under_construction), `amenities` (JSON array), `images` (JSON array of mediaAssetIds)                                                                                                                                                                                         | Belongs to Building; Has many Rooms (units); Has many BookingLineItems; Has many SeasonalPrices |
-| **Room**                 | `id`, `roomTypeId` (FK), `unitNumber`, `floor`, `status` (available/occupied/maintenance)                                                                                                                                                                                                                                                                                                                               | Belongs to RoomType                                                                             |
-| **SeasonalPrice**        | `id`, `roomTypeId` (FK), `startDate`, `endDate`, `price` (integer, NGN), `label` (e.g., "Christmas Peak")                                                                                                                                                                                                                                                                                                               | Belongs to RoomType                                                                             |
-| **Booking**              | `id`, `reference` (unique, e.g., "GAR-A1B2C3D4"), `userId` (FK, nullable — null for admin-initiated walk-in/phone bookings only; all online bookings require authentication), `guestName`, `guestEmail`, `guestPhone`, `checkInDate`, `checkOutDate`, `nights`, `adults`, `children`, `specialRequests`, `subtotal`, `dealDiscount`, `tax`, `total`, `status` (enum), `dealId` (FK, nullable), `createdAt`, `updatedAt` | Belongs to User (optional); Has many BookingLineItems; Has one Payment; May reference Deal      |
-| **BookingLineItem**      | `id`, `bookingId` (FK), `roomTypeId` (FK), `quantity`, `unitPrice`, `lineTotal`                                                                                                                                                                                                                                                                                                                                         | Belongs to Booking; References RoomType                                                         |
-| **Payment**              | `id`, `bookingId` (FK), `gateway` (e.g., "paystack", "cash", "pos"), `gatewayReference`, `amount`, `currency` ("NGN"), `status` (pending/success/failed/refunded/partially_refunded), `refundAmount` (integer, nullable), `refundedAt` (nullable), `paidAt`, `metadata` (JSON), `createdAt`, `updatedAt`                                                                                                                | Belongs to Booking                                                                              |
-| **Restaurant**           | `id`, `resortId` (FK, nullable — null if shared across campuses), `name`, `slug`, `description`, `cuisineType`, `operatingHours` (JSON), `images` (JSON array), `createdAt`, `updatedAt`                                                                                                                                                                                                                                | Belongs to Resort (optional); Has many MenuItems                                                |
-| **MenuItem**             | `id`, `restaurantId` (FK), `name`, `description`, `price` (integer, NGN), `category` (starter/main/dessert/beverage), `isAvailable`, `sortOrder`                                                                                                                                                                                                                                                                        | Belongs to Restaurant                                                                           |
-| **Facility**             | `id`, `resortId` (FK, nullable — null if shared across campuses), `name`, `slug`, `description`, `operatingHours` (JSON), `images` (JSON array), `isFeatured`, `sortOrder`, `createdAt`, `updatedAt`                                                                                                                                                                                                                    | Belongs to Resort (optional)                                                                    |
-| **Gem**                  | `id`, `name`, `slug`, `description`, `category` (nature/culture/adventure/spiritual), `distance`, `duration`, `images` (JSON array), `isFeatured`                                                                                                                                                                                                                                                                       | —                                                                                               |
-| **EventCategory**        | `id`, `name` (weddings/shoots/celebrations/team_bonding), `description`, `venueOptions` (JSON), `capacity`, `samplePackages` (JSON), `images` (JSON array)                                                                                                                                                                                                                                                              | Has many EventInquiries                                                                         |
-| **EventInquiry**         | `id`, `eventCategoryId` (FK), `contactName`, `contactEmail`, `contactPhone`, `preferredDate`, `estimatedGuests`, `budgetRange`, `specialRequirements`, `status` (new/in_review/responded/closed), `assignedTo` (FK, nullable), `createdAt`                                                                                                                                                                              | Belongs to EventCategory                                                                        |
-| **Deal**                 | `id`, `title`, `slug`, `description`, `discountType` (percentage/fixed), `discountValue`, `promoCode` (unique, nullable), `startDate`, `endDate`, `isActive`, `category` (room/dining/package/seasonal), `applicableRoomTypeIds` (JSON array), `images` (JSON array), `terms`                                                                                                                                           | Referenced by Bookings                                                                          |
-| **ContactSubmission**    | `id`, `userId` (FK, nullable), `name`, `email`, `phone`, `subject`, `message`, `status` (new/read/responded/closed), `createdAt`                                                                                                                                                                                                                                                                                        | Belongs to User (optional)                                                                      |
-| **NewsletterSubscriber** | `id`, `email` (unique), `isConfirmed`, `confirmedAt`, `unsubscribedAt`, `createdAt`                                                                                                                                                                                                                                                                                                                                     | —                                                                                               |
-| **NotifyMeRegistration** | `id`, `roomTypeId` (FK), `email`, `isNotified`, `notifiedAt` (nullable), `createdAt`                                                                                                                                                                                                                                                                                                                                    | References RoomType                                                                             |
-| **Amenity**              | `id`, `name`, `icon` (mediaAssetId, FK, nullable), `category` (enum: general/bathroom/entertainment/outdoor — resort-level amenities), `sortOrder`, `createdAt`, `updatedAt`                                                                                                                                                                                                                                            | Referenced by RoomTypeAmenity (many-to-many)                                                    |
-| **RoomTypeAmenity**      | `roomTypeId` (FK), `amenityId` (FK) — composite PK                                                                                                                                                                                                                                                                                                                                                                      | Junction table: RoomType ↔ Amenity                                                              |
-| **SystemSetting**        | `id`, `key` (unique, e.g., `tax_rate`, `checkin_time`, `checkout_time`, `pending_booking_expiry_minutes`, `whatsapp_number`, `contact_email`, `contact_phone`, `map_coordinates`), `value` (text), `updatedAt`, `updatedBy` (FK, nullable)                                                                                                                                                                              | Updated by Admin                                                                                |
-| **MediaAsset**           | `id`, `fileName`, `mimeType`, `sizeBytes`, `url`, `cdnUrl`, `altText`, `category` (gallery/room/facility/restaurant/event/deal), `uploadedBy` (FK), `createdAt`                                                                                                                                                                                                                                                         | Uploaded by User                                                                                |
-| **AuditLog**             | `id`, `userId` (FK), `action`, `entity`, `entityId`, `previousData` (JSON), `newData` (JSON), `ipAddress`, `createdAt`                                                                                                                                                                                                                                                                                                  | Belongs to User                                                                                 |
+| Entity                   | Key Attributes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Relationships                                                                                   |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **User**                 | `id`, `email`, `passwordHash`, `fullName`, `phone`, `role` (guest/content_manager/resort_admin/super_admin), `isEmailVerified`, `isLocked`, `failedLoginAttempts`, `lockedUntil`, `createdAt`, `updatedAt`                                                                                                                                                                                                                                                                                                                               | Has many Bookings; Has many ContactSubmissions                                                  |
+| **Resort**               | `id`, `name` (e.g., "GAR Elysian"), `slug`, `description`, `heroImageId`, `features` (JSON), `createdAt`, `updatedAt`                                                                                                                                                                                                                                                                                                                                                                                                                    | Has many Buildings; Has many Facilities; Has many Restaurants                                   |
+| **Building**             | `id`, `resortId` (FK), `name` (e.g., "The Fountain Haven"), `description`                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Belongs to Resort; Has many RoomTypes                                                           |
+| **RoomType**             | `id`, `buildingId` (FK), `name`, `tier` (enum), `description`, `basePrice` (integer, NGN), `maxGuests`, `totalUnits`, `status` (available/under_construction), `amenities` (JSON array), `images` (JSON array of mediaAssetIds)                                                                                                                                                                                                                                                                                                          | Belongs to Building; Has many Rooms (units); Has many BookingLineItems; Has many SeasonalPrices |
+| **Room**                 | `id`, `roomTypeId` (FK), `unitNumber`, `floor`, `status` (available/occupied/maintenance)                                                                                                                                                                                                                                                                                                                                                                                                                                                | Belongs to RoomType                                                                             |
+| **SeasonalPrice**        | `id`, `roomTypeId` (FK), `startDate`, `endDate`, `price` (integer, NGN), `label` (e.g., "Christmas Peak")                                                                                                                                                                                                                                                                                                                                                                                                                                | Belongs to RoomType                                                                             |
+| **Booking**              | `id`, `reference` (unique, e.g., "GAR-A1B2C3D4"), `userId` (FK, nullable — null for guest-checkout bookings not yet linked to an account and for admin-initiated bookings), `channel` (online_guest/online_account/walk_in), `privacyConsentAt` (nullable), `guestName`, `guestEmail`, `guestPhone`, `checkInDate`, `checkOutDate`, `nights`, `adults`, `children`, `specialRequests`, `subtotal`, `dealDiscount`, `tax`, `total`, `status` (enum), `dealId` (FK, nullable), `createdAt`, `updatedAt`                                    | Belongs to User (optional); Has many BookingLineItems; Has one Payment; May reference Deal      |
+| **BookingLineItem**      | `id`, `bookingId` (FK), `roomTypeId` (FK), `quantity`, `unitPrice`, `lineTotal`                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Belongs to Booking; References RoomType                                                         |
+| **Payment**              | `id`, `bookingId` (FK), `gateway` ("paystack", "cash", "pos", "bank_transfer"), `gatewayReference` (unique per gateway; required for bank_transfer), `amount`, `currency` ("NGN"), `status` (pending/success/failed/refund_pending/refunded/partially_refunded/refund_failed), `refundAmount` (integer, nullable), `refundMethod` (paystack/bank_transfer/cash/pos_reversal, nullable), `refundReference` (nullable), `refundProcessedBy` (FK, nullable), `refundedAt` (nullable), `paidAt`, `metadata` (JSON), `createdAt`, `updatedAt` | Belongs to Booking                                                                              |
+| **Restaurant**           | `id`, `resortId` (FK, nullable — null if shared across campuses), `name`, `slug`, `description`, `cuisineType`, `operatingHours` (JSON), `images` (JSON array), `createdAt`, `updatedAt`                                                                                                                                                                                                                                                                                                                                                 | Belongs to Resort (optional); Has many MenuItems                                                |
+| **MenuItem**             | `id`, `restaurantId` (FK), `name`, `description`, `price` (integer, NGN), `category` (starter/main/dessert/beverage), `isAvailable`, `sortOrder`                                                                                                                                                                                                                                                                                                                                                                                         | Belongs to Restaurant                                                                           |
+| **Facility**             | `id`, `resortId` (FK, nullable — null if shared across campuses), `name`, `slug`, `description`, `operatingHours` (JSON), `images` (JSON array), `isFeatured`, `sortOrder`, `createdAt`, `updatedAt`                                                                                                                                                                                                                                                                                                                                     | Belongs to Resort (optional)                                                                    |
+| **Gem**                  | `id`, `name`, `slug`, `description`, `category` (nature/culture/adventure/spiritual), `distance`, `duration`, `images` (JSON array), `isFeatured`                                                                                                                                                                                                                                                                                                                                                                                        | —                                                                                               |
+| **EventCategory**        | `id`, `name` (weddings/shoots/celebrations/team_bonding), `description`, `venueOptions` (JSON), `capacity`, `samplePackages` (JSON), `images` (JSON array)                                                                                                                                                                                                                                                                                                                                                                               | Has many EventInquiries                                                                         |
+| **EventInquiry**         | `id`, `eventCategoryId` (FK), `contactName`, `contactEmail`, `contactPhone`, `preferredDate`, `estimatedGuests`, `budgetRange`, `specialRequirements`, `status` (new/in_review/responded/closed), `assignedTo` (FK, nullable), `createdAt`                                                                                                                                                                                                                                                                                               | Belongs to EventCategory                                                                        |
+| **Deal**                 | `id`, `title`, `slug`, `description`, `discountType` (percentage/fixed), `discountValue`, `promoCode` (unique, nullable), `startDate`, `endDate`, `isActive`, `category` (room/dining/package/seasonal), `applicableRoomTypeIds` (JSON array), `images` (JSON array), `terms`                                                                                                                                                                                                                                                            | Referenced by Bookings                                                                          |
+| **ContactSubmission**    | `id`, `userId` (FK, nullable), `name`, `email`, `phone`, `subject`, `message`, `status` (new/read/responded/closed), `createdAt`                                                                                                                                                                                                                                                                                                                                                                                                         | Belongs to User (optional)                                                                      |
+| **NewsletterSubscriber** | `id`, `email` (unique), `isConfirmed`, `confirmedAt`, `unsubscribedAt`, `createdAt`                                                                                                                                                                                                                                                                                                                                                                                                                                                      | —                                                                                               |
+| **NotifyMeRegistration** | `id`, `roomTypeId` (FK), `email`, `isNotified`, `notifiedAt` (nullable), `createdAt`                                                                                                                                                                                                                                                                                                                                                                                                                                                     | References RoomType                                                                             |
+| **Amenity**              | `id`, `name`, `icon` (mediaAssetId, FK, nullable), `category` (enum: general/bathroom/entertainment/outdoor — resort-level amenities), `sortOrder`, `createdAt`, `updatedAt`                                                                                                                                                                                                                                                                                                                                                             | Referenced by RoomTypeAmenity (many-to-many)                                                    |
+| **RoomTypeAmenity**      | `roomTypeId` (FK), `amenityId` (FK) — composite PK                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Junction table: RoomType ↔ Amenity                                                              |
+| **SystemSetting**        | `id`, `key` (unique, e.g., `tax_rate`, `checkin_time`, `checkout_time`, `pending_booking_expiry_minutes`, `whatsapp_number`, `contact_email`, `contact_phone`, `map_coordinates`), `value` (text), `updatedAt`, `updatedBy` (FK, nullable)                                                                                                                                                                                                                                                                                               | Updated by Admin                                                                                |
+| **MediaAsset**           | `id`, `fileName`, `mimeType`, `sizeBytes`, `url`, `cdnUrl`, `altText`, `category` (gallery/room/facility/restaurant/event/deal), `uploadedBy` (FK), `createdAt`                                                                                                                                                                                                                                                                                                                                                                          | Uploaded by User                                                                                |
+| **AuditLog**             | `id`, `userId` (FK), `action`, `entity`, `entityId`, `previousData` (JSON), `newData` (JSON), `ipAddress`, `createdAt`                                                                                                                                                                                                                                                                                                                                                                                                                   | Belongs to User                                                                                 |
 
 ---
 
@@ -1628,104 +1644,106 @@ Cancelled  Cancelled
 
 > **Design Note:** All endpoints are prefixed with `/api/v1/`. Public endpoints are accessible without authentication. Guest-authenticated endpoints require a valid JWT from a registered guest. Admin endpoints require JWT + appropriate role. All responses use standard envelope: `{ "success": boolean, "data": {...}, "error": { "code": string, "message": string } }`. Pagination uses `?page=1&limit=20` with response headers `X-Total-Count` and `X-Total-Pages`.
 
-| Method                     | Route                                 | Description                  | Auth | Role                       |
-| -------------------------- | ------------------------------------- | ---------------------------- | ---- | -------------------------- |
-| **Authentication**         |                                       |                              |      |                            |
-| POST                       | `/api/v1/auth/register`               | Register guest               | No   | Public                     |
-| POST                       | `/api/v1/auth/login`                  | Login                        | No   | Public                     |
-| POST                       | `/api/v1/auth/refresh`                | Refresh JWT                  | No   | Public                     |
-| POST                       | `/api/v1/auth/logout`                 | Logout                       | Yes  | Any                        |
-| POST                       | `/api/v1/auth/forgot-password`        | Request password reset       | No   | Public                     |
-| POST                       | `/api/v1/auth/reset-password`         | Reset password               | No   | Public                     |
-| POST                       | `/api/v1/auth/resend-verification`    | Resend email verification    | No   | Public                     |
-| PUT                        | `/api/v1/auth/me/password`            | Change password              | Yes  | Any                        |
-| GET                        | `/api/v1/auth/me`                     | Get current user             | Yes  | Any                        |
-| PUT                        | `/api/v1/auth/me`                     | Update profile               | Yes  | Any                        |
-| **Rooms**                  |                                       |                              |      |                            |
-| GET                        | `/api/v1/rooms`                       | List room types (filterable) | No   | Public                     |
-| GET                        | `/api/v1/rooms/{id}`                  | Room type detail             | No   | Public                     |
-| POST                       | `/api/v1/rooms`                       | Create room type             | Yes  | Resort Admin+              |
-| PUT                        | `/api/v1/rooms/{id}`                  | Update room type             | Yes  | Resort Admin+              |
-| DELETE                     | `/api/v1/rooms/{id}`                  | Soft-delete room type        | Yes  | Super Admin                |
-| GET                        | `/api/v1/rooms/{id}/units`            | List individual units        | Yes  | Resort Admin+              |
-| PUT                        | `/api/v1/rooms/{id}/units/{uid}`      | Update unit status           | Yes  | Resort Admin+              |
-| GET                        | `/api/v1/buildings`                   | List buildings               | No   | Public                     |
-| POST                       | `/api/v1/buildings`                   | Create building              | Yes  | Resort Admin+              |
-| PUT                        | `/api/v1/buildings/{id}`              | Update building              | Yes  | Resort Admin+              |
-| **Availability & Booking** |                                       |                              |      |                            |
-| GET                        | `/api/v1/availability`                | Check availability           | No   | Public                     |
-| GET                        | `/api/v1/availability/calendar`       | Calendar-view availability   | No   | Public                     |
-| POST                       | `/api/v1/bookings`                    | Create booking               | Yes  | Guest+ (Admin for walk-in) |
-| GET                        | `/api/v1/bookings`                    | List bookings                | Yes  | Guest (own) / Admin (all)  |
-| GET                        | `/api/v1/bookings/{ref}`              | Get booking detail           | Yes  | Guest (own) / Admin        |
-| PUT                        | `/api/v1/bookings/{ref}/cancel`       | Cancel booking               | Yes  | Guest (own) / Admin        |
-| PUT                        | `/api/v1/bookings/{ref}/status`       | Update booking status        | Yes  | Resort Admin+              |
-| POST                       | `/api/v1/bookings/{ref}/confirmation` | Resend confirmation          | Yes  | Guest (own) / Admin        |
-| GET                        | `/api/v1/bookings/{ref}/pdf`          | Download PDF confirmation    | Yes  | Guest (own) / Admin        |
-| **Payments**               |                                       |                              |      |                            |
-| POST                       | `/api/v1/payments/initiate`           | Initiate payment             | Yes  | Guest+                     |
-| POST                       | `/api/v1/payments/verify`             | Verify payment (webhook)     | No   | Paystack webhook           |
-| GET                        | `/api/v1/payments/{id}`               | Get payment status           | Yes  | Guest (own) / Admin        |
-| **Restaurants & Menus**    |                                       |                              |      |                            |
-| GET                        | `/api/v1/restaurants`                 | List restaurants             | No   | Public                     |
-| GET                        | `/api/v1/restaurants/{id}`            | Restaurant detail            | No   | Public                     |
-| POST                       | `/api/v1/restaurants`                 | Create restaurant            | Yes  | Content Mgr+               |
-| PUT                        | `/api/v1/restaurants/{id}`            | Update restaurant            | Yes  | Content Mgr+               |
-| GET                        | `/api/v1/restaurants/{id}/menu`       | Get menu                     | No   | Public                     |
-| PUT                        | `/api/v1/restaurants/{id}/menu`       | Update menu                  | Yes  | Content Mgr+               |
-| **Facilities**             |                                       |                              |      |                            |
-| GET                        | `/api/v1/facilities`                  | List facilities              | No   | Public                     |
-| GET                        | `/api/v1/facilities/{id}`             | Facility detail              | No   | Public                     |
-| POST                       | `/api/v1/facilities`                  | Create facility              | Yes  | Content Mgr+               |
-| PUT                        | `/api/v1/facilities/{id}`             | Update facility              | Yes  | Content Mgr+               |
-| DELETE                     | `/api/v1/facilities/{id}`             | Delete facility              | Yes  | Resort Admin+              |
-| **Off-Beat Gems**          |                                       |                              |      |                            |
-| GET                        | `/api/v1/gems`                        | List gems (filterable)       | No   | Public                     |
-| POST                       | `/api/v1/gems`                        | Create gem                   | Yes  | Content Mgr+               |
-| PUT                        | `/api/v1/gems/{id}`                   | Update gem                   | Yes  | Content Mgr+               |
-| DELETE                     | `/api/v1/gems/{id}`                   | Delete gem                   | Yes  | Content Mgr+               |
-| **Events**                 |                                       |                              |      |                            |
-| GET                        | `/api/v1/events`                      | List event categories        | No   | Public                     |
-| POST                       | `/api/v1/events/inquiries`            | Submit event inquiry         | No   | Public                     |
-| GET                        | `/api/v1/events/inquiries`            | List inquiries               | Yes  | Resort Admin+              |
-| PUT                        | `/api/v1/events/inquiries/{id}`       | Update inquiry               | Yes  | Resort Admin+              |
-| **Deals & Offers**         |                                       |                              |      |                            |
-| GET                        | `/api/v1/deals`                       | List active deals            | No   | Public                     |
-| GET                        | `/api/v1/deals/{id}`                  | Deal detail                  | No   | Public                     |
-| POST                       | `/api/v1/deals`                       | Create deal                  | Yes  | Content Mgr+               |
-| PUT                        | `/api/v1/deals/{id}`                  | Update deal                  | Yes  | Content Mgr+               |
-| DELETE                     | `/api/v1/deals/{id}`                  | Delete deal                  | Yes  | Resort Admin+              |
-| GET                        | `/api/v1/deals/validate/{code}`       | Validate promo code          | No   | Public                     |
-| **Contact & Newsletter**   |                                       |                              |      |                            |
-| POST                       | `/api/v1/contact`                     | Submit contact form          | No   | Public                     |
-| GET                        | `/api/v1/contact`                     | List submissions             | Yes  | Resort Admin+              |
-| PUT                        | `/api/v1/contact/{id}`                | Update submission            | Yes  | Resort Admin+              |
-| POST                       | `/api/v1/newsletter/subscribe`        | Subscribe                    | No   | Public                     |
-| POST                       | `/api/v1/newsletter/unsubscribe`      | Unsubscribe                  | No   | Public                     |
-| POST                       | `/api/v1/notify-me`                   | Register interest            | No   | Public                     |
-| **Content (CMS)**          |                                       |                              |      |                            |
-| GET                        | `/api/v1/content/{page}`              | Get page content             | No   | Public                     |
-| PUT                        | `/api/v1/content/{page}`              | Update page content          | Yes  | Content Mgr+               |
-| **Media**                  |                                       |                              |      |                            |
-| POST                       | `/api/v1/media`                       | Upload media                 | Yes  | Content Mgr+               |
-| GET                        | `/api/v1/media`                       | List media                   | Yes  | Content Mgr+               |
-| DELETE                     | `/api/v1/media/{id}`                  | Delete media                 | Yes  | Content Mgr+               |
-| **Amenities**              |                                       |                              |      |                            |
-| GET                        | `/api/v1/amenities`                   | List all amenities           | No   | Public                     |
-| POST                       | `/api/v1/amenities`                   | Create amenity               | Yes  | Content Mgr+               |
-| PUT                        | `/api/v1/amenities/{id}`              | Update amenity               | Yes  | Content Mgr+               |
-| DELETE                     | `/api/v1/amenities/{id}`              | Delete amenity               | Yes  | Resort Admin+              |
-| **Admin Settings**         |                                       |                              |      |                            |
-| GET                        | `/api/v1/admin/settings`              | List system settings         | Yes  | Super Admin                |
-| PUT                        | `/api/v1/admin/settings`              | Update system settings       | Yes  | Super Admin                |
-| **Admin Users**            |                                       |                              |      |                            |
-| GET                        | `/api/v1/admin/users`                 | List all users               | Yes  | Super Admin                |
-| PUT                        | `/api/v1/admin/users/{id}/role`       | Change user role             | Yes  | Super Admin                |
-| PUT                        | `/api/v1/admin/users/{id}/status`     | Activate/deactivate user     | Yes  | Super Admin                |
-| **Analytics (Admin)**      |                                       |                              |      |                            |
-| GET                        | `/api/v1/analytics/bookings`          | Booking statistics           | Yes  | Resort Admin+              |
-| GET                        | `/api/v1/analytics/revenue`           | Revenue reports              | Yes  | Resort Admin+              |
-| GET                        | `/api/v1/analytics/occupancy`         | Occupancy rates              | Yes  | Resort Admin+              |
+| Method                     | Route                                    | Description                  | Auth | Role                       |
+| -------------------------- | ---------------------------------------- | ---------------------------- | ---- | -------------------------- |
+| **Authentication**         |                                          |                              |      |                            |
+| POST                       | `/api/v1/auth/register`                  | Register guest               | No   | Public                     |
+| POST                       | `/api/v1/auth/login`                     | Login                        | No   | Public                     |
+| POST                       | `/api/v1/auth/refresh`                   | Refresh JWT                  | No   | Public                     |
+| POST                       | `/api/v1/auth/logout`                    | Logout                       | Yes  | Any                        |
+| POST                       | `/api/v1/auth/forgot-password`           | Request password reset       | No   | Public                     |
+| POST                       | `/api/v1/auth/reset-password`            | Reset password               | No   | Public                     |
+| POST                       | `/api/v1/auth/resend-verification`       | Resend email verification    | No   | Public                     |
+| PUT                        | `/api/v1/auth/me/password`               | Change password              | Yes  | Any                        |
+| GET                        | `/api/v1/auth/me`                        | Get current user             | Yes  | Any                        |
+| PUT                        | `/api/v1/auth/me`                        | Update profile               | Yes  | Any                        |
+| **Rooms**                  |                                          |                              |      |                            |
+| GET                        | `/api/v1/rooms`                          | List room types (filterable) | No   | Public                     |
+| GET                        | `/api/v1/rooms/{id}`                     | Room type detail             | No   | Public                     |
+| POST                       | `/api/v1/rooms`                          | Create room type             | Yes  | Resort Admin+              |
+| PUT                        | `/api/v1/rooms/{id}`                     | Update room type             | Yes  | Resort Admin+              |
+| DELETE                     | `/api/v1/rooms/{id}`                     | Soft-delete room type        | Yes  | Super Admin                |
+| GET                        | `/api/v1/rooms/{id}/units`               | List individual units        | Yes  | Resort Admin+              |
+| PUT                        | `/api/v1/rooms/{id}/units/{uid}`         | Update unit status           | Yes  | Resort Admin+              |
+| GET                        | `/api/v1/buildings`                      | List buildings               | No   | Public                     |
+| POST                       | `/api/v1/buildings`                      | Create building              | Yes  | Resort Admin+              |
+| PUT                        | `/api/v1/buildings/{id}`                 | Update building              | Yes  | Resort Admin+              |
+| **Availability & Booking** |                                          |                              |      |                            |
+| GET                        | `/api/v1/availability`                   | Check availability           | No   | Public                     |
+| GET                        | `/api/v1/availability/calendar`          | Calendar-view availability   | No   | Public                     |
+| POST                       | `/api/v1/bookings`                       | Create booking               | Yes  | Guest+ (Admin for walk-in) |
+| GET                        | `/api/v1/bookings`                       | List bookings                | Yes  | Guest (own) / Admin (all)  |
+| GET                        | `/api/v1/bookings/{ref}`                 | Get booking detail           | Yes  | Guest (own) / Admin        |
+| PUT                        | `/api/v1/bookings/{ref}/cancel`          | Cancel booking               | Yes  | Guest (own) / Admin        |
+| PUT                        | `/api/v1/bookings/{ref}/status`          | Update booking status        | Yes  | Resort Admin+              |
+| POST                       | `/api/v1/bookings/{ref}/offline-payment` | Record offline payment       | Yes  | Resort Admin+              |
+| POST                       | `/api/v1/bookings/{ref}/confirmation`    | Resend confirmation          | Yes  | Guest (own) / Admin        |
+| GET                        | `/api/v1/bookings/{ref}/pdf`             | Download PDF confirmation    | Yes  | Guest (own) / Admin        |
+| **Payments**               |                                          |                              |      |                            |
+| POST                       | `/api/v1/payments/initiate`              | Initiate payment             | Yes  | Guest+                     |
+| POST                       | `/api/v1/payments/verify`                | Verify payment (webhook)     | No   | Paystack webhook           |
+| GET                        | `/api/v1/payments/{id}`                  | Get payment status           | Yes  | Guest (own) / Admin        |
+| POST                       | `/api/v1/payments/{id}/refund`           | Record / retry refund        | Yes  | Resort Admin+              |
+| **Restaurants & Menus**    |                                          |                              |      |                            |
+| GET                        | `/api/v1/restaurants`                    | List restaurants             | No   | Public                     |
+| GET                        | `/api/v1/restaurants/{id}`               | Restaurant detail            | No   | Public                     |
+| POST                       | `/api/v1/restaurants`                    | Create restaurant            | Yes  | Content Mgr+               |
+| PUT                        | `/api/v1/restaurants/{id}`               | Update restaurant            | Yes  | Content Mgr+               |
+| GET                        | `/api/v1/restaurants/{id}/menu`          | Get menu                     | No   | Public                     |
+| PUT                        | `/api/v1/restaurants/{id}/menu`          | Update menu                  | Yes  | Content Mgr+               |
+| **Facilities**             |                                          |                              |      |                            |
+| GET                        | `/api/v1/facilities`                     | List facilities              | No   | Public                     |
+| GET                        | `/api/v1/facilities/{id}`                | Facility detail              | No   | Public                     |
+| POST                       | `/api/v1/facilities`                     | Create facility              | Yes  | Content Mgr+               |
+| PUT                        | `/api/v1/facilities/{id}`                | Update facility              | Yes  | Content Mgr+               |
+| DELETE                     | `/api/v1/facilities/{id}`                | Delete facility              | Yes  | Resort Admin+              |
+| **Off-Beat Gems**          |                                          |                              |      |                            |
+| GET                        | `/api/v1/gems`                           | List gems (filterable)       | No   | Public                     |
+| POST                       | `/api/v1/gems`                           | Create gem                   | Yes  | Content Mgr+               |
+| PUT                        | `/api/v1/gems/{id}`                      | Update gem                   | Yes  | Content Mgr+               |
+| DELETE                     | `/api/v1/gems/{id}`                      | Delete gem                   | Yes  | Content Mgr+               |
+| **Events**                 |                                          |                              |      |                            |
+| GET                        | `/api/v1/events`                         | List event categories        | No   | Public                     |
+| POST                       | `/api/v1/events/inquiries`               | Submit event inquiry         | No   | Public                     |
+| GET                        | `/api/v1/events/inquiries`               | List inquiries               | Yes  | Resort Admin+              |
+| PUT                        | `/api/v1/events/inquiries/{id}`          | Update inquiry               | Yes  | Resort Admin+              |
+| **Deals & Offers**         |                                          |                              |      |                            |
+| GET                        | `/api/v1/deals`                          | List active deals            | No   | Public                     |
+| GET                        | `/api/v1/deals/{id}`                     | Deal detail                  | No   | Public                     |
+| POST                       | `/api/v1/deals`                          | Create deal                  | Yes  | Content Mgr+               |
+| PUT                        | `/api/v1/deals/{id}`                     | Update deal                  | Yes  | Content Mgr+               |
+| DELETE                     | `/api/v1/deals/{id}`                     | Delete deal                  | Yes  | Resort Admin+              |
+| GET                        | `/api/v1/deals/validate/{code}`          | Validate promo code          | No   | Public                     |
+| **Contact & Newsletter**   |                                          |                              |      |                            |
+| POST                       | `/api/v1/contact`                        | Submit contact form          | No   | Public                     |
+| GET                        | `/api/v1/contact`                        | List submissions             | Yes  | Resort Admin+              |
+| PUT                        | `/api/v1/contact/{id}`                   | Update submission            | Yes  | Resort Admin+              |
+| POST                       | `/api/v1/newsletter/subscribe`           | Subscribe                    | No   | Public                     |
+| POST                       | `/api/v1/newsletter/unsubscribe`         | Unsubscribe                  | No   | Public                     |
+| POST                       | `/api/v1/notify-me`                      | Register interest            | No   | Public                     |
+| **Content (CMS)**          |                                          |                              |      |                            |
+| GET                        | `/api/v1/content/{page}`                 | Get page content             | No   | Public                     |
+| PUT                        | `/api/v1/content/{page}`                 | Update page content          | Yes  | Content Mgr+               |
+| **Media**                  |                                          |                              |      |                            |
+| POST                       | `/api/v1/media`                          | Upload media                 | Yes  | Content Mgr+               |
+| GET                        | `/api/v1/media`                          | List media                   | Yes  | Content Mgr+               |
+| DELETE                     | `/api/v1/media/{id}`                     | Delete media                 | Yes  | Content Mgr+               |
+| **Amenities**              |                                          |                              |      |                            |
+| GET                        | `/api/v1/amenities`                      | List all amenities           | No   | Public                     |
+| POST                       | `/api/v1/amenities`                      | Create amenity               | Yes  | Content Mgr+               |
+| PUT                        | `/api/v1/amenities/{id}`                 | Update amenity               | Yes  | Content Mgr+               |
+| DELETE                     | `/api/v1/amenities/{id}`                 | Delete amenity               | Yes  | Resort Admin+              |
+| **Admin Settings**         |                                          |                              |      |                            |
+| GET                        | `/api/v1/admin/settings`                 | List system settings         | Yes  | Super Admin                |
+| PUT                        | `/api/v1/admin/settings`                 | Update system settings       | Yes  | Super Admin                |
+| **Admin Users**            |                                          |                              |      |                            |
+| GET                        | `/api/v1/admin/users`                    | List all users               | Yes  | Super Admin                |
+| PUT                        | `/api/v1/admin/users/{id}/role`          | Change user role             | Yes  | Super Admin                |
+| PUT                        | `/api/v1/admin/users/{id}/status`        | Activate/deactivate user     | Yes  | Super Admin                |
+| **Analytics (Admin)**      |                                          |                              |      |                            |
+| GET                        | `/api/v1/analytics/bookings`             | Booking statistics           | Yes  | Resort Admin+              |
+| GET                        | `/api/v1/analytics/revenue`              | Revenue reports              | Yes  | Resort Admin+              |
+| GET                        | `/api/v1/analytics/occupancy`            | Occupancy rates              | Yes  | Resort Admin+              |
 
 ---
 
@@ -1735,12 +1753,12 @@ Cancelled  Cancelled
 
 ### 8.1 Payment Gateway — Paystack
 
-| Attribute          | Detail                                                                                                                                              |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Purpose**        | Process online payments for bookings (NGN)                                                                                                          |
-| **API/SDK**        | Paystack Inline JS (frontend), Paystack REST API (backend webhook verification)                                                                     |
-| **Data Exchanged** | Amount, currency, email, booking reference → Transaction reference, status, payment method                                                          |
-| **Fallback**       | Display "Online payment temporarily unavailable. Please contact us on WhatsApp to complete your booking." Pending booking is preserved for 2 hours. |
+| Attribute          | Detail                                                                                                                                                                                                                                                                                              |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Purpose**        | Process online payments for bookings (NGN)                                                                                                                                                                                                                                                          |
+| **API/SDK**        | Paystack Inline JS (frontend), Paystack REST API (backend webhook verification)                                                                                                                                                                                                                     |
+| **Data Exchanged** | Amount, currency, email, booking reference → Transaction reference, status, payment method                                                                                                                                                                                                          |
+| **Fallback**       | Display "Online payment temporarily unavailable. Please contact us on WhatsApp to complete your booking." Pending booking is preserved for 2 hours. The WhatsApp concierge may take payment by bank transfer, which an admin records as an offline payment to confirm the booking (Section 3.14.4). |
 
 ### 8.2 WhatsApp Business
 
@@ -1849,12 +1867,13 @@ _Detailed wireframes to be produced in design phase based on these specification
 
 ### 9.3 Revision History
 
-| Version | Date             | Author                                 | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| ------- | ---------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1.0     | March 29, 2026   | Architecture Team                      | Initial SRS draft                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| 1.1     | —                | Architecture Team                      | Revised per BA critique: added cookie consent banner; global error/loading/empty states; fixed hero video mobile spec; fixed Village max-guests; rewrote booking page as 4-step wizard with per-night pricing; added Auth pages (3.11), Guest Account (3.12), Privacy Policy (3.13), Admin CMS panel (3.14); expanded auth lockout & booking engine specs; added Amenity, RoomTypeAmenity, SystemSetting entities; added calendar availability & PDF endpoints; added SMS deferral note; added CAPTCHA & webhook verification mandates; resolved guest-checkout vs. required-auth contradiction |
-| 1.2     | March 29, 2026   | Architecture Team                      | Added Section 2.7 Technology Stack specifying concrete implementation choices: Supabase (managed PostgreSQL + Auth + Storage), Next.js API Routes, Chakra UI v3, Paystack, SendGrid, Vercel deployment. Updated Sections 2.4, 4, 5.3, and 5.5 to align with chosen stack.                                                                                                                                                                                                                                                                                                                       |
-| 1.3     | October 15, 2026 | Product Owner (approved) / Engineering | Guest checkout: online bookings no longer require an account or email verification. Added booking access ("Manage booking") links valid until 30 days after check-out, post-booking account offer, account linking by verified email (immediate when a verified account exists), checkout privacy consent, and booking abuse limits (10 bookings/hour/IP, 3 live holds/email; reCAPTCHA deferred). Updated 2.3, 3.11, 4.1.                                                                                                                                                                      |
+| Version | Date             | Author                                 | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------- | ---------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0     | March 29, 2026   | Architecture Team                      | Initial SRS draft                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 1.1     | —                | Architecture Team                      | Revised per BA critique: added cookie consent banner; global error/loading/empty states; fixed hero video mobile spec; fixed Village max-guests; rewrote booking page as 4-step wizard with per-night pricing; added Auth pages (3.11), Guest Account (3.12), Privacy Policy (3.13), Admin CMS panel (3.14); expanded auth lockout & booking engine specs; added Amenity, RoomTypeAmenity, SystemSetting entities; added calendar availability & PDF endpoints; added SMS deferral note; added CAPTCHA & webhook verification mandates; resolved guest-checkout vs. required-auth contradiction                                                                                                       |
+| 1.2     | March 29, 2026   | Architecture Team                      | Added Section 2.7 Technology Stack specifying concrete implementation choices: Supabase (managed PostgreSQL + Auth + Storage), Next.js API Routes, Chakra UI v3, Paystack, SendGrid, Vercel deployment. Updated Sections 2.4, 4, 5.3, and 5.5 to align with chosen stack.                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 1.3     | October 15, 2026 | Product Owner (approved) / Engineering | Guest checkout: online bookings no longer require an account or email verification. Added booking access ("Manage booking") links valid until 30 days after check-out, post-booking account offer, account linking by verified email (immediate when a verified account exists), checkout privacy consent, and booking abuse limits (10 bookings/hour/IP, 3 live holds/email; reCAPTCHA deferred). Updated 2.3, 3.11, 4.1.                                                                                                                                                                                                                                                                            |
+| 1.4     | October 16, 2026 | Product Owner (approved) / Engineering | Offline payments and manual refunds: admins can record bank-transfer, cash, and POS payments (including WhatsApp concierge bookings) to confirm bookings, and cancel offline-paid bookings with a manual refund tracked Pending → Processed → Failed outside Paystack. Admin refund override with mandatory reason. Added `bank_transfer` gateway, `refund_pending`/`refund_failed` payment statuses, refund method/reference fields, and the offline-payment and refund endpoints. Check-in assigns room units. Replaced FID with INP in performance targets. Corrected Booking `userId` description for guest checkout and added `channel`/`privacyConsentAt`. Updated 3.14.4, 4.3, 5.1, 6, 7, 8.1. |
 
 ---
 

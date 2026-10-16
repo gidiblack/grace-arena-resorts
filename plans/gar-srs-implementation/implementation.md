@@ -12,7 +12,7 @@ Implement the authoritative requirements in `docs/GAR-SRS.md` based on `plans/ga
 
 - `feature/gar-m1-marketing-site` — **Milestone 1: Marketing Site** (Steps 1, 5, 6, 7)
 - `feature/gar-m2-booking-engine` — **Milestone 2: Booking Engine** (Steps 2, 3, 4, 8, 9, 10, 11)
-- `feature/gar-m3-admin-ops` — **Milestone 3: Admin & Operations** (Steps 12, 13, 14)
+- `feature/gar-m3-admin-ops` — **Milestone 3: Admin & Operations** (Steps 12A, 12B, 13, 14)
 - `feature/gar-admin-crud-phase-2` — **Follow-up PR** (Step 15: Admin CRUD Breadth)
 
 Each step is developed with its own commit and verification gate, merging to `main` via PRs per milestone or per step. Early steps not exposing user-facing features merge directly; incomplete user journeys use feature flags or unlinked routes until milestone completion.
@@ -64,27 +64,34 @@ Each step is developed with its own commit and verification gate, merging to `ma
 - [x] All auth flows working (register, verify, login, reset, change password)
 - [x] Payment webhook security verified in Paystack sandbox
 
-### Milestone 3: Admin & Operations (Target: 3–5 weeks after M2 · 11–17 dev-days)
+### Milestone 3: Admin & Operations (Target: 4–6 weeks after M2 · 19–25 dev-days)
 
-**Delivers:** Admin dashboard, bookings management, operational tooling, quality gates.
+**Delivers:** Admin bookings operations (including offline payments and manual refunds), room status, dashboard, operational tooling, quality gates.
 
-| Step    | Scope                                                                           | Estimated Effort   |
-| ------- | ------------------------------------------------------------------------------- | ------------------ |
-| Step 12 | Admin portal foundation, RBAC, dashboard KPIs, bookings management, room status | 5–7 days           |
-| Step 13 | Observability (Sentry), SEO finalization, background jobs, runbook              | 3–5 days           |
-| Step 14 | Quality gate, CI/CD, documentation, CWV, manual a11y audit checklist            | 3–5 days           |
-|         | **M3 subtotal**                                                                 | **11–17 dev-days** |
+> **M3 audit (2026-10-16):** Step 12 re-scoped and split into 12A/12B after an audit against SRS v1.3 and the shipped M2 code; see `plan-v1.2-corrected.md` v1.4.
+
+| Step     | Scope                                                                                                                     | Estimated Effort   |
+| -------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| Step 12A | Admin shell, RBAC guards, bookings operations (check-in units, offline payments, manual refunds), room status + Notify-Me | 7–9 days           |
+| Step 12B | Admin dashboard and analytics                                                                                             | 4–5 days           |
+| Step 13  | Observability, SEO finalization, background job scheduling, auth/reliability hardening                                    | 4–5 days           |
+| Step 14  | Quality gate, CI/CD, load test, documentation                                                                             | 4–6 days           |
+|          | **M3 subtotal**                                                                                                           | **19–25 dev-days** |
 
 **Exit Criteria:**
 
-- Admin dashboard with KPIs and bookings chart
-- Admin bookings management with status transitions, cancellation, refund processing
-- Background jobs running (pending booking expiry, failed email retry, deal deactivation)
-- Sentry monitoring integrated
-- CI pipeline passing (lint, format, typecheck, test, build, e2e smoke)
-- Core Web Vitals targets met
+- Admin access enforced per the SRS 4.1 role matrix (Content Manager: read-only bookings, no financial analytics); admin accounts bootstrapped
+- Admin bookings management: filters/search, detail with full status history, check-in with unit assignment, check-out, no-show, admin-initiated (walk-in / WhatsApp concierge) bookings
+- Offline payments (bank transfer / cash / POS) recorded by admins; admin cancellation with the policy refund calculator; Paystack refunds automated, manual refunds tracked Pending → Processed → Failed
+- Room unit status and room-type status management; Notify-Me emails sent on `under_construction` → `available`
+- Admin dashboard with SRS 3.14.2 KPIs, bookings/revenue chart, occupancy heatmap, activity feed
+- Background jobs scheduled and verified (pending booking expiry, failed email retry, deal deactivation, access-token purge)
+- Sentry integrated with PII/token scrubbing; uptime monitoring live; backups and point-in-time recovery confirmed
+- CI pipeline passing (lint, format, typecheck, coverage ≥ 70%, build, e2e smoke, axe, Lighthouse CI)
+- Core Web Vitals targets met (LCP, CLS, TTFB in the lab; INP from field data); 500-user load test run with API p95 < 300 ms
+- Manual accessibility audit completed
 
-### Total Estimated Effort: 58–83 dev-days
+### Total Estimated Effort: 66–91 dev-days
 
 ---
 
@@ -124,7 +131,7 @@ Each step is developed with its own commit and verification gate, merging to `ma
 
 - **Before M1 Launch (Data Day 1):** Room inventory verified, media uploaded to `media-public`, menus entered, facility hours confirmed, system settings configured.
 - **Before M2 Launch (Data Day 2):** Seasonal pricing entered, active deals created, tax rate confirmed (7.5%), check-in/out times verified (14:00/11:00), pending booking expiry set (30 mins), admin staff accounts created, Paystack live keys configured, SendGrid production sender verified.
-- **Before M3 Launch (Data Day 3):** Sentry DSN configured, GA4 measurement ID verified, alerting thresholds set, background job schedules confirmed.
+- **Before M3 Launch (Data Day 3):** Sentry DSN configured, GA4 measurement ID verified, alerting thresholds set, background job schedules confirmed (`CRON_SECRET` set; `retry-failed-emails` present in `cron.job`), uptime monitor and backups/PITR confirmed, offline-payment SOP agreed (resort bank account for WhatsApp concierge, who may record payments/refunds, daily reconciliation), admin accounts created via `scripts/create-admin-user.ts`.
 
 ---
 
@@ -1053,53 +1060,197 @@ git commit -m "feat: guest account, booking management, profile and password cha
 
 ---
 
-## 12. Admin Portal Foundation, RBAC, Dashboard, and Bookings Management
+## 12A. Admin Shell, RBAC Guards, Bookings Operations, Offline Payments & Refunds, Room Status
 
-**Milestone:** M3 · **Estimated Effort:** 5–7 days · **Branch:** `feature/gar-m3-admin-ops` · **PR:** Step 12 PR merged to `main`
+**Milestone:** M3 · **Estimated Effort:** 7–9 days · **Branch:** `feature/gar-m3-admin-ops` · **PR:** Step 12A PR merged to `main`
 
-> **Simplified Admin Rationale (PM Recommendation):** The SRS specifies a full CMS with 14 sidebar modules, Recharts dashboards, occupancy heatmaps, and broad CRUD. For v1.0, the admin panel will have 2–3 users. To accelerate time-to-launch, Step 12 builds:
+> **Simplified Admin Rationale (PM Recommendation):** The SRS specifies a full CMS with 14 sidebar modules, Recharts dashboards, occupancy heatmaps, and broad CRUD. For v1.0, the admin panel will have 2–3 users. Step 12 is split so operations ship first:
 >
-> 1. Protected admin shell, RBAC, and dashboard KPIs/charts
-> 2. **Bookings Management (`/admin/bookings`)** — operationally critical module with paginated list, filters, booking detail (`/admin/bookings/{ref}`), check-in/out, no-show, cancel with refund calculator, and admin-initiated booking creation form (cash/POS)
-> 3. **Room Status Management (`/admin/rooms`)** — ability to toggle unit status (available/occupied/maintenance)
+> 1. **12A (this step):** protected admin shell, RBAC guards, admin bootstrap, **Bookings Management** (filters, detail, check-in with unit assignment, check-out, no-show, admin-initiated bookings, **offline payments and manual refunds**), and **Room Status Management** with the Notify-Me trigger
+> 2. **12B:** dashboard KPIs, charts, heatmap, activity feed
 >
-> All other broad CRUD modules (content, restaurants, facilities, gems, events, deals, contact, newsletter, media, users, settings) remain deferred to Step 15. Staff can use Supabase Dashboard for quick raw edits.
+> All other broad CRUD modules remain deferred to Step 15. Staff can use the Supabase Dashboard for quick raw edits.
+
+> **Product Decision (2026-10-16): Offline payments and manual refunds.** Guests who book through the WhatsApp concierge may pay by **bank transfer**. Admins record offline payments (bank transfer / cash / POS) to confirm bookings, and cancel such bookings with a refund paid **outside Paystack** that is tracked to completion. Specified in **SRS v1.4** (§3.14.4, §4.3, §6, §7, §8.1).
 
 ### Step Checklist
 
-- [ ] Build protected admin shell (`AdminLayout`, `AdminSidebar`, `AdminTopbar`, `AdminBreadcrumb`)
-- [ ] Sidebar links all 14 modules per SRS 3.14.1; unbuilt modules show greyed out with "Coming Soon" tooltip
-- [ ] AdminTopbar includes: admin user name, role badge, "View Site" link, logout button, notification bell placeholder
-- [ ] Implement dashboard metrics cards: bookings count, revenue, occupancy rate, **average daily rate (ADR)**, pending bookings, unread contact/inquiry counts (ADR + revenue restricted from Content Manager)
-- [ ] Implement dashboard charts (Recharts): (1) bookings over time — line chart, last 30 days; (2) revenue over time — bar chart, last 30 days; (3) occupancy by room type — bar chart; (4) revenue by campus — pie chart; plus occupancy heatmap
-- [ ] Implement recent activity feed (last 10 actions with timestamps)
-- [ ] Implement Bookings Management (`/admin/bookings/index.tsx`, `/admin/bookings/[ref].tsx`):
-  - Table: reference, guest, dates, rooms, total, status, created date
-  - Actions: Mark Checked-In (with **room unit assignment selector**), Mark Checked-Out, Mark No-Show (guarded by 24h), Cancel Booking
-  - **Payment details panel** on booking detail: payment method, gateway reference, amount paid, refund status/amount
-  - **Status timeline component**: chronological audit trail of status changes with timestamps and actor name (reads from `audit_logs` where `entity='booking'`)
-  - Admin-initiated walk-in booking creation form (sets `channel = 'walk_in'`, supports `gateway: 'cash' | 'pos'`)
-- [ ] Implement Room Status Management (`/admin/rooms/index.tsx`):
-  - View room types and toggle individual room unit status (available / occupied / maintenance)
-  - When admin changes a **RoomType** status from `under_construction` → `available`, trigger batch NotifyMe emails to all registered subscribers for that room type (set `isNotified = true`, `notifiedAt = NOW()`; failed sends retry up to 3× with exponential backoff)
-- [ ] Restrict financial analytics: Content Manager denied financial metrics; Resort Admin & Super Admin granted access
-- [ ] Unauthenticated or unauthorized users redirect to `/login?redirect=/admin`
-- [ ] Implement admin session inactivity timeout: 30-minute sliding window tracked via last-activity timestamp; stale sessions redirect to `/login`
+**Schema: `supabase/migrations/0009_admin_operations.sql`**
+
+- [ ] `bookings`: add `cancellation_reason` (`guest_request` | `admin_cancelled` | `payment_timeout` | `payment_after_expiry`), `cancelled_at`, `cancelled_by`, `status_changed_by`. Backfill `[System: Cancelled due to payment timeout]` rows to `payment_timeout`. Update `expire_stale_pending_bookings()` to set the reason instead of appending to `special_requests`
+- [ ] `booking_status_history` table plus an `AFTER INSERT OR UPDATE OF status` trigger on `bookings` (actor = `status_changed_by`, null = System). Captures API, webhook, and pg_cron transitions; `audit_logs` today is written only by cancel, claim, and status
+- [ ] `booking_room_assignments` (`booking_id`, `booking_line_item_id`, `room_id`, `assigned_by`, `assigned_at`, `released_at`) with a partial unique index on `room_id WHERE released_at IS NULL`
+- [ ] `payments`: add status `refund_failed`; constrain `gateway IN ('paystack','cash','pos','bank_transfer')`; add `refund_method` (`paystack` | `bank_transfer` | `cash` | `pos_reversal`), `refund_reference`, `refund_processed_by`, `refund_note`. Store only bank name and last 4 digits in `metadata.refundDestination`, never full account numbers
+- [ ] RPCs: `check_in_booking(booking_id, assignments jsonb, actor)` and `check_out_booking(booking_id, actor)` (atomic status, assignment, and unit-status changes); `record_offline_payment(...)` (insert payment + pending → confirmed, guarded on `status = 'pending'`)
+- [ ] Confirm `check_room_availability` subtracts `maintenance` units, as `get_stay_availability` already does (SRS 4.2)
+- [ ] Regenerate `src/types/db.ts`
+
+**Access control (Next 16)**
+
+- [ ] `src/lib/auth/admin-guard.ts`: `requireAdminPage(roles)` used in `getServerSideProps` of **every** `/admin` page. Unauthenticated or unauthorized users go to `/login?redirect=/admin`
+- [ ] `src/proxy.ts`: optimistic redirect for `/admin/:path*` when no session cookie exists. Next 16 renamed Middleware to Proxy; `pages/admin/_middleware.ts` is not supported, and Proxy is not the authorization layer
+- [ ] Every admin API keeps `withApi({ requiredRoles })`. Booking mutations, offline payments, refunds, and room endpoints require `resort_admin` or `super_admin`
+- [ ] Role matrix (SRS 4.1 / 2.3):
+  - Content Manager: Dashboard (non-financial), Bookings read-only (no action buttons), content modules "Coming Soon"; Rooms, Users, and Settings hidden
+  - Resort Admin: all except Users and Settings
+  - Super Admin: all
+- [ ] Admin idle timeout (plan addition, not SRS): `IdleTimeout.tsx` logs out after 30 minutes without activity (`/login?...&reason=idle`); the guard rejects a stale HttpOnly `gar_admin_last_seen` cookie
+- [ ] `scripts/create-admin-user.ts` (service role): create the auth user, set the role, send a password-set link. Used for Data Day 2 until Step 15 user management
+
+**Admin shell**
+
+- [ ] `AdminLayout`, `AdminSidebar`, `AdminTopbar`, `AdminBreadcrumb`; desktop-first, functional at ≥ 768px; no public navbar or footer
+- [ ] Sidebar lists all 14 SRS 3.14.1 modules, filtered by role; unbuilt modules are greyed out with a "Coming Soon" tooltip
+- [ ] Topbar: user name, role badge, "View Site" (new tab), logout, notification bell (counts wired in 12B)
+
+**Bookings Management**
+
+- [ ] Extend `GET /api/v1/bookings` admin filters: `checkInFrom`, `checkInTo`, `resort`, `channel`, `paymentStatus`, and `q` (reference / guest name / email). Today it supports only `status`, `reference`, and `guestEmail`
+- [ ] `/admin/bookings`:
+  - Table: reference, guest, channel, check-in, check-out, rooms, total, booking status, payment/refund status, created date
+  - Quick filter **"Refunds to process"**: `refund_pending` with a manual method, or `refund_failed`
+- [ ] `/admin/bookings/[ref]`:
+  - Guest info, linked account or "Guest checkout", channel and source, privacy-consent timestamp
+  - Rooms, pricing breakdown, deal, special requests
+  - **Payment panel**: gateway, reference, amount, paid at, refund amount/status/method/reference
+  - Assigned units
+  - **Status timeline** from `booking_status_history`, plus admin notes from `audit_logs`
+- [ ] `PUT /bookings/{ref}/status`: allow only `checked_in`, `checked_out`, and `no_show`. **Reject `cancelled` and `pending → confirmed`**; today both are accepted, which bypasses the refund flow and payment verification
+  - Checked-In requires one available unit per booked room (count = line-item quantity) and calls `check_in_booking`; the units become `occupied`
+  - Checked-Out calls `check_out_booking`; the assignments are released and the units become `available`
+  - No-Show keeps the 24-hour guard
+- [ ] **Record Offline Payment**: `POST /api/v1/bookings/{ref}/offline-payment` with `{ method: 'bank_transfer' | 'cash' | 'pos', amount, reference, paidAt, note }`
+  - Amount must equal the booking total; bank-transfer reference required and unique
+  - If the booking is still `pending`, it becomes `confirmed` and the confirmation email with PDF is sent; if the hold has expired, return 409
+  - Audit-logged
+- [ ] **Admin-initiated booking** `/admin/bookings/new`:
+  - Public booking fields plus source (WhatsApp / phone / front desk), payment method (`cash` | `pos` | `bank_transfer`), and payment reference (required for bank transfer)
+  - Creates a Confirmed booking with `channel = 'walk_in'` and `user_id = null`
+  - Extend the `paymentMethod` enum in `bookings/index.ts` with `bank_transfer`, and use the real reference when one is supplied
+- [ ] **Admin cancellation** (`/bookings/{ref}/cancel`, modal with the GET refund preview):
+  - Resort Admin+ may override the refund amount (0 to the amount paid) with a mandatory reason; audit-logged; `cancellation_reason = 'admin_cancelled'`
+  - Paystack payments: Paystack Refunds API as today. If Paystack rejects, offer **"Refund manually instead"** rather than blocking the cancellation
+  - Offline payments (`bank_transfer` / `cash` / `pos`): **no Paystack call**. The booking is cancelled; the payment becomes `refund_pending` with `refund_method` and `refund_amount`; the guest receives `booking_refund_initiated` (offline variant: "refund will be sent by bank transfer")
+  - Guest self-cancellations of offline-paid bookings (manage link or account) take the same manual path and appear in the queue
+- [ ] **Record refund outcome**: `POST /api/v1/payments/{id}/refund` with `{ action: 'mark_processed' | 'mark_failed' | 'retry_paystack', reference, refundedAt, destination: { bankName, accountLast4 }, note }`
+  - `mark_processed` → `refunded` / `partially_refunded`, `refunded_at`, `refund_reference`, `refund_processed_by`; sends `booking_refund_completed`
+  - `mark_failed` → `refund_failed`
+  - UI lifecycle: Pending → Processed → Failed (SRS 3.14.4)
+- [ ] `payments/webhook.ts`: `refund.failed` sets the payment to `refund_failed`. Today it only logs, leaving `refund_pending` forever
+- [ ] Audit-log every admin action: status changes, offline payments, cancellations and overrides, refund outcomes, unit and room-type status changes, admin bookings (SRS 5.3)
+
+**Room Status Management**
+
+- [ ] `/admin/rooms` (Resort Admin+): room types table filterable by resort, tier, and status
+- [ ] `PUT /api/v1/rooms/{id}`, accepting only `status` (`under_construction` ↔ `available`) in M3. `rooms/[id].ts` is GET-only today
+- [ ] `GET /api/v1/rooms/{id}/units` and `PUT /api/v1/rooms/{id}/units/{unitId}`. Admins set `available` or `maintenance`; `occupied` is set only by check-in and check-out; `maintenance` is blocked while a unit is assigned
+- [ ] **Notify-Me** (`src/services/notify-me/send-room-available.ts`): on `under_construction` → `available`, run a batch send after the response to registrations with `is_notified = false`
+  - New template `room_now_available` in `src/services/email/templates.ts`, per SRS 4.5 (subject, room name, tier, ₦ price per night, hero image, description, "Book Now" → `/booking?room={roomTypeId}`)
+  - On success: `is_notified = true`, `notified_at = NOW()`
+  - Failures go to `failed_emails` with a `retry_handler` (Step 13 retry job: 3 retries, exponential backoff)
+  - Never re-sends to rows already notified
 
 ### Explicit File Paths
 
-- [ ] src/pages/admin/index.tsx
-- [ ] src/pages/admin/_middleware.ts (or page-level guard wrapper)
+- [ ] supabase/migrations/0009_admin_operations.sql
+- [ ] src/types/db.ts (regenerated)
+- [ ] src/proxy.ts
+- [ ] src/lib/auth/admin-guard.ts
 - [ ] src/components/admin/AdminLayout.tsx
 - [ ] src/components/admin/AdminSidebar.tsx
 - [ ] src/components/admin/AdminTopbar.tsx
 - [ ] src/components/admin/AdminBreadcrumb.tsx
+- [ ] src/components/admin/IdleTimeout.tsx
+- [ ] src/pages/admin/index.tsx
 - [ ] src/pages/admin/bookings/index.tsx
 - [ ] src/pages/admin/bookings/[ref].tsx
+- [ ] src/pages/admin/bookings/new.tsx
 - [ ] src/pages/admin/rooms/index.tsx
+- [ ] src/pages/api/v1/bookings/index.ts
+- [ ] src/pages/api/v1/bookings/[ref]/status.ts
+- [ ] src/pages/api/v1/bookings/[ref]/cancel.ts
+- [ ] src/pages/api/v1/bookings/[ref]/offline-payment.ts
+- [ ] src/pages/api/v1/payments/[id]/refund.ts
+- [ ] src/pages/api/v1/payments/webhook.ts
+- [ ] src/pages/api/v1/rooms/[id].ts
+- [ ] src/pages/api/v1/rooms/[id]/units/index.ts
+- [ ] src/pages/api/v1/rooms/[id]/units/[unitId].ts
+- [ ] src/services/notify-me/send-room-available.ts
+- [ ] src/services/email/templates.ts
+- [ ] scripts/create-admin-user.ts
+
+### Commands
+
+```powershell
+npx supabase db reset
+npx supabase gen types typescript --local > src/types/db.ts
+npm run dev
+npm run lint
+npm run typecheck
+npm run test
+```
+
+### Verification Checklist
+
+- [ ] Admin shell renders desktop-first without public navbar/footer; usable at 768px
+- [ ] Unauthenticated → `/login?redirect=/admin`; guest-role user → redirected; Content Manager sees read-only bookings with no action buttons, and every booking mutation returns 403
+- [ ] Bookings table filters by status, channel, payment status, date range, and resort, and searches by reference, name, and email
+- [ ] Check-In requires unit assignment and marks units occupied; Check-Out releases them; No-Show respects the 24-hour rule
+- [ ] `PUT /status` with `cancelled` or `pending → confirmed` is rejected
+- [ ] Bank-transfer offline payment confirms a pending booking and emails the confirmation; an expired hold returns 409; a duplicate reference is rejected
+- [ ] Admin booking with `bank_transfer` creates a Confirmed `walk_in` booking with the real transfer reference
+- [ ] Admin cancellation of a bank-transfer booking makes **no Paystack call**, sets `refund_pending`, and appears under "Refunds to process"; marking it processed sets `refunded` / `partially_refunded` and emails the guest; marking it failed sets `refund_failed`
+- [ ] Refund override requires a reason and is audit-logged
+- [ ] Paystack `refund.failed` webhook → `refund_failed`; "Refund manually instead" works after a Paystack rejection
+- [ ] Status timeline shows webhook and cron transitions ("System") as well as admin actions
+- [ ] Room unit status persists; `occupied` cannot be set manually
+- [ ] RoomType `under_construction` → `available` sends Notify-Me emails exactly once; failures land in `failed_emails`
+- [ ] Admin session expires after 30 minutes of inactivity
+
+### STOP & COMMIT
+
+```powershell
+git add supabase/migrations/0009_admin_operations.sql src/types/db.ts src/proxy.ts src/lib/auth src/pages/admin src/components/admin src/pages/api/v1/bookings src/pages/api/v1/payments src/pages/api/v1/rooms src/services/notify-me src/services/email/templates.ts scripts/create-admin-user.ts
+git commit -m "feat: admin shell, RBAC guards, bookings operations, offline payments and manual refunds, room status"
+```
+
+---
+
+## 12B. Admin Dashboard and Analytics
+
+**Milestone:** M3 · **Estimated Effort:** 4–5 days · **Branch:** `feature/gar-m3-admin-ops` · **PR:** Step 12B PR merged to `main`
+
+### Step Checklist
+
+- [ ] Analytics endpoints (`/api/v1/analytics/bookings`, `/revenue`, `/occupancy`) are **Resort Admin+** (SRS §7)
+- [ ] `GET /api/v1/admin/summary` (all staff roles; plan addition): non-financial KPIs, unread counts, activity feed, bell counts. The Content Manager dashboard uses only this endpoint and never receives revenue fields
+- [ ] Metric cards (SRS 3.14.2): bookings (today / week / month), revenue (today / week / month; Resort Admin+), occupancy (today), pending bookings, unread contact submissions (`new`), unread event inquiries (`new`)
+- [ ] Recharts bookings chart: count and revenue over the last 30 days
+- [ ] Occupancy heatmap: current and next month
+- [ ] SRS 4.6 metrics: average stay duration, deal redemptions, revenue by room type, contact submissions by status/subject, newsletter total and growth. **Page Views (GA) deferred to Step 15** (GA4 Data API)
+- [ ] Metric definitions:
+  - Revenue = successful payments by `paid_at` (all gateways, including `bank_transfer`, `cash`, `pos`) minus processed refunds by `refunded_at`, with a breakdown by gateway
+  - Bookings counted by `created_at`, excluding `payment_timeout` cancellations (shown as "expired holds")
+  - Occupancy = confirmed + checked-in units / bookable units per night, excluding `under_construction` room types and `maintenance` units
+  - All buckets in WAT
+- [ ] Activity feed: last 10 events from `booking_status_history`, admin `audit_logs`, contact submissions, event inquiries
+- [ ] Notification bell: new bookings, new contact submissions, new event inquiries, refunds to process
+- [ ] Quick actions: "Create Booking" → `/admin/bookings/new`; "Add Deal" and "Upload Media" disabled ("Coming Soon", Step 15)
+- [ ] Optional (not SRS): average daily rate and revenue by campus, only if time permits
+- [ ] Analytics queries implemented as SQL views/RPCs; p95 < 300 ms at seed volume
+
+### Explicit File Paths
+
+- [ ] src/pages/admin/index.tsx
+- [ ] src/components/admin/dashboard/MetricCard.tsx
+- [ ] src/components/admin/dashboard/BookingsRevenueChart.tsx
+- [ ] src/components/admin/dashboard/OccupancyHeatmap.tsx
+- [ ] src/components/admin/dashboard/ActivityFeed.tsx
+- [ ] src/components/admin/dashboard/QuickActions.tsx
 - [ ] src/pages/api/v1/analytics/bookings.ts
 - [ ] src/pages/api/v1/analytics/revenue.ts
 - [ ] src/pages/api/v1/analytics/occupancy.ts
+- [ ] src/pages/api/v1/admin/summary.ts
 
 ### Commands
 
@@ -1112,49 +1263,63 @@ npm run test
 
 ### Verification Checklist
 
-- [ ] Admin shell renders desktop-first without public navbar/footer
-- [ ] Content Manager is blocked from financial analytics endpoints and ADR/revenue KPI cards
-- [ ] Resort Admin and Super Admin can view all 4 charts (bookings line, revenue bar, occupancy bar, revenue-by-campus pie)
-- [ ] Bookings table filters by status, date range, resort, and searches by reference/name
-- [ ] Admin can mark Checked-In (with unit assignment), Checked-Out, and No-Show on `/admin/bookings/[ref]`
-- [ ] Booking detail displays payment details panel and status change timeline
-- [ ] Room unit status toggle persists in database
-- [ ] Admin booking creation creates Confirmed booking without online payment, records `channel = 'walk_in'`
-- [ ] Changing RoomType from `under_construction` → `available` triggers NotifyMe emails
-- [ ] Admin session expires after 30 minutes of inactivity
+- [ ] Content Manager gets 403 on all analytics endpoints and sees no revenue cards; `/admin/summary` returns no financial fields for that role
+- [ ] Resort Admin and Super Admin see revenue cards, the 30-day chart, and the heatmap
+- [ ] Revenue includes offline payments and nets out processed refunds
+- [ ] Expired holds are excluded from booking and cancellation counts
+- [ ] Occupancy excludes under-construction room types and maintenance units
+- [ ] Activity feed and bell show bookings, contact submissions, inquiries, and refunds to process
 
 ### STOP & COMMIT
 
 ```powershell
-git add src/pages/admin src/components/admin src/pages/api/v1/analytics
-git commit -m "feat: admin shell, RBAC guards, analytics dashboard, bookings management, room status"
+git add src/pages/admin/index.tsx src/components/admin/dashboard src/pages/api/v1/analytics src/pages/api/v1/admin/summary.ts
+git commit -m "feat: admin dashboard KPIs, analytics endpoints, activity feed"
 ```
 
 ---
 
-## 13. Observability, SEO Finalization, Background Jobs, and Operational Hardening
+## 13. Observability, SEO Finalization, Background Job Scheduling, and Operational Hardening
 
-**Milestone:** M3 · **Estimated Effort:** 3–5 days · **Branch:** `feature/gar-m3-admin-ops` · **PR:** Step 13 PR merged to `main`
+**Milestone:** M3 · **Estimated Effort:** 4–5 days · **Branch:** `feature/gar-m3-admin-ops` · **PR:** Step 13 PR merged to `main`
+
+> **Actual job state (M3 audit):** `expire_stale_pending_bookings` (every 5 min) and `deactivate_expired_deals` (daily) are SQL functions scheduled by pg_cron in 0006/0007. **Failed email retry is not scheduled anywhere:** 0006 only unschedules `retry-failed-emails`, and the logic lives in `src/pages/api/v1/internal/jobs/retry-failed-emails.ts`, which needs `CRON_SECRET` and an external caller. There are no Supabase Edge Functions. Notify-Me is event-driven (Step 12A).
 
 ### Step Checklist
 
-- [ ] Generate dynamic `sitemap.xml` (includes public pages, excludes auth/booking/account/admin) and `robots.txt` (disallow `/admin`, `/api`, `/account`)
-- [ ] Complete structured-data schemas across all page types; add `og:url` meta tag alongside existing canonical URL
-- [ ] Initialize Sentry client and server error/performance monitoring hooks
-- [ ] Configure Sentry alerting rules (document thresholds in runbook): error rate spikes, API p95 latency, failed payment webhooks, background job failures
-- [ ] Verify and test existing background jobs (SQL functions already defined in migrations `0003`/`0006`, scheduled via pg_cron):
-  - `expire_pending_bookings` (every 5 mins): verify stale pending bookings are expired and room holds released
-  - `retry_failed_emails` (every 10 mins): verify retry logic with exponential backoff (max 3 retries)
-  - `deactivate_expired_deals` (daily): verify `is_active=false` for deals past `end_date`
-  - **Note:** `notify-room-available` is now event-driven in Step 12 (triggered from admin room status endpoint), not a cron job
-- [ ] Produce operational incident response runbook (`docs/operations/runbook.md`) including Sentry alert thresholds, background job monitoring, rollback procedures, and common failure modes
+- [ ] Dynamic `sitemap.xml`: public pages only; excludes `/booking`, auth pages, `/account`, `/manage-booking`, `/admin`
+- [ ] `robots.txt`: disallow `/admin`, `/api`, `/account`, `/booking`, `/manage-booking`
+- [ ] `noindex` on auth, account, and manage-booking pages (none found on `/account` or `/manage-booking`)
+- [ ] Complete JSON-LD across page types (SRS 4.6); add `og:url` alongside the canonical URL
+- [ ] Sentry client and server via `instrumentation.ts` (read `node_modules/next/dist/docs/02-pages/02-guides/instrumentation.md` first)
+  - `beforeSend` / `beforeBreadcrumb` scrub email, phone, names, auth headers, and the `t` query parameter (booking access token)
+  - No session replay
+- [ ] Sentry alert rules (thresholds documented in the runbook): error-rate spike, API p95 > 300 ms, webhook failures, job failures, new `refund_failed`
+- [ ] GA4: strip `t` from `page_location` before `page_view`
+- [ ] **Schedule failed-email retry every 10 minutes** in `0010_job_schedules.sql`:
+  - pg_cron + pg_net POST to `/api/v1/internal/jobs/retry-failed-emails` with `Authorization: Bearer <CRON_SECRET from Supabase Vault>`
+  - Alternative: `vercel.json` cron, which needs Vercel Pro because Hobby crons run at most daily
+  - Set `CRON_SECRET` in Vercel
+- [ ] Persistent email failure (3 attempts exhausted) → staff alert email + Sentry event (SRS 8.4)
+- [ ] Daily purge of expired `booking_access` tokens (30 days after check-out; SRS v1.3)
+- [ ] Verify `expire_stale_pending_bookings`: per-booking hold, including the 2-hour gateway-downtime window (SRS 8.1), and `cancellation_reason = 'payment_timeout'` after 0009
+- [ ] Verify `deactivate_expired_deals` sets `is_active = false` for deals past `end_date`
+- [ ] Set `jwt_expiry = 900` in `supabase/config.toml` (SRS 4.1: 15 minutes; currently 3600); re-test refresh, "Remember me", and the admin idle timeout
+- [ ] `GET /api/v1/health` and an uptime monitor on `/` and `/api/v1/health` (SRS 5.4)
+- [ ] Confirm Supabase daily backups (30-day retention) and point-in-time recovery are enabled (SRS 5.4)
+- [ ] `npm audit`, gitleaks secret scan, headers check (CSP, HSTS, Referrer-Policy)
+- [ ] `docs/operations/runbook.md`: alert thresholds, job monitoring, rollback, common failure modes, **offline-payment and manual-refund SOP** (who may record, required references, daily bank reconciliation)
 
 ### Explicit File Paths
 
 - [ ] src/pages/sitemap.xml.ts
 - [ ] src/pages/robots.txt.ts
 - [ ] src/lib/seo/structured-data/* (or additions to existing `src/lib/seo/meta.ts`)
+- [ ] instrumentation.ts (+ Sentry client config)
 - [ ] src/lib/monitoring/sentry.ts
+- [ ] src/pages/api/v1/health.ts
+- [ ] supabase/migrations/0010_job_schedules.sql
+- [ ] supabase/config.toml
 - [ ] docs/operations/runbook.md
 
 ### Commands
@@ -1164,58 +1329,72 @@ npm install @sentry/nextjs
 npm run lint
 npm run test
 npm run dev
-# Verify background jobs locally:
 npx supabase db reset
-# Inspect pg_cron schedule:
-# SELECT * FROM cron.job;
+# Inspect pg_cron schedule and runs:
+# SELECT jobname, schedule FROM cron.job;
+# SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 20;
 ```
 
 ### Verification Checklist
 
-- [ ] `sitemap.xml` lists all public routes and excludes private routes (`/admin`, `/account`, `/booking`, `/login`, `/register`)
-- [ ] `robots.txt` disallows `/admin`, `/api`, `/account`
-- [ ] Expired pending bookings release unit inventory after 30 minutes
-- [ ] Failed email retry handles transient SendGrid errors up to 3 attempts
-- [ ] Expired deals automatically set `is_active=false`
-- [ ] Sentry captures client-side and server-side errors with performance tracing
-- [ ] Notify-me emails fire when admin changes RoomType from `under_construction` to `available` (Step 12 event-driven trigger)
+- [ ] `sitemap.xml` lists all public routes and excludes private ones (`/admin`, `/account`, `/booking`, `/manage-booking`, auth pages)
+- [ ] `robots.txt` disallows `/admin`, `/api`, `/account`, `/booking`, `/manage-booking`
+- [ ] `cron.job` contains `expire-pending-bookings`, `deactivate-expired-deals`, `retry-failed-emails`, `purge-booking-access-tokens`
+- [ ] Retry route rejects a missing or invalid secret; a queued failed email is retried with backoff up to 3 attempts; exhaustion alerts staff
+- [ ] Expired pending bookings release inventory and record `payment_timeout`
+- [ ] Expired deals automatically set `is_active = false`
+- [ ] Sentry captures client and server errors with tracing; events contain no email, phone, or `t` token
+- [ ] Access tokens expire after 15 minutes and refresh works
+- [ ] Uptime monitor is green; backups and point-in-time recovery confirmed
 
 ### STOP & COMMIT
 
 ```powershell
-git add src/pages/sitemap.xml.ts src/pages/robots.txt.ts src/lib/seo src/lib/monitoring docs/operations/runbook.md
-git commit -m "feat: observability, SEO completion, background jobs verification, operational runbook"
+git add src/pages/sitemap.xml.ts src/pages/robots.txt.ts src/lib/seo src/lib/monitoring instrumentation.ts src/pages/api/v1/health.ts supabase/migrations/0010_job_schedules.sql supabase/config.toml docs/operations/runbook.md
+git commit -m "feat: observability, SEO completion, job scheduling, auth and reliability hardening"
 ```
 
 ---
 
 ## 14. End-to-End Quality Gate, Documentation, and Release Readiness
 
-**Milestone:** M3 · **Estimated Effort:** 3–5 days · **Branch:** `feature/gar-m3-admin-ops` · **PR:** Step 14 PR merged to `main` — **Completes Milestone 3 & Core Scope**
+**Milestone:** M3 · **Estimated Effort:** 4–6 days · **Branch:** `feature/gar-m3-admin-ops` · **PR:** Step 14 PR merged to `main` — **Completes Milestone 3 & Core Scope**
 
 ### Step Checklist
 
-- [ ] Configure GitHub Actions CI pipeline covering lint, Prettier check, typecheck, unit/integration tests, e2e smoke tests, and build
-- [ ] Enforce test coverage thresholds (≥ 70% on API routes per SRS 5.5)
-- [ ] Produce OpenAPI contract specification (`docs/api/openapi.yaml`) aligned to implemented endpoints
+- [ ] Install `@playwright/test`, `@axe-core/playwright`, `@lhci/cli`; add the `test:e2e`, `test:a11y`, and `lhci` scripts (none exist today)
+- [ ] GitHub Actions CI on PRs to `main`/`develop` and pushes to `develop`/`main`: lint, Prettier check, typecheck, `test:coverage`, build, e2e smoke, axe, Lighthouse CI. Nightly full regression
+- [ ] Coverage thresholds in `vitest.config.ts`: ≥ 70% for `src/pages/api/**`, `src/domain/**`, `src/services/**` (SRS 5.5). CI runs `test:coverage` so the thresholds are enforced
+- [ ] OpenAPI generated from the Zod schemas and served at `/api/docs` in development only (SRS 2.7.4 / 5.5)
 - [ ] Document test strategy (`docs/testing/strategy.md`) and release checklist (`docs/release/checklist.md`)
-- [ ] Create manual accessibility audit checklist (`docs/accessibility/manual-audit-checklist.md`) covering NVDA/VoiceOver screen readers, color contrast, and focus management
-- [ ] Document load testing approach for 500+ concurrent users (k6/Artillery)
-- [ ] Verify Core Web Vitals targets per SRS 5.1: LCP < 2.5s on 4G, FID < 100ms, CLS < 0.1, TTFB < 600ms, API p95 < 300ms
-- [ ] Verify i18n readiness: audit that all user-facing strings use translation helpers and no hard-coded strings remain
+- [ ] Manual accessibility audit checklist (`docs/accessibility/manual-audit-checklist.md`), covering NVDA/VoiceOver, contrast, and focus management, **and complete the audit** before launch
+- [ ] **Run** a k6 load test at 500 concurrent virtual users on staging; record API p95 (< 300 ms)
+- [ ] Core Web Vitals (SRS 5.1):
+  - Lighthouse CI asserts LCP < 2.5 s (4G), CLS < 0.1, TTFB < 600 ms
+  - FID was retired by Chrome in 2024 and cannot be measured in the lab: monitor INP < 200 ms from field data (`web-vitals` / Vercel Speed Insights) and assert TBT < 200 ms in the lab (SRS v1.4 §5.1)
+- [ ] i18n readiness audit, including the new admin strings
+- [ ] Privilege-escalation and IDOR regression tests for every M3 admin endpoint
+- [ ] Release checklist covers:
+  - reCAPTCHA v3 on booking creation (SRS v1.3, before production launch)
+  - branch protection on `main`
+  - `CRON_SECRET`, Sentry DSN, GA4
+  - Paystack live keys
+  - admin accounts bootstrapped
+  - offline-payment SOP signed off
+  - SRS deferrals (Step 15, GA page views, SMS)
 
 ### Explicit File Paths
 
 - [ ] vitest.config.ts
 - [ ] playwright.config.ts
-- [ ] tests/unit/**/*.test.ts
-- [ ] tests/integration/**/*.test.ts
-- [ ] tests/e2e/**/*.spec.ts
-- [ ] tests/accessibility/**/*.spec.ts
-- [ ] tests/performance/**
+- [ ] src/**/\_\_tests\_\_/** (existing co-located unit/integration convention)
+- [ ] e2e/**/*.spec.ts
+- [ ] e2e/accessibility/**/*.spec.ts
+- [ ] lighthouserc.json
+- [ ] load/k6-booking.js
 - [ ] .github/workflows/ci.yml
 - [ ] docs/testing/strategy.md
-- [ ] docs/api/openapi.yaml
+- [ ] docs/api/openapi (generated)
 - [ ] docs/release/checklist.md
 - [ ] docs/accessibility/manual-audit-checklist.md
 
@@ -1227,15 +1406,16 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   push:
-    branches:
-      [main, feature/gar-m1-marketing-site, feature/gar-m2-booking-engine, feature/gar-m3-admin-ops]
+    branches: [main, develop]
+  schedule:
+    - cron: "0 2 * * *" # nightly full regression
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -1256,42 +1436,62 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Unit + Integration
-        run: npm run test
+      - name: Unit + Integration (coverage thresholds enforced)
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build
 
+      - uses: supabase/setup-cli@v1
+
+      - name: Start local Supabase
+        run: npx supabase start
+
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: E2E Smoke
+      - name: E2E smoke
+        if: github.event_name != 'schedule'
         run: npm run test:e2e -- --grep @smoke
+
+      - name: E2E full regression (nightly)
+        if: github.event_name == 'schedule'
+        run: npm run test:e2e
+
+      - name: Accessibility (axe-core)
+        run: npm run test:a11y
+
+      - name: Lighthouse CI
+        run: npm run lhci
 ```
 
 ### Commands
 
 ```powershell
+npm install -D @playwright/test @axe-core/playwright @lhci/cli
 npm run ci
 npm run test:e2e -- --grep @smoke
-npm run build
+npm run test:a11y
+npm run lhci
+k6 run load/k6-booking.js
 ```
 
 ### Verification Checklist
 
-- [ ] CI pipeline passes on `main` and milestone branches
-- [ ] Unit and integration test coverage meets ≥ 70% on API routes
-- [ ] Critical guest and admin smoke journeys pass in Playwright
-- [ ] Automated axe-core accessibility checks pass
-- [ ] Core Web Vitals targets validated on public pages
-- [ ] Manual accessibility checklist and load testing strategy documented
-- [ ] M3 Exit Criteria satisfied; core implementation ready for production deployment
+- [ ] CI passes on `develop` and `main`, and the nightly run is green
+- [ ] Coverage ≥ 70% on backend business logic, enforced by CI
+- [ ] Critical guest journeys and admin journeys (booking management, offline payment, manual refund) pass in Playwright
+- [ ] Automated axe-core checks pass on public and admin pages
+- [ ] Lighthouse CI meets LCP, CLS, and TTFB; field INP is monitored
+- [ ] k6 at 500 virtual users meets API p95 < 300 ms
+- [ ] Manual accessibility audit completed and findings resolved or logged
+- [ ] M3 exit criteria satisfied; core implementation ready for production deployment
 
 ### STOP & COMMIT
 
 ```powershell
-git add vitest.config.ts playwright.config.ts tests .github/workflows/ci.yml docs/testing/strategy.md docs/api/openapi.yaml docs/release/checklist.md docs/accessibility/manual-audit-checklist.md
-git commit -m "chore: test matrix, CI baseline, docs, performance and accessibility gates"
+git add vitest.config.ts playwright.config.ts e2e load lighthouserc.json .github/workflows/ci.yml package.json package-lock.json docs/testing docs/api docs/release docs/accessibility
+git commit -m "chore: test matrix, CI gates, load test, docs, performance and accessibility gates"
 ```
 
 ---
@@ -1301,12 +1501,12 @@ git commit -m "chore: test matrix, CI baseline, docs, performance and accessibil
 ### Status
 
 - [ ] Deferred intentionally to keep core delivery milestones reviewable and minimize risk
-- [ ] Operational Bookings Management (`/admin/bookings`) and Room Unit Status (`/admin/rooms`) are already delivered in Step 12
-- [ ] Full CRUD breadth for CMS content, seasonal pricing, media uploads, and super-admin modules will be implemented on branch `feature/gar-admin-crud-phase-2`
+- [ ] Already delivered in M3 (Step 12A): Bookings Management, admin-initiated booking UI, offline payments and manual refunds, room-type status toggle, unit status, Notify-Me batch emails
+- [ ] Full CRUD breadth for CMS content, room types, seasonal pricing, media uploads, super-admin modules, and the GA4 Page Views dashboard metric will be implemented on branch `feature/gar-admin-crud-phase-2`
 
 ### Explicit Deferred File Paths
 
-- [ ] src/pages/admin/rooms/new.tsx, [id].tsx (seasonal pricing, full room type CRUD)
+- [ ] src/pages/admin/rooms/new.tsx, [id]/*.tsx (seasonal pricing, full room type CRUD)
 - [ ] src/pages/admin/content/*.tsx
 - [ ] src/pages/admin/restaurants/*.tsx
 - [ ] src/pages/admin/facilities/*.tsx
@@ -1316,7 +1516,7 @@ git commit -m "chore: test matrix, CI baseline, docs, performance and accessibil
 - [ ] src/pages/admin/contact/*.tsx
 - [ ] src/pages/admin/newsletter/*.tsx
 - [ ] src/pages/admin/media/*.tsx
-- [ ] src/pages/admin/users/*.tsx
+- [ ] src/pages/admin/users/*.tsx (replaces `scripts/create-admin-user.ts`)
 - [ ] src/pages/admin/settings/*.tsx
 - [ ] src/pages/api/v1/admin/settings.ts
 - [ ] src/pages/api/v1/admin/users/*.ts
@@ -1357,7 +1557,8 @@ git commit -m "docs: mark admin CRUD breadth as deferred to phase-2 branch"
 9. `feat: payment integration, secure webhook, refund API, gateway degradation, race handling` (M2 · Step 9)
 10. `feat: booking wizard frontend, confirmation UX, payment fallback UI` (M2 · Step 10)
 11. `feat: guest account, booking management, change password UI` (M2 · Step 11 — **M2 Complete**)
-12. `feat: admin shell, RBAC, analytics dashboard, bookings management, room status` (M3 · Step 12)
-13. `feat: observability, SEO completion, background jobs, operational runbook` (M3 · Step 13)
-14. `chore: full test matrix, CWV targets, manual audit checklist, docs, release readiness` (M3 · Step 14 — **M3 Complete**)
-15. `docs: follow-up PR plan for full admin CRUD breadth` (Phase 2 · Step 15)
+12. `feat: admin shell, RBAC guards, bookings operations, offline payments and manual refunds, room status` (M3 · Step 12A)
+13. `feat: admin dashboard KPIs, analytics endpoints, activity feed` (M3 · Step 12B)
+14. `feat: observability, SEO completion, job scheduling, auth and reliability hardening` (M3 · Step 13)
+15. `chore: test matrix, CI gates, load test, docs, performance and accessibility gates` (M3 · Step 14 — **M3 Complete**)
+16. `docs: follow-up PR plan for full admin CRUD breadth` (Phase 2 · Step 15)
