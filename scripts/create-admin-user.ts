@@ -1,6 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database, UserRole } from "../src/types/db";
 
+try {
+  (process as unknown as { loadEnvFile?: (path?: string) => void }).loadEnvFile?.(".env.local");
+} catch {
+  // Ignore if .env.local does not exist or environment already populated
+}
+
 /**
  * CLI script to bootstrap or elevate admin accounts (Data Day 2 & local setup).
  * Usage:
