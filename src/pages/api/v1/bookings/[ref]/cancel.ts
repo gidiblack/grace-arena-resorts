@@ -9,6 +9,7 @@ import {
 import { recordAuditLog } from "@/pages/api/v1/_shared/audit-log";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { initiatePaystackRefund } from "@/services/payments/refund";
+import { PaystackError } from "@/services/payments/paystack";
 import { sendEmail } from "@/services/email";
 import { authorizeBookingAccess } from "@/services/booking/access";
 import { runAfterResponse } from "@/services/booking/notifications";
@@ -132,20 +133,45 @@ export default withApi(
             .eq("id", payment.id);
           refundStatus = "initiated";
         } catch (error) {
-          logger.error("Paystack refund failed during cancellation", {
-            reference: booking.reference,
-            error: error instanceof Error ? error.message : String(error),
-          });
-          await supabase
-            .from("payments")
-            .update({ status: "success", refund_amount: null })
-            .eq("id", payment.id);
-          return fail(
-            res,
-            "REFUND_FAILED",
-            "We could not process your refund right now, so the booking has not been cancelled. Please try again or contact us on WhatsApp.",
-            502
-          );
+          const isAlreadyRefunded =
+            (error instanceof PaystackError &&
+              ((error.responseData as { code?: string })?.code === "transaction_reversed" ||
+                error.message.toLowerCase().includes("already exist"))) ||
+            (error instanceof Error && error.message.toLowerCase().includes("already exist"));
+
+          if (isAlreadyRefunded) {
+            logger.info("Paystack refund already exists on gateway, proceeding with cancellation", {
+              reference: booking.reference,
+            });
+            await supabase
+              .from("payments")
+              .update({
+                status: "refund_pending",
+                refund_amount: refund.refundAmount,
+                metadata: {
+                  ...((payment.metadata as Record<string, Json>) || {}),
+                  refundReason: "GUEST_CANCELLATION",
+                  alreadyRefundedOnGateway: true,
+                },
+              })
+              .eq("id", payment.id);
+            refundStatus = "initiated";
+          } else {
+            logger.error("Paystack refund failed during cancellation", {
+              reference: booking.reference,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            await supabase
+              .from("payments")
+              .update({ status: "success", refund_amount: null })
+              .eq("id", payment.id);
+            return fail(
+              res,
+              "REFUND_FAILED",
+              "We could not process your refund right now, so the booking has not been cancelled. Please try again or contact us on WhatsApp.",
+              502
+            );
+          }
         }
       } else {
         // Cash/POS walk-in payments are refunded at the front desk
