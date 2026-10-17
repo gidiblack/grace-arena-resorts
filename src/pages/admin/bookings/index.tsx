@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import type { GetServerSideProps } from "next";
 import NextLink from "next/link";
+import { useRouter } from "next/router";
 import {
   Box,
   Flex,
@@ -62,9 +63,10 @@ interface AdminBookingRow {
     amount?: number;
   }>;
   booking_line_items?: Array<{
-    room_types?: {
+    quantity: number;
+    room_type?: {
       name?: string;
-    };
+    } | null;
   }>;
   [key: string]: unknown;
 }
@@ -77,7 +79,13 @@ export const getServerSideProps: GetServerSideProps<AdminBookingsPageProps> = as
   ]);
 };
 
+function queryValue(value: string | string[] | undefined, fallback: string): string {
+  return typeof value === "string" && value ? value : fallback;
+}
+
 export default function AdminBookingsPage({ adminUser }: AdminBookingsPageProps) {
+  const router = useRouter();
+  const [filtersReady, setFiltersReady] = useState(false);
   const [bookings, setBookings] = useState<AdminBookingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -93,24 +101,49 @@ export default function AdminBookingsPage({ adminUser }: AdminBookingsPageProps)
   const [checkInTo, setCheckInTo] = useState("");
   const [isRefundsToProcessQuickFilter, setIsRefundsToProcessQuickFilter] = useState(false);
 
+  // Initialise filters from the URL so dashboard and notification links land pre-filtered
+  useEffect(() => {
+    if (!router.isReady || filtersReady) return;
+    const q = router.query;
+    setSearch(queryValue(q.q, ""));
+    setStatus(queryValue(q.status, "all"));
+    setChannel(queryValue(q.channel, "all"));
+    setPaymentStatus(queryValue(q.paymentStatus, "all"));
+    setCheckInFrom(queryValue(q.checkInFrom, ""));
+    setCheckInTo(queryValue(q.checkInTo, ""));
+    setIsRefundsToProcessQuickFilter(q.refundQueue === "true");
+    setFiltersReady(true);
+  }, [router.isReady, router.query, filtersReady]);
+
   const fetchBookings = useCallback(async () => {
+    if (!filtersReady) return;
     setLoading(true);
     try {
-      const params = new URLSearchParams();
+      const filters = new URLSearchParams();
+      if (isRefundsToProcessQuickFilter) {
+        filters.set("refundQueue", "true");
+      } else {
+        if (status !== "all") filters.set("status", status);
+        if (channel !== "all") filters.set("channel", channel);
+        if (paymentStatus !== "all") filters.set("paymentStatus", paymentStatus);
+        if (checkInFrom) filters.set("checkInFrom", checkInFrom);
+        if (checkInTo) filters.set("checkInTo", checkInTo);
+      }
+      if (search.trim()) filters.set("q", search.trim());
+
+      // Keep the URL shareable and back-button friendly
+      const filterQuery = filters.toString();
+      router.replace(
+        filterQuery ? `/admin/bookings?${filterQuery}` : "/admin/bookings",
+        undefined,
+        {
+          shallow: true,
+        }
+      );
+
+      const params = new URLSearchParams(filters);
       params.set("page", page.toString());
       params.set("limit", "15");
-
-      if (isRefundsToProcessQuickFilter) {
-        params.set("paymentStatus", "refund_pending");
-      } else {
-        if (status !== "all") params.set("status", status);
-        if (channel !== "all") params.set("channel", channel);
-        if (paymentStatus !== "all") params.set("paymentStatus", paymentStatus);
-        if (checkInFrom) params.set("checkInFrom", checkInFrom);
-        if (checkInTo) params.set("checkInTo", checkInTo);
-      }
-
-      if (search.trim()) params.set("q", search.trim());
 
       const res = await fetch(`/api/v1/bookings?${params.toString()}`);
       const json = await res.json();
@@ -127,7 +160,19 @@ export default function AdminBookingsPage({ adminUser }: AdminBookingsPageProps)
     } finally {
       setLoading(false);
     }
-  }, [page, status, channel, paymentStatus, checkInFrom, checkInTo, search, isRefundsToProcessQuickFilter]);
+    // router is intentionally omitted: its identity changes on every replace()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    filtersReady,
+    page,
+    status,
+    channel,
+    paymentStatus,
+    checkInFrom,
+    checkInTo,
+    search,
+    isRefundsToProcessQuickFilter,
+  ]);
 
   useEffect(() => {
     fetchBookings();
@@ -147,12 +192,14 @@ export default function AdminBookingsPage({ adminUser }: AdminBookingsPageProps)
   const isResortAdmin = ["resort_admin", "super_admin"].includes(adminUser.role);
 
   return (
-    <AdminLayout
-      title="Bookings Management"
-      user={adminUser}
-      breadcrumbs={[{ label: "Bookings" }]}
-    >
-      <Flex justify="space-between" align={{ base: "start", md: "center" }} mb={6} flexWrap="wrap" gap={4}>
+    <AdminLayout title="Bookings Management" user={adminUser} breadcrumbs={[{ label: "Bookings" }]}>
+      <Flex
+        justify="space-between"
+        align={{ base: "start", md: "center" }}
+        mb={6}
+        flexWrap="wrap"
+        gap={4}
+      >
         <Box>
           <Heading as="h1" size="lg" color="gray.800">
             Bookings Management
@@ -165,7 +212,7 @@ export default function AdminBookingsPage({ adminUser }: AdminBookingsPageProps)
         <HStack gap={3}>
           <Button
             size="sm"
-            colorScheme={isRefundsToProcessQuickFilter ? "red" : "gray"}
+            colorPalette={isRefundsToProcessQuickFilter ? "red" : "gray"}
             variant={isRefundsToProcessQuickFilter ? "solid" : "outline"}
             onClick={() => {
               setIsRefundsToProcessQuickFilter((prev) => !prev);
@@ -173,20 +220,23 @@ export default function AdminBookingsPage({ adminUser }: AdminBookingsPageProps)
             }}
           >
             <HStack gap={1.5}>
-              <Icon as={FaExclamationTriangle} color={isRefundsToProcessQuickFilter ? "white" : "red.500"} />
+              <Icon
+                as={FaExclamationTriangle}
+                color={isRefundsToProcessQuickFilter ? "white" : "red.500"}
+              />
               <Text>Refunds to Process</Text>
             </HStack>
           </Button>
 
           {isResortAdmin && (
-            <NextLink href="/admin/bookings/new" passHref legacyBehavior>
-              <Button as="a" size="sm" colorScheme="blue">
+            <Button asChild size="sm" colorPalette="blue">
+              <NextLink href="/admin/bookings/new">
                 <HStack gap={1.5}>
                   <Icon as={FaPlus} />
                   <Text>New Booking</Text>
                 </HStack>
-              </Button>
-            </NextLink>
+              </NextLink>
+            </Button>
           )}
         </HStack>
       </Flex>
@@ -349,7 +399,9 @@ export default function AdminBookingsPage({ adminUser }: AdminBookingsPageProps)
                   <Table.ColumnHeader py={3}>Channel</Table.ColumnHeader>
                   <Table.ColumnHeader py={3}>Dates</Table.ColumnHeader>
                   <Table.ColumnHeader py={3}>Rooms</Table.ColumnHeader>
-                  <Table.ColumnHeader py={3} textAlign="right">Total</Table.ColumnHeader>
+                  <Table.ColumnHeader py={3} textAlign="right">
+                    Total
+                  </Table.ColumnHeader>
                   <Table.ColumnHeader py={3}>Booking Status</Table.ColumnHeader>
                   <Table.ColumnHeader py={3}>Payment</Table.ColumnHeader>
                   <Table.ColumnHeader py={3}>Action</Table.ColumnHeader>
@@ -358,18 +410,19 @@ export default function AdminBookingsPage({ adminUser }: AdminBookingsPageProps)
               <Table.Body>
                 {bookings.map((booking) => {
                   const pmt = (booking.payments && booking.payments[0]) || null;
-                  const pmtStatus = pmt?.status || (booking.status === "confirmed" ? "success" : "pending");
+                  const pmtStatus =
+                    pmt?.status || (booking.status === "confirmed" ? "success" : "pending");
                   const pmtColor = PAYMENT_STATUS_COLORS[pmtStatus] || "gray";
                   const statusColor = STATUS_COLORS[booking.status] || "gray";
 
                   return (
                     <Table.Row key={booking.id} _hover={{ bg: "gray.50" }}>
                       <Table.Cell fontWeight="bold" color="blue.600">
-                        <NextLink href={`/admin/bookings/${booking.reference}`} passHref legacyBehavior>
-                          <Text as="a" cursor="pointer" _hover={{ textDecoration: "underline" }}>
+                        <Text asChild cursor="pointer" _hover={{ textDecoration: "underline" }}>
+                          <NextLink href={`/admin/bookings/${booking.reference}`}>
                             {booking.reference}
-                          </Text>
-                        </NextLink>
+                          </NextLink>
+                        </Text>
                       </Table.Cell>
                       <Table.Cell>
                         <Text fontWeight="medium" fontSize="xs">
@@ -390,30 +443,38 @@ export default function AdminBookingsPage({ adminUser }: AdminBookingsPageProps)
                       </Table.Cell>
                       <Table.Cell fontSize="xs">
                         <Text>{booking.check_in_date}</Text>
-                        <Text color="gray.500">to {booking.check_out_date} ({booking.nights}n)</Text>
+                        <Text color="gray.500">
+                          to {booking.check_out_date} ({booking.nights}n)
+                        </Text>
                       </Table.Cell>
                       <Table.Cell fontSize="xs">
-                        {booking.booking_line_items?.length || 1} room(s)
+                        {(booking.booking_line_items || []).reduce(
+                          (sum, li) => sum + (li.quantity || 0),
+                          0
+                        ) || 1}{" "}
+                        room(s)
                       </Table.Cell>
                       <Table.Cell textAlign="right" fontWeight="semibold" fontSize="xs">
                         {formatNgn(booking.total)}
                       </Table.Cell>
                       <Table.Cell>
-                        <Badge colorScheme={statusColor} textTransform="capitalize" fontSize="10px">
+                        <Badge
+                          colorPalette={statusColor}
+                          textTransform="capitalize"
+                          fontSize="10px"
+                        >
                           {booking.status.replace("_", " ")}
                         </Badge>
                       </Table.Cell>
                       <Table.Cell>
-                        <Badge colorScheme={pmtColor} textTransform="capitalize" fontSize="10px">
+                        <Badge colorPalette={pmtColor} textTransform="capitalize" fontSize="10px">
                           {pmtStatus.replace("_", " ")}
                         </Badge>
                       </Table.Cell>
                       <Table.Cell>
-                        <NextLink href={`/admin/bookings/${booking.reference}`} passHref legacyBehavior>
-                          <Button as="a" size="xs" variant="outline" colorScheme="blue">
-                            View
-                          </Button>
-                        </NextLink>
+                        <Button asChild size="xs" variant="outline" colorPalette="blue">
+                          <NextLink href={`/admin/bookings/${booking.reference}`}>View</NextLink>
+                        </Button>
                       </Table.Cell>
                     </Table.Row>
                   );

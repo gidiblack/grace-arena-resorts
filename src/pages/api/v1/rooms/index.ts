@@ -7,7 +7,7 @@ import { recordAuditLog } from "@/pages/api/v1/_shared/audit-log";
 import type { RoomTier, RoomTypeStatus } from "@/types/db";
 
 const createRoomTypeSchema = z.object({
-  building_id: z.string().uuid("Building ID must be a valid UUID").optional().nullable(),
+  building_id: z.guid("Building ID must be a valid UUID").optional().nullable(),
   name: z.string().trim().min(2, "Room suite name is required").max(100),
   slug: z.string().trim().min(2).max(100).optional(),
   tier: z.enum(["budget", "standard", "deluxe", "premium", "executive", "presidential", "royal"]),
@@ -37,9 +37,15 @@ export default withApi(
 
       if (dbRooms && dbRooms.length > 0) {
         let filtered = dbRooms.map((r) => {
-          const building = r.buildings as { name?: string; resorts?: { name?: string; slug?: string } } | null;
-          const campusSlug = building?.resorts?.slug || (r.name.toLowerCase().includes("hut") ? "village" : "elysian");
-          const campusName = building?.resorts?.name || (campusSlug === "village" ? "GAR Village" : "GAR Elysian");
+          const building = r.buildings as {
+            name?: string;
+            resorts?: { name?: string; slug?: string };
+          } | null;
+          const campusSlug =
+            building?.resorts?.slug ||
+            (r.name.toLowerCase().includes("hut") ? "village" : "elysian");
+          const campusName =
+            building?.resorts?.name || (campusSlug === "village" ? "GAR Village" : "GAR Elysian");
 
           return {
             id: r.id,
@@ -123,7 +129,12 @@ export default withApi(
         if (defaultBuilding) {
           buildingId = defaultBuilding.id;
         } else {
-          return fail(res, "BUILDING_REQUIRED", "Please create a building first or provide a valid building_id", 400);
+          return fail(
+            res,
+            "BUILDING_REQUIRED",
+            "Please create a building first or provide a valid building_id",
+            400
+          );
         }
       }
 

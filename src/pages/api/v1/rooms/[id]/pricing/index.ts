@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { idOrSlugFilter } from "@/lib/supabase/filters";
 import { withApi } from "../../../_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
@@ -25,7 +26,7 @@ export default withApi(
     const { data: roomType } = await supabase
       .from("room_types")
       .select("id, name")
-      .or(`id.eq.${id},slug.eq.${id}`)
+      .or(idOrSlugFilter(id))
       .maybeSingle();
 
     if (!roomType) {
@@ -58,13 +59,23 @@ export default withApi(
         return fail(res, "UNAUTHORIZED", "Authentication required", 401);
       }
       if (!["resort_admin", "super_admin"].includes(user.role)) {
-        return fail(res, "FORBIDDEN", "Only resort administrators can manage seasonal pricing", 403);
+        return fail(
+          res,
+          "FORBIDDEN",
+          "Only resort administrators can manage seasonal pricing",
+          403
+        );
       }
 
       const body = req.body as z.infer<typeof seasonalPriceSchema>;
 
       if (body.start_date > body.end_date) {
-        return fail(res, "INVALID_DATE_RANGE", "Start date must be before or equal to end date", 400);
+        return fail(
+          res,
+          "INVALID_DATE_RANGE",
+          "Start date must be before or equal to end date",
+          400
+        );
       }
 
       // Check for overlapping seasonal price records for this room type
@@ -99,7 +110,12 @@ export default withApi(
         .single();
 
       if (insertErr || !newPrice) {
-        return fail(res, "CREATE_FAILED", insertErr?.message || "Failed to create seasonal price", 500);
+        return fail(
+          res,
+          "CREATE_FAILED",
+          insertErr?.message || "Failed to create seasonal price",
+          500
+        );
       }
 
       await recordAuditLog({

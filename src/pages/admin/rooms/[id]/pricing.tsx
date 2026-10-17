@@ -177,11 +177,7 @@ export default function AdminSeasonalPricingPage({ adminUser }: PricingPageProps
     >
       <Box maxW="900px" mx="auto">
         <HStack mb={4} justify="space-between">
-          <Button
-            size="xs"
-            variant="ghost"
-            onClick={() => router.push("/admin/rooms")}
-          >
+          <Button size="xs" variant="ghost" onClick={() => router.push("/admin/rooms")}>
             <HStack gap={1}>
               <Icon as={FaArrowLeft} boxSize={3} />
               <Text>Back to Rooms</Text>
@@ -190,7 +186,7 @@ export default function AdminSeasonalPricingPage({ adminUser }: PricingPageProps
 
           <Button
             size="xs"
-            colorScheme="blue"
+            colorPalette="blue"
             onClick={() => {
               setPrice(basePrice);
               setShowAddModal(true);
@@ -203,14 +199,28 @@ export default function AdminSeasonalPricingPage({ adminUser }: PricingPageProps
           </Button>
         </HStack>
 
-        <Box bg="white" p={6} borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm">
-          <HStack justify="space-between" mb={4} pb={3} borderBottom="1px solid" borderColor="gray.100">
+        <Box
+          bg="white"
+          p={6}
+          borderRadius="lg"
+          border="1px solid"
+          borderColor="gray.200"
+          boxShadow="sm"
+        >
+          <HStack
+            justify="space-between"
+            mb={4}
+            pb={3}
+            borderBottom="1px solid"
+            borderColor="gray.100"
+          >
             <Box>
               <Heading size="md" color="gray.800">
                 Seasonal Rates — {roomName}
               </Heading>
               <Text fontSize="xs" color="gray.500">
-                Standard base rate: {formatNgn(basePrice)} / night. Date-range overrides take precedence.
+                Standard base rate: {formatNgn(basePrice)} / night. Date-range overrides take
+                precedence.
               </Text>
             </Box>
           </HStack>
@@ -272,7 +282,8 @@ export default function AdminSeasonalPricingPage({ adminUser }: PricingPageProps
                         <Button
                           size="xs"
                           variant="ghost"
-                          colorScheme="red"
+                          colorPalette="red"
+                          aria-label={`Delete seasonal rate ${p.label || p.start_date}`}
                           onClick={() => handleDeletePrice(p.id)}
                           loading={saving}
                         >
@@ -391,11 +402,17 @@ export default function AdminSeasonalPricingPage({ adminUser }: PricingPageProps
                   />
                 </Box>
 
-                <Flex justify="flex-end" gap={2} pt={3} borderTop="1px solid" borderColor="gray.100">
+                <Flex
+                  justify="flex-end"
+                  gap={2}
+                  pt={3}
+                  borderTop="1px solid"
+                  borderColor="gray.100"
+                >
                   <Button size="sm" variant="outline" onClick={() => setShowAddModal(false)}>
                     Cancel
                   </Button>
-                  <Button size="sm" colorScheme="blue" type="submit" loading={saving}>
+                  <Button size="sm" colorPalette="blue" type="submit" loading={saving}>
                     Save Rate
                   </Button>
                 </Flex>

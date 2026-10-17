@@ -3,6 +3,7 @@ import type { ServerResponse } from "node:http";
 import { stringifySetCookie } from "cookie";
 import { getSupabaseAdminClient, createSupabaseAuthClient } from "@/lib/supabase/server";
 import { ACCESS_COOKIE, REFRESH_COOKIE, setSessionCookies } from "@/services/auth/session";
+import { ADMIN_ACCESS_DENIED_NOTICE } from "./admin-notices";
 import type { UserRole } from "@/types/db";
 
 export interface AdminUserSession {
@@ -112,10 +113,10 @@ export async function requireAdminPage<P extends { adminUser: AdminUserSession }
   // 4. Role authorization check
   const userRole = profile.role as UserRole;
   if (!ALL_ADMIN_ROLES.includes(userRole)) {
-    // Regular guest attempting to access admin panel
+    // Signed-in guest: sending them back to /login would loop, so explain on their account page
     return {
       redirect: {
-        destination: `/login?redirect=${redirectTarget}`,
+        destination: `/account?notice=${ADMIN_ACCESS_DENIED_NOTICE}`,
         permanent: false,
       },
     };

@@ -1,13 +1,6 @@
 import React from "react";
 import NextLink from "next/link";
-import {
-  Box,
-  Flex,
-  HStack,
-  Text,
-  Button,
-  Icon,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Text, Button, Icon } from "@chakra-ui/react";
 import { FaPlus, FaTag, FaPhotoVideo, FaUndo } from "react-icons/fa";
 import type { UserRole } from "@/types/db";
 
@@ -20,14 +13,7 @@ export function QuickActions({ userRole, refundsToProcessCount = 0 }: QuickActio
   const isContentManager = userRole === "content_manager";
 
   return (
-    <Box
-      bg="white"
-      p={5}
-      borderRadius="lg"
-      borderWidth="1px"
-      borderColor="gray.200"
-      boxShadow="sm"
-    >
+    <Box bg="white" p={5} borderRadius="lg" borderWidth="1px" borderColor="gray.200" boxShadow="sm">
       <Flex
         direction={{ base: "column", sm: "row" }}
         justify="space-between"
@@ -35,7 +21,13 @@ export function QuickActions({ userRole, refundsToProcessCount = 0 }: QuickActio
         gap={4}
       >
         <Box>
-          <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" color="gray.500" letterSpacing="wide">
+          <Text
+            fontSize="xs"
+            fontWeight="bold"
+            textTransform="uppercase"
+            color="gray.500"
+            letterSpacing="wide"
+          >
             Quick Actions
           </Text>
           <Text fontSize="xs" color="gray.500" mt={0.5}>
@@ -48,7 +40,7 @@ export function QuickActions({ userRole, refundsToProcessCount = 0 }: QuickActio
           {isContentManager ? (
             <Button
               size="sm"
-              colorScheme="blue"
+              colorPalette="blue"
               variant="solid"
               disabled
               title="Content Managers have read-only access to bookings"
@@ -60,7 +52,7 @@ export function QuickActions({ userRole, refundsToProcessCount = 0 }: QuickActio
             </Button>
           ) : (
             <NextLink href="/admin/bookings/new" style={{ textDecoration: "none" }}>
-              <Button size="sm" colorScheme="blue" variant="solid">
+              <Button size="sm" colorPalette="blue" variant="solid">
                 <HStack gap={1.5}>
                   <Icon as={FaPlus} boxSize={3} />
                   <Text>Create Booking</Text>
@@ -71,8 +63,8 @@ export function QuickActions({ userRole, refundsToProcessCount = 0 }: QuickActio
 
           {/* Refunds Queue Shortcut */}
           {!isContentManager && refundsToProcessCount > 0 && (
-            <NextLink href="/admin/bookings?paymentStatus=refund_pending" style={{ textDecoration: "none" }}>
-              <Button size="sm" colorScheme="purple" variant="outline">
+            <NextLink href="/admin/bookings?refundQueue=true" style={{ textDecoration: "none" }}>
+              <Button size="sm" colorPalette="purple" variant="outline">
                 <HStack gap={1.5}>
                   <Icon as={FaUndo} boxSize={3} />
                   <Text>Process Refunds ({refundsToProcessCount})</Text>
@@ -83,7 +75,7 @@ export function QuickActions({ userRole, refundsToProcessCount = 0 }: QuickActio
 
           {/* Add Deal */}
           <NextLink href="/admin/deals" style={{ textDecoration: "none" }}>
-            <Button size="sm" variant="outline" colorScheme="blue">
+            <Button size="sm" variant="outline" colorPalette="blue">
               <HStack gap={1.5}>
                 <Icon as={FaTag} boxSize={3} />
                 <Text>Add Deal</Text>
@@ -93,7 +85,7 @@ export function QuickActions({ userRole, refundsToProcessCount = 0 }: QuickActio
 
           {/* Upload Media */}
           <NextLink href="/admin/media" style={{ textDecoration: "none" }}>
-            <Button size="sm" variant="outline" colorScheme="blue">
+            <Button size="sm" variant="outline" colorPalette="blue">
               <HStack gap={1.5}>
                 <Icon as={FaPhotoVideo} boxSize={3} />
                 <Text>Upload Media</Text>

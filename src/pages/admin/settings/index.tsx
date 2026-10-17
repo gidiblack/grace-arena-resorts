@@ -12,11 +12,7 @@ import {
   Icon,
   Spinner,
 } from "@chakra-ui/react";
-import {
-  FaCheckCircle,
-  FaExclamationCircle,
-  FaSave,
-} from "react-icons/fa";
+import { FaCheckCircle, FaExclamationCircle, FaSave } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 
@@ -57,7 +53,8 @@ export default function AdminSettingsPage({ adminUser }: SettingsPageProps) {
           if (s.tax_rate) setTaxRate(s.tax_rate);
           if (s.checkin_time) setCheckinTime(s.checkin_time);
           if (s.checkout_time) setCheckoutTime(s.checkout_time);
-          if (s.pending_booking_expiry_minutes) setPendingExpiryMinutes(s.pending_booking_expiry_minutes);
+          if (s.pending_booking_expiry_minutes)
+            setPendingExpiryMinutes(s.pending_booking_expiry_minutes);
           if (s.whatsapp_number) setWhatsappNumber(s.whatsapp_number);
           if (s.contact_email) setContactEmail(s.contact_email);
           if (s.contact_phone) setContactPhone(s.contact_phone);
@@ -99,7 +96,10 @@ export default function AdminSettingsPage({ adminUser }: SettingsPageProps) {
 
       const json = await res.json();
       if (res.ok && json.success) {
-        setFeedback({ type: "success", message: "System settings saved and applied successfully!" });
+        setFeedback({
+          type: "success",
+          message: "System settings saved and applied successfully!",
+        });
       } else {
         setFeedback({
           type: "error",
@@ -126,12 +126,13 @@ export default function AdminSettingsPage({ adminUser }: SettingsPageProps) {
               <Heading as="h1" size="lg" color="gray.800">
                 Resort Operations & System Settings
               </Heading>
-              <Badge colorScheme="red" fontSize="10px">
+              <Badge colorPalette="red" fontSize="10px">
                 Super Admin Only
               </Badge>
             </HStack>
             <Text fontSize="sm" color="gray.600">
-              Configure global VAT tax rates, check-in/out times, contact handles, and payment fallback policies.
+              Configure global VAT tax rates, check-in/out times, contact handles, and payment
+              fallback policies.
             </Text>
           </Box>
         </Flex>
@@ -162,7 +163,14 @@ export default function AdminSettingsPage({ adminUser }: SettingsPageProps) {
           <form onSubmit={handleSave}>
             <VStack gap={6} align="stretch">
               {/* 1. FINANCIAL & TAX CONFIG */}
-              <Box bg="white" p={6} borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm">
+              <Box
+                bg="white"
+                p={6}
+                borderRadius="lg"
+                border="1px solid"
+                borderColor="gray.200"
+                boxShadow="sm"
+              >
                 <Heading size="sm" color="gray.800" mb={1}>
                   1. Financial & Tax Configuration
                 </Heading>
@@ -193,12 +201,20 @@ export default function AdminSettingsPage({ adminUser }: SettingsPageProps) {
               </Box>
 
               {/* 2. OPERATIONAL & BOOKING TIMINGS */}
-              <Box bg="white" p={6} borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm">
+              <Box
+                bg="white"
+                p={6}
+                borderRadius="lg"
+                border="1px solid"
+                borderColor="gray.200"
+                boxShadow="sm"
+              >
                 <Heading size="sm" color="gray.800" mb={1}>
                   2. Operational Timings & Inventory Locks
                 </Heading>
                 <Text fontSize="xs" color="gray.500" mb={4}>
-                  Check-in/out policies printed on booking vouchers and temporary hold release windows.
+                  Check-in/out policies printed on booking vouchers and temporary hold release
+                  windows.
                 </Text>
 
                 <Flex gap={4} flexWrap="wrap">
@@ -266,7 +282,14 @@ export default function AdminSettingsPage({ adminUser }: SettingsPageProps) {
               </Box>
 
               {/* 3. RESORT CONTACT & SOCIAL CHANNELS */}
-              <Box bg="white" p={6} borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm">
+              <Box
+                bg="white"
+                p={6}
+                borderRadius="lg"
+                border="1px solid"
+                borderColor="gray.200"
+                boxShadow="sm"
+              >
                 <Heading size="sm" color="gray.800" mb={1}>
                   3. Contact Information & Location
                 </Heading>
@@ -360,12 +383,20 @@ export default function AdminSettingsPage({ adminUser }: SettingsPageProps) {
               </Box>
 
               {/* 4. PAYMENT GATEWAY FALLBACK */}
-              <Box bg="white" p={6} borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm">
+              <Box
+                bg="white"
+                p={6}
+                borderRadius="lg"
+                border="1px solid"
+                borderColor="gray.200"
+                boxShadow="sm"
+              >
                 <Heading size="sm" color="gray.800" mb={1}>
                   4. Payment Gateway Downtime Override
                 </Heading>
                 <Text fontSize="xs" color="gray.500" mb={4}>
-                  Activate to gracefully display bank-transfer / WhatsApp concierge fallback UI when Paystack is experiencing downtime.
+                  Activate to gracefully display bank-transfer / WhatsApp concierge fallback UI when
+                  Paystack is experiencing downtime.
                 </Text>
 
                 <HStack gap={3}>
@@ -382,13 +413,15 @@ export default function AdminSettingsPage({ adminUser }: SettingsPageProps) {
                     }}
                   >
                     <option value="false">Standard Mode (Paystack Online Active)</option>
-                    <option value="true">Gateway Degradation Fallback (WhatsApp Concierge Mode)</option>
+                    <option value="true">
+                      Gateway Degradation Fallback (WhatsApp Concierge Mode)
+                    </option>
                   </select>
                 </HStack>
               </Box>
 
               <Flex justify="flex-end" pt={2}>
-                <Button size="md" colorScheme="blue" type="submit" loading={saving}>
+                <Button size="md" colorPalette="blue" type="submit" loading={saving}>
                   <HStack gap={2}>
                     <Icon as={FaSave} />
                     <Text>Save Settings</Text>

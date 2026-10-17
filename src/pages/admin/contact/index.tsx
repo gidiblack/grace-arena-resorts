@@ -13,13 +13,7 @@ import {
   Spinner,
   Table,
 } from "@chakra-ui/react";
-import {
-  FaEnvelope,
-  FaCheckCircle,
-  FaExclamationCircle,
-  FaReply,
-  FaUser,
-} from "react-icons/fa";
+import { FaEnvelope, FaCheckCircle, FaExclamationCircle, FaReply, FaUser } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import type { ContactStatus } from "@/types/db";
@@ -62,9 +56,7 @@ export default function AdminContactPage({ adminUser }: ContactPageProps) {
     setLoading(true);
     try {
       const url =
-        statusFilter === "all"
-          ? "/api/v1/contact"
-          : `/api/v1/contact?status=${statusFilter}`;
+        statusFilter === "all" ? "/api/v1/contact" : `/api/v1/contact?status=${statusFilter}`;
       const res = await fetch(url);
       const json = await res.json();
       if (res.ok && json.success && Array.isArray(json.data)) {
@@ -181,7 +173,14 @@ export default function AdminContactPage({ adminUser }: ContactPageProps) {
         </Box>
       )}
 
-      <Box bg="white" borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm" overflow="hidden">
+      <Box
+        bg="white"
+        borderRadius="lg"
+        border="1px solid"
+        borderColor="gray.200"
+        boxShadow="sm"
+        overflow="hidden"
+      >
         {loading ? (
           <Flex justify="center" p={12}>
             <Spinner size="lg" color="blue.500" />
@@ -189,7 +188,9 @@ export default function AdminContactPage({ adminUser }: ContactPageProps) {
         ) : submissions.length === 0 ? (
           <VStack py={12} px={4}>
             <Icon as={FaEnvelope} boxSize={8} color="gray.400" mb={2} />
-            <Text fontWeight="semibold" color="gray.700">No contact messages received</Text>
+            <Text fontWeight="semibold" color="gray.700">
+              No contact messages received
+            </Text>
           </VStack>
         ) : (
           <Box overflowX="auto">
@@ -209,7 +210,9 @@ export default function AdminContactPage({ adminUser }: ContactPageProps) {
                     <Table.Cell>
                       <Box>
                         <Text fontWeight="semibold">{sub.name}</Text>
-                        <Text fontSize="xs" color="gray.500">{sub.email}</Text>
+                        <Text fontSize="xs" color="gray.500">
+                          {sub.email}
+                        </Text>
                       </Box>
                     </Table.Cell>
                     <Table.Cell>
@@ -221,7 +224,11 @@ export default function AdminContactPage({ adminUser }: ContactPageProps) {
                       {new Date(sub.created_at).toLocaleDateString()}
                     </Table.Cell>
                     <Table.Cell>
-                      <Badge colorScheme={getStatusColor(sub.status)} textTransform="uppercase" fontSize="10px">
+                      <Badge
+                        colorPalette={getStatusColor(sub.status)}
+                        textTransform="uppercase"
+                        fontSize="10px"
+                      >
                         {sub.status}
                       </Badge>
                     </Table.Cell>
@@ -229,7 +236,7 @@ export default function AdminContactPage({ adminUser }: ContactPageProps) {
                       <Button
                         size="xs"
                         variant="outline"
-                        colorScheme="blue"
+                        colorPalette="blue"
                         onClick={() => {
                           setSelectedMessage(sub);
                           setEditStatus(sub.status);
@@ -259,7 +266,14 @@ export default function AdminContactPage({ adminUser }: ContactPageProps) {
           p={4}
         >
           <Box bg="white" maxW="560px" w="100%" p={6} borderRadius="lg" boxShadow="xl">
-            <Flex justify="space-between" align="center" mb={4} pb={2} borderBottom="1px solid" borderColor="gray.100">
+            <Flex
+              justify="space-between"
+              align="center"
+              mb={4}
+              pb={2}
+              borderBottom="1px solid"
+              borderColor="gray.100"
+            >
               <Heading size="sm">{selectedMessage.subject}</Heading>
               <Button size="xs" variant="ghost" onClick={() => setSelectedMessage(null)}>
                 Close
@@ -269,7 +283,9 @@ export default function AdminContactPage({ adminUser }: ContactPageProps) {
             <VStack gap={3} align="stretch" mb={4} fontSize="sm">
               <HStack>
                 <Icon as={FaUser} color="gray.400" boxSize={3.5} />
-                <Text fontWeight="semibold" color="gray.800">{selectedMessage.name}</Text>
+                <Text fontWeight="semibold" color="gray.800">
+                  {selectedMessage.name}
+                </Text>
                 <Text color="gray.500">({selectedMessage.email})</Text>
               </HStack>
 
@@ -286,7 +302,13 @@ export default function AdminContactPage({ adminUser }: ContactPageProps) {
               </Box>
             </VStack>
 
-            <Flex justify="space-between" align="center" pt={4} borderTop="1px solid" borderColor="gray.100">
+            <Flex
+              justify="space-between"
+              align="center"
+              pt={4}
+              borderTop="1px solid"
+              borderColor="gray.100"
+            >
               <HStack gap={2}>
                 <a
                   href={`mailto:${selectedMessage.email}?subject=Re: ${encodeURIComponent(selectedMessage.subject)}`}
@@ -294,7 +316,7 @@ export default function AdminContactPage({ adminUser }: ContactPageProps) {
                   rel="noreferrer"
                   style={{ textDecoration: "none" }}
                 >
-                  <Button size="xs" colorScheme="blue">
+                  <Button size="xs" colorPalette="blue">
                     <HStack gap={1}>
                       <Icon as={FaReply} boxSize={2.5} />
                       <Text>Reply via Email</Text>
@@ -323,7 +345,7 @@ export default function AdminContactPage({ adminUser }: ContactPageProps) {
                 </select>
                 <Button
                   size="xs"
-                  colorScheme="green"
+                  colorPalette="green"
                   onClick={() => handleUpdateStatus(editStatus)}
                   loading={saving}
                 >

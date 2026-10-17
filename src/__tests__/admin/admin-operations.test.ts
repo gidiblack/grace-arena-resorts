@@ -3,7 +3,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { FakeSupabase } from "@/test-utils/fake-supabase";
 import { mockApiCall } from "@/test-utils/api";
 import { resetRateLimits } from "@/lib/security/rate-limit";
-import { requireAdminPage, ADMIN_LAST_SEEN_COOKIE, ADMIN_IDLE_TIMEOUT_MS } from "@/lib/auth/admin-guard";
+import {
+  requireAdminPage,
+  ADMIN_LAST_SEEN_COOKIE,
+  ADMIN_IDLE_TIMEOUT_MS,
+} from "@/lib/auth/admin-guard";
 import { ACCESS_COOKIE } from "@/services/auth/session";
 import type { UserRole } from "@/types/db";
 
@@ -20,7 +24,9 @@ vi.mock("@/services/booking/notifications", () => ({
 }));
 
 vi.mock("@/services/payments/refund", () => ({
-  initiatePaystackRefund: vi.fn().mockResolvedValue({ success: true, refundId: "paystack_ref_123" }),
+  initiatePaystackRefund: vi
+    .fn()
+    .mockResolvedValue({ success: true, refundId: "paystack_ref_123" }),
 }));
 
 const db = vi.hoisted(() => ({ current: null as unknown as FakeSupabase }));
@@ -38,6 +44,79 @@ import offlinePaymentHandler from "@/pages/api/v1/bookings/[ref]/offline-payment
 import refundHandler from "@/pages/api/v1/payments/[id]/refund";
 import bookingStatusHandler from "@/pages/api/v1/bookings/[ref]/status";
 import unitStatusHandler from "@/pages/api/v1/rooms/[id]/units/[unitId]";
+
+import cancelHandler from "@/pages/api/v1/bookings/[ref]/cancel";
+import bookingsListHandler from "@/pages/api/v1/bookings/index";
+
+/** Mirrors trg_booking_status_history: every status change writes one history row. */
+function setBookingStatus(bookingId: string, status: string, actor: string | null) {
+  const booking = db.current.rows("bookings").find((b) => b.id === bookingId)!;
+  db.current.rows("booking_status_history").push({
+    id: crypto.randomUUID(),
+    booking_id: bookingId,
+    from_status: booking.status,
+    to_status: status,
+    changed_by: actor,
+  });
+  booking.status = status;
+  booking.status_changed_by = actor;
+}
+
+function rpcError(message: string, code = "P0001") {
+  return { data: null, error: { code, message }, status: 400 };
+}
+
+/** In-memory equivalents of the 0009 RPCs (check-in, check-out, offline payment). */
+function installAdminRpcs() {
+  db.current.rpcHandlers["check_in_booking"] = ({ p_booking_id, p_assignments, p_actor }: any) => {
+    const booking = db.current.rows("bookings").find((b) => b.id === p_booking_id);
+    if (!booking) return rpcError("BOOKING_NOT_FOUND");
+    if (booking.status !== "confirmed") return rpcError("INVALID_TRANSITION");
+    for (const a of p_assignments) {
+      const lineItem = db.current
+        .rows("booking_line_items")
+        .find((li) => li.id === a.booking_line_item_id && li.booking_id === p_booking_id);
+      if (!lineItem) return rpcError("INVALID_LINE_ITEM");
+      const room = db.current.rows("rooms").find((r) => r.id === a.room_id);
+      if (!room) return rpcError("ROOM_NOT_FOUND");
+      if (room.room_type_id !== lineItem.room_type_id) return rpcError("ROOM_TYPE_MISMATCH");
+      if (room.status !== "available") return rpcError("ROOM_NOT_AVAILABLE");
+    }
+    for (const a of p_assignments) {
+      db.current.rows("booking_room_assignments").push({
+        id: crypto.randomUUID(),
+        booking_id: p_booking_id,
+        booking_line_item_id: a.booking_line_item_id,
+        room_id: a.room_id,
+        released_at: null,
+      });
+      db.current.rows("rooms").find((r) => r.id === a.room_id)!.status = "occupied";
+    }
+    setBookingStatus(p_booking_id, "checked_in", p_actor);
+    return { data: null, error: null, status: 200 };
+  };
+
+  db.current.rpcHandlers["record_offline_payment"] = (args: any) => {
+    const booking = db.current.rows("bookings").find((b) => b.id === args.p_booking_id);
+    if (!booking) return rpcError("BOOKING_NOT_FOUND");
+    if (booking.status !== "pending") return rpcError("INVALID_BOOKING_STATUS");
+    if (new Date(booking.hold_expires_at) < new Date()) return rpcError("BOOKING_HOLD_EXPIRED");
+    if (booking.total !== args.p_amount) return rpcError("AMOUNT_MISMATCH");
+    const payment = {
+      id: crypto.randomUUID(),
+      booking_id: args.p_booking_id,
+      gateway: args.p_method,
+      gateway_reference: args.p_reference,
+      amount: args.p_amount,
+      status: "success",
+      paid_at: args.p_paid_at,
+    };
+    db.current.rows("payments").push(payment);
+    setBookingStatus(args.p_booking_id, "confirmed", args.p_actor);
+    booking.hold_expires_at = null;
+    return { data: { ...payment }, error: null, status: 200 };
+  };
+}
 
 const CONTENT_MANAGER_ID = "22222222-2222-2222-2222-222222222201";
 const RESORT_ADMIN_ID = "33333333-3333-3333-3333-333333333301";
@@ -107,6 +186,8 @@ describe("Step 12: Admin Operations & RBAC Protection", () => {
         status: 200,
       };
     };
+
+    installAdminRpcs();
   });
 
   describe("Admin Shell Server-Side Guard (requireAdminPage)", () => {
@@ -155,7 +236,7 @@ describe("Step 12: Admin Operations & RBAC Protection", () => {
 
       const result = await requireAdminPage(ctx);
       expect(result).toHaveProperty("redirect");
-      expect((result as any).redirect.destination).toContain("/login");
+      expect((result as any).redirect.destination).toContain("/account?notice=admin_access_denied");
     });
 
     it("allows authorized staff and refreshes the idle timestamp cookie", async () => {
@@ -614,6 +695,397 @@ describe("Step 12: Admin Operations & RBAC Protection", () => {
 
       expect(call.status()).toBe(400);
       expect(call.body().error.code).toBe("UNIT_OCCUPIED");
+    });
+  });
+
+  describe("Regression: failures are never reported as success", () => {
+    function seedConfirmedBooking(quantity = 1) {
+      const lineItemId = crypto.randomUUID();
+      db.current.seed("bookings", [
+        {
+          id: "b-reg-1",
+          reference: "GAR-REG-0001",
+          status: "confirmed",
+          total: 60000,
+          check_in_date: "2026-12-08",
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      db.current.seed("booking_line_items", [
+        { id: lineItemId, booking_id: "b-reg-1", room_type_id: "rt-std", quantity },
+      ]);
+      return lineItemId;
+    }
+
+    function seedUnit(status = "available") {
+      const id = crypto.randomUUID();
+      db.current.seed("rooms", [
+        { id, room_type_id: "rt-std", room_number: id.slice(0, 4), status },
+      ]);
+      return id;
+    }
+
+    async function checkIn(assignments: Array<{ bookingLineItemId: string; roomId: string }>) {
+      const call = mockApiCall({
+        method: "PUT",
+        query: { ref: "GAR-REG-0001" },
+        body: { status: "checked_in", assignments },
+        headers: { authorization: `Bearer ${resortAdminToken}` },
+      });
+      await bookingStatusHandler(call.req, call.res);
+      return call;
+    }
+
+    it("rejects check-in to an occupied unit and leaves booking and unit untouched", async () => {
+      const lineItemId = seedConfirmedBooking();
+      const occupied = seedUnit("occupied");
+
+      const call = await checkIn([{ bookingLineItemId: lineItemId, roomId: occupied }]);
+
+      expect(call.status()).toBe(409);
+      expect(call.body().error.code).toBe("ROOM_NOT_AVAILABLE");
+      expect(db.current.rows("bookings")[0].status).toBe("confirmed");
+      expect(db.current.rows("booking_room_assignments")).toHaveLength(0);
+    });
+
+    it("returns 500 without touching rooms when the check-in RPC is missing", async () => {
+      db.current.rpcHandlers["check_in_booking"] = () =>
+        rpcError("Could not find the function", "PGRST202");
+      const lineItemId = seedConfirmedBooking();
+      const unit = seedUnit();
+
+      const call = await checkIn([{ bookingLineItemId: lineItemId, roomId: unit }]);
+
+      expect(call.status()).toBe(500);
+      expect(call.body().error.code).toBe("SCHEMA_OUT_OF_DATE");
+      expect(db.current.rows("rooms").find((r) => r.id === unit)?.status).toBe("available");
+      expect(db.current.rows("bookings")[0].status).toBe("confirmed");
+    });
+
+    it("requires one distinct unit per booked room (quantity 2)", async () => {
+      const lineItemId = seedConfirmedBooking(2);
+      const unit = seedUnit();
+
+      const tooFew = await checkIn([{ bookingLineItemId: lineItemId, roomId: unit }]);
+      expect(tooFew.status()).toBe(400);
+      expect(tooFew.body().error.code).toBe("INVALID_ASSIGNMENTS");
+
+      const duplicate = await checkIn([
+        { bookingLineItemId: lineItemId, roomId: unit },
+        { bookingLineItemId: lineItemId, roomId: unit },
+      ]);
+      expect(duplicate.status()).toBe(400);
+      expect(duplicate.body().error.code).toBe("DUPLICATE_UNIT");
+
+      const second = seedUnit();
+      const ok = await checkIn([
+        { bookingLineItemId: lineItemId, roomId: unit },
+        { bookingLineItemId: lineItemId, roomId: second },
+      ]);
+      expect(ok.status()).toBe(200);
+      expect(db.current.rows("booking_room_assignments")).toHaveLength(2);
+    });
+
+    it("leaves status history to the database trigger (no duplicate rows from the API)", async () => {
+      db.current.seed("bookings", [
+        {
+          id: "b-ns-1",
+          reference: "GAR-NS-0001",
+          status: "confirmed",
+          check_in_date: "2026-01-05",
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      const call = mockApiCall({
+        method: "PUT",
+        query: { ref: "GAR-NS-0001" },
+        body: { status: "no_show" },
+        headers: { authorization: `Bearer ${resortAdminToken}` },
+      });
+      await bookingStatusHandler(call.req, call.res);
+
+      expect(call.status()).toBe(200);
+      expect(db.current.rows("bookings")[0].status).toBe("no_show");
+      expect(db.current.rows("booking_status_history")).toHaveLength(0);
+    });
+
+    it("records no payment when the offline payment RPC fails", async () => {
+      db.current.seed("bookings", [
+        {
+          id: "b-op-1",
+          reference: "GAR-OP-0001",
+          status: "pending",
+          total: 60000,
+          hold_expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      db.current.rpcHandlers["record_offline_payment"] = () =>
+        rpcError("Could not find the function", "PGRST202");
+
+      const call = mockApiCall({
+        method: "POST",
+        query: { ref: "GAR-OP-0001" },
+        body: { method: "bank_transfer", amount: 60000, reference: "TRX-1" },
+        headers: { authorization: `Bearer ${resortAdminToken}` },
+      });
+      await offlinePaymentHandler(call.req, call.res);
+
+      expect(call.status()).toBe(500);
+      expect(db.current.rows("payments")).toHaveLength(0);
+      expect(db.current.rows("bookings")[0].status).toBe("pending");
+    });
+
+    it("rejects an override reason that fails validation instead of ignoring the override", async () => {
+      db.current.seed("bookings", [
+        {
+          id: "b-cx-1",
+          reference: "GAR-CX-0001",
+          status: "confirmed",
+          total: 60000,
+          check_in_date: "2027-03-01",
+          guest_email: "guest@example.com",
+        },
+      ]);
+      db.current.seed("payments", [
+        { id: "p-cx-1", booking_id: "b-cx-1", gateway: "cash", amount: 60000, status: "success" },
+      ]);
+
+      const call = mockApiCall({
+        method: "PUT",
+        query: { ref: "GAR-CX-0001" },
+        body: { refundAmountOverride: 1000, overrideReason: "ok" },
+        headers: { authorization: `Bearer ${resortAdminToken}` },
+      });
+      await cancelHandler(call.req, call.res);
+
+      expect(call.status()).toBe(400);
+      expect(call.body().error.code).toBe("INVALID_REQUEST_BODY");
+      expect(db.current.rows("bookings")[0].status).toBe("confirmed");
+      expect(db.current.rows("payments")[0].status).toBe("success");
+    });
+
+    it("returns 403 (not 404) when a Content Manager tries to cancel", async () => {
+      const call = mockApiCall({
+        method: "PUT",
+        query: { ref: "GAR-CX-0001" },
+        body: {},
+        headers: { authorization: `Bearer ${contentManagerToken}` },
+      });
+      await cancelHandler(call.req, call.res);
+      expect(call.status()).toBe(403);
+    });
+  });
+
+  describe("GET /api/v1/bookings/{ref}/history", () => {
+    beforeEach(() => {
+      db.current.seed("bookings", [{ id: "b-h-1", reference: "GAR-H-0001", status: "checked_in" }]);
+      db.current.seed("payments", [{ id: "p-h-1", booking_id: "b-h-1", status: "success" }]);
+      db.current.seed("booking_status_history", [
+        {
+          id: "h-1",
+          booking_id: "b-h-1",
+          from_status: null,
+          to_status: "pending",
+          changed_by: null,
+          created_at: "2026-10-01T10:00:00Z",
+        },
+        {
+          id: "h-2",
+          booking_id: "b-h-1",
+          from_status: "pending",
+          to_status: "confirmed",
+          changed_by: null,
+          created_at: "2026-10-01T10:05:00Z",
+        },
+        {
+          id: "h-3",
+          booking_id: "b-h-1",
+          from_status: "confirmed",
+          to_status: "checked_in",
+          changed_by: RESORT_ADMIN_ID,
+          created_at: "2026-10-02T14:00:00Z",
+        },
+        {
+          id: "h-x",
+          booking_id: "other",
+          from_status: null,
+          to_status: "pending",
+          changed_by: null,
+          created_at: "2026-10-01T09:00:00Z",
+        },
+      ]);
+      db.current.seed("audit_logs", [
+        {
+          id: "a-1",
+          user_id: RESORT_ADMIN_ID,
+          action: "UPDATE_STATUS_CHECKED_IN",
+          entity: "booking",
+          entity_id: "b-h-1",
+          new_data: { note: "ID verified" },
+          created_at: "2026-10-02T14:00:01Z",
+        },
+        {
+          id: "a-2",
+          user_id: RESORT_ADMIN_ID,
+          action: "RECORD_REFUND_PROCESSED",
+          entity: "payment",
+          entity_id: "p-h-1",
+          new_data: {},
+          created_at: "2026-10-03T09:00:00Z",
+        },
+      ]);
+      db.current.seed("booking_room_assignments", [
+        {
+          id: "as-1",
+          booking_id: "b-h-1",
+          booking_line_item_id: "li-1",
+          room_id: "rm-101",
+          assigned_at: "2026-10-02T14:00:00Z",
+          released_at: null,
+        },
+        {
+          id: "as-x",
+          booking_id: "other",
+          booking_line_item_id: "li-x",
+          room_id: "rm-102",
+          assigned_at: "2026-10-02T14:00:00Z",
+          released_at: null,
+        },
+      ]);
+    });
+
+    async function history(token: string) {
+      const call = mockApiCall({
+        method: "GET",
+        query: { ref: "GAR-H-0001" },
+        headers: { authorization: `Bearer ${token}` },
+      });
+      const { default: historyHandler } = await import("@/pages/api/v1/bookings/[ref]/history");
+      await historyHandler(call.req, call.res);
+      return call;
+    }
+
+    it("merges status transitions (System for null actors) with admin actions in order", async () => {
+      const call = await history(contentManagerToken);
+      expect(call.status()).toBe(200);
+      const { timeline } = call.body().data;
+      expect(timeline.map((t: any) => t.id)).toEqual(["h-1", "h-2", "h-3", "a-1", "a-2"]);
+      expect(timeline[1].actor).toBeNull();
+      expect(timeline[2].actor).toEqual({ id: RESORT_ADMIN_ID, name: "resort admin user" });
+      expect(timeline[3].note).toBe("ID verified");
+    });
+
+    it("returns only this booking's unit assignments", async () => {
+      const call = await history(resortAdminToken);
+      const { assignments } = call.body().data;
+      expect(assignments.map((a: any) => a.id)).toEqual(["as-1"]);
+    });
+
+    it("is not available to guests", async () => {
+      const call = await history(guestToken);
+      expect(call.status()).toBe(403);
+    });
+  });
+
+  describe("Revenue by room type", () => {
+    it("allocates net paid amounts (after processed refunds) across line items", async () => {
+      db.current.seed("booking_line_items", [
+        { id: "li-a", booking_id: "b-r-1", room_type_id: "rt-std", line_total: 60000 },
+        { id: "li-b", booking_id: "b-r-1", room_type_id: "rt-hut", line_total: 120000 },
+        { id: "li-c", booking_id: "b-r-2", room_type_id: "rt-std", line_total: 60000 },
+      ]);
+      const { getRoomTypeRevenueBreakdown } =
+        await import("@/services/analytics/analytics-service");
+      const breakdown = await getRoomTypeRevenueBreakdown(db.current.client as any, [
+        // 180,000 + 7.5% tax paid, nothing refunded
+        { booking_id: "b-r-1", status: "success", amount: 193500, paid_at: "2026-10-01T10:00:00Z" },
+        // 64,500 paid and fully refunded: contributes nothing
+        {
+          booking_id: "b-r-2",
+          status: "refunded",
+          amount: 64500,
+          refund_amount: 64500,
+          paid_at: "2026-10-01T10:00:00Z",
+          refunded_at: "2026-10-02T10:00:00Z",
+        },
+      ]);
+      const byType = Object.fromEntries(breakdown.map((r) => [r.roomTypeId, r.revenue]));
+      expect(byType["rt-std"]).toBe(64500);
+      expect(byType["rt-hut"]).toBe(129000);
+      expect(breakdown.reduce((sum, r) => sum + r.revenue, 0)).toBe(193500);
+    });
+  });
+
+  describe("Bookings list: search escaping and refund queue", () => {
+    beforeEach(() => {
+      db.current.seed("bookings", [
+        {
+          id: "b-l-1",
+          reference: "GAR-L-0001",
+          guest_name: "Doe, John",
+          guest_email: "j@x.com",
+          status: "cancelled",
+          created_at: "2026-10-01T10:00:00Z",
+        },
+        {
+          id: "b-l-2",
+          reference: "GAR-L-0002",
+          guest_name: "Ada Obi",
+          guest_email: "a@x.com",
+          status: "cancelled",
+          created_at: "2026-10-02T10:00:00Z",
+        },
+        {
+          id: "b-l-3",
+          reference: "GAR-L-0003",
+          guest_name: "Paystack Guest",
+          guest_email: "p@x.com",
+          status: "cancelled",
+          created_at: "2026-10-03T10:00:00Z",
+        },
+      ]);
+      db.current.seed("payments", [
+        {
+          id: "p-l-1",
+          booking_id: "b-l-1",
+          status: "refund_pending",
+          refund_method: "bank_transfer",
+        },
+        { id: "p-l-2", booking_id: "b-l-2", status: "refund_failed", refund_method: "paystack" },
+        { id: "p-l-3", booking_id: "b-l-3", status: "refund_pending", refund_method: "paystack" },
+      ]);
+    });
+
+    async function list(query: Record<string, string>) {
+      const call = mockApiCall({
+        method: "GET",
+        query,
+        headers: { authorization: `Bearer ${resortAdminToken}` },
+      });
+      await bookingsListHandler(call.req, call.res);
+      return call;
+    }
+
+    it("treats commas and parentheses in search as literal text", async () => {
+      const comma = await list({ q: "Doe, J" });
+      expect(comma.status()).toBe(200);
+      expect(comma.body().data.map((b: any) => b.reference)).toEqual(["GAR-L-0001"]);
+
+      const injection = await list({ q: "x,status.eq.cancelled)" });
+      expect(injection.status()).toBe(200);
+      expect(injection.body().data).toHaveLength(0);
+    });
+
+    it("refundQueue returns manual pending refunds and failed refunds only", async () => {
+      const call = await list({ refundQueue: "true" });
+      expect(call.status()).toBe(200);
+      expect(
+        call
+          .body()
+          .data.map((b: any) => b.reference)
+          .sort()
+      ).toEqual(["GAR-L-0001", "GAR-L-0002"]);
     });
   });
 });

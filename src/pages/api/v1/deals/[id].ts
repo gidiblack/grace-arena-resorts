@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { idOrSlugFilter } from "@/lib/supabase/filters";
 import { withApi } from "@/pages/api/v1/_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { MOCK_DEALS } from "@/data/mock/resort-data";
@@ -38,7 +39,7 @@ export default withApi(
       const { data: dbDeal } = await supabase
         .from("deals")
         .select("*")
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .or(idOrSlugFilter(id))
         .maybeSingle();
 
       if (dbDeal) {
@@ -62,7 +63,12 @@ export default withApi(
         return fail(res, "UNAUTHORIZED", "Authentication required", 401);
       }
       if (!["content_manager", "resort_admin", "super_admin"].includes(user.role)) {
-        return fail(res, "FORBIDDEN", "Only content managers and administrators can edit deals", 403);
+        return fail(
+          res,
+          "FORBIDDEN",
+          "Only content managers and administrators can edit deals",
+          403
+        );
       }
 
       const updates = req.body as z.infer<typeof updateDealSchema>;
@@ -70,16 +76,19 @@ export default withApi(
       const { data: existing, error: fetchErr } = await supabase
         .from("deals")
         .select("*")
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .or(idOrSlugFilter(id))
         .maybeSingle();
 
       if (fetchErr || !existing) {
         return fail(res, "NOT_FOUND", `Deal '${id}' not found`, 404);
       }
 
-      const promoCode = updates.promo_code !== undefined
-        ? (updates.promo_code ? updates.promo_code.toUpperCase().trim() : null)
-        : existing.promo_code;
+      const promoCode =
+        updates.promo_code !== undefined
+          ? updates.promo_code
+            ? updates.promo_code.toUpperCase().trim()
+            : null
+          : existing.promo_code;
 
       if (promoCode && promoCode !== existing.promo_code) {
         const { data: existingCode } = await supabase
@@ -99,14 +108,20 @@ export default withApi(
         .update({
           ...(updates.title ? { title: updates.title } : {}),
           ...(updates.description ? { description: updates.description } : {}),
-          ...(updates.discount_type ? { discount_type: updates.discount_type as DiscountType } : {}),
-          ...(updates.discount_value !== undefined ? { discount_value: updates.discount_value } : {}),
+          ...(updates.discount_type
+            ? { discount_type: updates.discount_type as DiscountType }
+            : {}),
+          ...(updates.discount_value !== undefined
+            ? { discount_value: updates.discount_value }
+            : {}),
           ...(updates.promo_code !== undefined ? { promo_code: promoCode } : {}),
           ...(updates.start_date ? { start_date: updates.start_date } : {}),
           ...(updates.end_date ? { end_date: updates.end_date } : {}),
           ...(updates.is_active !== undefined ? { is_active: updates.is_active } : {}),
           ...(updates.category ? { category: updates.category as DealCategory } : {}),
-          ...(updates.applicable_room_type_ids ? { applicable_room_type_ids: updates.applicable_room_type_ids } : {}),
+          ...(updates.applicable_room_type_ids
+            ? { applicable_room_type_ids: updates.applicable_room_type_ids }
+            : {}),
           ...(updates.images ? { images: updates.images } : {}),
           ...(updates.terms !== undefined ? { terms: updates.terms } : {}),
           updated_at: new Date().toISOString(),
@@ -147,17 +162,14 @@ export default withApi(
       const { data: existing } = await supabase
         .from("deals")
         .select("id, title")
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .or(idOrSlugFilter(id))
         .maybeSingle();
 
       if (!existing) {
         return fail(res, "NOT_FOUND", `Deal '${id}' not found`, 404);
       }
 
-      const { error: deleteErr } = await supabase
-        .from("deals")
-        .delete()
-        .eq("id", existing.id);
+      const { error: deleteErr } = await supabase.from("deals").delete().eq("id", existing.id);
 
       if (deleteErr) {
         return fail(res, "DELETE_FAILED", "Failed to delete deal", 500);

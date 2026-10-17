@@ -33,6 +33,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   experimental: {
     optimizePackageImports: ["@chakra-ui/react"],
+    // Next 16.2.1: a dev session restored from the Turbopack filesystem cache (default since 16.1)
+    // stops matching dynamic [param] pages and API routes, which all return the 404 page until
+    // .next/dev is deleted. Compile from scratch on each `next dev` instead.
+    turbopackFileSystemCacheForDev: false,
   },
   async headers() {
     return [
@@ -44,7 +48,6 @@ const nextConfig: NextConfig = {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
           },
-          { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
@@ -52,6 +55,12 @@ const nextConfig: NextConfig = {
             value: "camera=(), microphone=(), geolocation=(), payment=(self)",
           },
         ],
+      },
+      {
+        // Next 16 dev serves _clientMiddlewareManifest.js as JSON while loading it with a <script>
+        // tag; nosniff turns that into a console error on every page. Development only.
+        source: isDev ? "/:path((?!_next/static/development/).*)" : "/:path*",
+        headers: [{ key: "X-Content-Type-Options", value: "nosniff" }],
       },
     ];
   },

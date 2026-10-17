@@ -20,6 +20,7 @@ import {
   FaExclamationCircle,
   FaTrash,
   FaStar,
+  FaEdit,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
@@ -55,7 +56,8 @@ export default function AdminFacilitiesPage({ adminUser }: FacilitiesPageProps) 
     null
   );
 
-  // New facility form fields
+  // Facility form fields (create, or edit when editingId is set)
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
@@ -79,7 +81,23 @@ export default function AdminFacilitiesPage({ adminUser }: FacilitiesPageProps) 
     fetchFacilities();
   }, [fetchFacilities]);
 
-  const handleCreateFacility = async (e: React.FormEvent) => {
+  const openCreate = () => {
+    setEditingId(null);
+    setName("");
+    setDescription("");
+    setIsFeatured(false);
+    setShowAddModal(true);
+  };
+
+  const openEdit = (facility: FacilityItem) => {
+    setEditingId(facility.id);
+    setName(facility.name);
+    setDescription(facility.description || "");
+    setIsFeatured(Boolean(facility.isFeatured ?? facility.is_featured));
+    setShowAddModal(true);
+  };
+
+  const handleSaveFacility = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !description.trim()) {
       setFeedback({ type: "error", message: "Name and description are required." });
@@ -90,20 +108,27 @@ export default function AdminFacilitiesPage({ adminUser }: FacilitiesPageProps) 
     setFeedback(null);
 
     try {
-      const res = await fetch("/api/v1/facilities", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          description: description.trim(),
-          is_featured: isFeatured,
-        }),
-      });
+      const res = await fetch(
+        editingId ? `/api/v1/facilities/${editingId}` : "/api/v1/facilities",
+        {
+          method: editingId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name.trim(),
+            description: description.trim(),
+            is_featured: isFeatured,
+          }),
+        }
+      );
 
       const json = await res.json();
       if (res.ok && json.success) {
-        setFeedback({ type: "success", message: `Facility '${name}' created!` });
+        setFeedback({
+          type: "success",
+          message: `Facility '${name}' ${editingId ? "updated" : "created"}.`,
+        });
         setShowAddModal(false);
+        setEditingId(null);
         setName("");
         setDescription("");
         setIsFeatured(false);
@@ -111,7 +136,7 @@ export default function AdminFacilitiesPage({ adminUser }: FacilitiesPageProps) 
       } else {
         setFeedback({
           type: "error",
-          message: json.error?.message || "Failed to create facility.",
+          message: json.error?.message || "Failed to save facility.",
         });
       }
     } catch {
@@ -150,11 +175,7 @@ export default function AdminFacilitiesPage({ adminUser }: FacilitiesPageProps) 
   };
 
   return (
-    <AdminLayout
-      title="Resort Facilities"
-      user={adminUser}
-      breadcrumbs={[{ label: "Facilities" }]}
-    >
+    <AdminLayout title="Resort Facilities" user={adminUser} breadcrumbs={[{ label: "Facilities" }]}>
       <Flex mb={6} justify="space-between" align="center" flexWrap="wrap" gap={3}>
         <Box>
           <Heading as="h1" size="lg" color="gray.800">
@@ -165,7 +186,7 @@ export default function AdminFacilitiesPage({ adminUser }: FacilitiesPageProps) 
           </Text>
         </Box>
 
-        <Button size="sm" colorScheme="blue" onClick={() => setShowAddModal(true)}>
+        <Button size="sm" colorPalette="blue" onClick={openCreate}>
           <HStack gap={1}>
             <Icon as={FaPlus} boxSize={3} />
             <Text>Add Facility</Text>
@@ -191,7 +212,14 @@ export default function AdminFacilitiesPage({ adminUser }: FacilitiesPageProps) 
         </Box>
       )}
 
-      <Box bg="white" borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm" overflow="hidden">
+      <Box
+        bg="white"
+        borderRadius="lg"
+        border="1px solid"
+        borderColor="gray.200"
+        boxShadow="sm"
+        overflow="hidden"
+      >
         {loading ? (
           <Flex justify="center" p={12}>
             <Spinner size="lg" color="blue.500" />
@@ -199,7 +227,9 @@ export default function AdminFacilitiesPage({ adminUser }: FacilitiesPageProps) 
         ) : facilities.length === 0 ? (
           <VStack py={12} px={4}>
             <Icon as={FaSwimmingPool} boxSize={8} color="gray.400" mb={2} />
-            <Text fontWeight="semibold" color="gray.700">No facilities registered</Text>
+            <Text fontWeight="semibold" color="gray.700">
+              No facilities registered
+            </Text>
           </VStack>
         ) : (
           <Box overflowX="auto">
@@ -228,27 +258,39 @@ export default function AdminFacilitiesPage({ adminUser }: FacilitiesPageProps) 
                         </Box>
                       </Table.Cell>
                       <Table.Cell>
-                        <Badge colorScheme="purple" textTransform="uppercase" fontSize="10px">
+                        <Badge colorPalette="purple" textTransform="uppercase" fontSize="10px">
                           {f.campus || "Resort Wide"}
                         </Badge>
                       </Table.Cell>
                       <Table.Cell>
                         {featured ? (
-                          <Badge colorScheme="yellow" fontSize="10px">
+                          <Badge colorPalette="yellow" fontSize="10px">
                             <HStack gap={1}>
                               <Icon as={FaStar} boxSize={2.5} />
                               <Text>Featured</Text>
                             </HStack>
                           </Badge>
                         ) : (
-                          <Text fontSize="xs" color="gray.400">Standard</Text>
+                          <Text fontSize="xs" color="gray.400">
+                            Standard
+                          </Text>
                         )}
                       </Table.Cell>
                       <Table.Cell textAlign="right">
                         <Button
                           size="xs"
                           variant="ghost"
-                          colorScheme="red"
+                          aria-label={`Edit facility ${f.name}`}
+                          onClick={() => openEdit(f)}
+                          disabled={saving}
+                        >
+                          <Icon as={FaEdit} boxSize={3} />
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          colorPalette="red"
+                          aria-label={`Delete facility ${f.name}`}
                           onClick={() => handleDelete(f.id, f.name)}
                           disabled={saving}
                         >
@@ -264,7 +306,7 @@ export default function AdminFacilitiesPage({ adminUser }: FacilitiesPageProps) 
         )}
       </Box>
 
-      {/* ADD FACILITY MODAL */}
+      {/* ADD / EDIT FACILITY MODAL */}
       {showAddModal && (
         <Box
           position="fixed"
@@ -278,13 +320,13 @@ export default function AdminFacilitiesPage({ adminUser }: FacilitiesPageProps) 
         >
           <Box bg="white" maxW="480px" w="100%" p={6} borderRadius="lg" boxShadow="xl">
             <Flex justify="space-between" align="center" mb={4}>
-              <Heading size="sm">Add New Facility</Heading>
+              <Heading size="sm">{editingId ? "Edit Facility" : "Add New Facility"}</Heading>
               <Button size="xs" variant="ghost" onClick={() => setShowAddModal(false)}>
                 Close
               </Button>
             </Flex>
 
-            <form onSubmit={handleCreateFacility}>
+            <form onSubmit={handleSaveFacility}>
               <VStack gap={4} align="stretch">
                 <Box>
                   <Text fontSize="xs" fontWeight="bold" color="gray.700" mb={1}>
@@ -340,12 +382,18 @@ export default function AdminFacilitiesPage({ adminUser }: FacilitiesPageProps) 
                   </label>
                 </HStack>
 
-                <Flex justify="flex-end" gap={2} pt={3} borderTop="1px solid" borderColor="gray.100">
+                <Flex
+                  justify="flex-end"
+                  gap={2}
+                  pt={3}
+                  borderTop="1px solid"
+                  borderColor="gray.100"
+                >
                   <Button size="sm" variant="outline" onClick={() => setShowAddModal(false)}>
                     Cancel
                   </Button>
-                  <Button size="sm" colorScheme="blue" type="submit" loading={saving}>
-                    Add Facility
+                  <Button size="sm" colorPalette="blue" type="submit" loading={saving}>
+                    {editingId ? "Save Changes" : "Add Facility"}
                   </Button>
                 </Flex>
               </VStack>

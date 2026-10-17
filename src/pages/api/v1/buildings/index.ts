@@ -7,7 +7,7 @@ import { recordAuditLog } from "@/pages/api/v1/_shared/audit-log";
 
 const createBuildingSchema = z.object({
   name: z.string().trim().min(2, "Building name is required").max(100),
-  resort_id: z.string().uuid().optional().nullable(),
+  resort_id: z.guid().optional().nullable(),
   description: z.string().trim().max(1000).optional().nullable(),
 });
 

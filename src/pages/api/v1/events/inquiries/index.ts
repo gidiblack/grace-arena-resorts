@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { buildIlikeOrFilter } from "@/lib/supabase/filters";
 import { withApi } from "../../_shared/handler";
 import { verifyRecaptcha } from "../../_shared/recaptcha";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
@@ -55,7 +56,10 @@ export default withApi(
       const { status, search, page = "1", limit = "20" } = req.query;
 
       const pageNum = Math.max(1, parseInt(typeof page === "string" ? page : "1", 10) || 1);
-      const limitNum = Math.min(100, Math.max(1, parseInt(typeof limit === "string" ? limit : "20", 10) || 20));
+      const limitNum = Math.min(
+        100,
+        Math.max(1, parseInt(typeof limit === "string" ? limit : "20", 10) || 20)
+      );
       const offset = (pageNum - 1) * limitNum;
 
       let query = supabase
@@ -68,10 +72,14 @@ export default withApi(
 
       if (search && typeof search === "string" && search.trim()) {
         const term = search.trim();
-        query = query.or(`contact_name.ilike.%${term}%,contact_email.ilike.%${term}%`);
+        query = query.or(buildIlikeOrFilter(["contact_name", "contact_email"], term));
       }
 
-      const { data: inquiries, count, error } = await query
+      const {
+        data: inquiries,
+        count,
+        error,
+      } = await query
         .order("created_at", { ascending: false })
         .range(offset, offset + limitNum - 1);
 
@@ -95,7 +103,12 @@ export default withApi(
 
       const recaptcha = await verifyRecaptcha(body.recaptchaToken, "event_inquiry");
       if (!recaptcha.success) {
-        return fail(res, "RECAPTCHA_FAILED", "Spam protection check failed. Please try again.", 400);
+        return fail(
+          res,
+          "RECAPTCHA_FAILED",
+          "Spam protection check failed. Please try again.",
+          400
+        );
       }
 
       let inquiryId = `EVT-${Date.now().toString(36).toUpperCase()}`;

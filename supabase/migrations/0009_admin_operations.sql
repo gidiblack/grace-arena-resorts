@@ -173,10 +173,13 @@ DECLARE
   v_room_id UUID;
   v_line_item_id UUID;
   v_room_status TEXT;
+  v_room_type_id UUID;
+  v_line_item_room_type_id UUID;
 BEGIN
   SELECT * INTO v_booking
   FROM public.bookings
-  WHERE id = p_booking_id;
+  WHERE id = p_booking_id
+  FOR UPDATE;
 
   IF v_booking.id IS NULL THEN
     RAISE EXCEPTION 'BOOKING_NOT_FOUND';
@@ -195,12 +198,25 @@ BEGIN
     v_room_id := (v_item ->> 'room_id')::uuid;
     v_line_item_id := (v_item ->> 'booking_line_item_id')::uuid;
 
-    SELECT status INTO v_room_status
+    SELECT room_type_id INTO v_line_item_room_type_id
+    FROM public.booking_line_items
+    WHERE id = v_line_item_id AND booking_id = p_booking_id;
+
+    IF v_line_item_room_type_id IS NULL THEN
+      RAISE EXCEPTION 'INVALID_LINE_ITEM' USING DETAIL = v_line_item_id::text;
+    END IF;
+
+    SELECT status, room_type_id INTO v_room_status, v_room_type_id
     FROM public.rooms
-    WHERE id = v_room_id;
+    WHERE id = v_room_id
+    FOR UPDATE;
 
     IF v_room_status IS NULL THEN
       RAISE EXCEPTION 'ROOM_NOT_FOUND' USING DETAIL = v_room_id::text;
+    END IF;
+
+    IF v_room_type_id != v_line_item_room_type_id THEN
+      RAISE EXCEPTION 'ROOM_TYPE_MISMATCH' USING DETAIL = v_room_id::text;
     END IF;
 
     IF v_room_status != 'available' THEN

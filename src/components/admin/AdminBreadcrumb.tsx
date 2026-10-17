@@ -15,12 +15,18 @@ export interface AdminBreadcrumbProps {
 export function AdminBreadcrumb({ items }: AdminBreadcrumbProps) {
   return (
     <HStack gap={2} fontSize="sm" color="gray.600" mb={4} flexWrap="wrap">
-      <NextLink href="/admin" passHref legacyBehavior>
-        <Link display="flex" alignItems="center" color="gray.500" _hover={{ color: "blue.600" }}>
+      <Link
+        asChild
+        display="flex"
+        alignItems="center"
+        color="gray.500"
+        _hover={{ color: "blue.600" }}
+      >
+        <NextLink href="/admin">
           <Icon as={FaHome} mr={1} boxSize={3} />
           <span>Admin</span>
-        </Link>
-      </NextLink>
+        </NextLink>
+      </Link>
 
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
@@ -32,11 +38,9 @@ export function AdminBreadcrumb({ items }: AdminBreadcrumbProps) {
                 {item.label}
               </Text>
             ) : (
-              <NextLink href={item.href} passHref legacyBehavior>
-                <Link color="gray.600" _hover={{ color: "blue.600" }}>
-                  {item.label}
-                </Link>
-              </NextLink>
+              <Link asChild color="gray.600" _hover={{ color: "blue.600" }}>
+                <NextLink href={item.href}>{item.label}</NextLink>
+              </Link>
             )}
           </React.Fragment>
         );

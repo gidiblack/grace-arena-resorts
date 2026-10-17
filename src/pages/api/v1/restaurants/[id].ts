@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { idOrSlugFilter } from "@/lib/supabase/filters";
 import { withApi } from "@/pages/api/v1/_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { MOCK_RESTAURANTS } from "@/data/mock/resort-data";
@@ -29,16 +30,14 @@ export default withApi(
       const { data: dbRestaurant } = await supabase
         .from("restaurants")
         .select("*, menu_items(*)")
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .or(idOrSlugFilter(id))
         .maybeSingle();
 
       if (dbRestaurant) {
         return ok(res, dbRestaurant);
       }
 
-      const mockRestaurant = MOCK_RESTAURANTS.find(
-        (r) => r.id === id
-      );
+      const mockRestaurant = MOCK_RESTAURANTS.find((r) => r.id === id);
 
       if (!mockRestaurant) {
         return fail(res, "NOT_FOUND", `Restaurant with id '${id}' not found`, 404);
@@ -56,7 +55,12 @@ export default withApi(
         return fail(res, "UNAUTHORIZED", "Authentication required", 401);
       }
       if (!["content_manager", "resort_admin", "super_admin"].includes(user.role)) {
-        return fail(res, "FORBIDDEN", "Only content managers and administrators can edit restaurants", 403);
+        return fail(
+          res,
+          "FORBIDDEN",
+          "Only content managers and administrators can edit restaurants",
+          403
+        );
       }
 
       const updates = req.body as z.infer<typeof updateRestaurantSchema>;
@@ -64,7 +68,7 @@ export default withApi(
       const { data: existing, error: fetchErr } = await supabase
         .from("restaurants")
         .select("*")
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .or(idOrSlugFilter(id))
         .maybeSingle();
 
       if (fetchErr || !existing) {
@@ -111,13 +115,18 @@ export default withApi(
         return fail(res, "UNAUTHORIZED", "Authentication required", 401);
       }
       if (!["content_manager", "resort_admin", "super_admin"].includes(user.role)) {
-        return fail(res, "FORBIDDEN", "Only content managers and administrators can delete restaurants", 403);
+        return fail(
+          res,
+          "FORBIDDEN",
+          "Only content managers and administrators can delete restaurants",
+          403
+        );
       }
 
       const { data: existing } = await supabase
         .from("restaurants")
         .select("id, name")
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .or(idOrSlugFilter(id))
         .maybeSingle();
 
       if (!existing) {

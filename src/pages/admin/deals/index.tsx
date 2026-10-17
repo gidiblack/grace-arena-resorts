@@ -19,6 +19,7 @@ import {
   FaCheckCircle,
   FaExclamationCircle,
   FaTrash,
+  FaEdit,
   FaMagic,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -40,6 +41,7 @@ interface DealItem {
   end_date?: string;
   isActive?: boolean;
   is_active?: boolean;
+  description?: string | null;
 }
 
 interface DealsPageProps {
@@ -47,11 +49,7 @@ interface DealsPageProps {
 }
 
 export const getServerSideProps: GetServerSideProps<DealsPageProps> = async (ctx) => {
-  return requireAdminPage<DealsPageProps>(ctx, [
-    "content_manager",
-    "resort_admin",
-    "super_admin",
-  ]);
+  return requireAdminPage<DealsPageProps>(ctx, ["content_manager", "resort_admin", "super_admin"]);
 };
 
 export default function AdminDealsPage({ adminUser }: DealsPageProps) {
@@ -64,6 +62,7 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
   );
 
   // New deal form fields
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [discountType, setDiscountType] = useState<"percentage" | "fixed">("percentage");
@@ -100,7 +99,33 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
     setPromoCode(code);
   };
 
-  const handleCreateDeal = async (e: React.FormEvent) => {
+  const openCreate = () => {
+    setEditingId(null);
+    setTitle("");
+    setPromoCode("");
+    setDiscountType("percentage");
+    setDiscountValue(10);
+    setStartDate("");
+    setEndDate("");
+    setDescription("");
+    setShowAddModal(true);
+  };
+
+  const openEdit = (deal: DealItem) => {
+    setEditingId(deal.id);
+    setTitle(deal.title);
+    setPromoCode(deal.promoCode ?? deal.promo_code ?? "");
+    setDiscountType(
+      ((deal.discountType ?? deal.discount_type) as "percentage" | "fixed") || "percentage"
+    );
+    setDiscountValue(Number(deal.discountValue ?? deal.discount_value ?? 0));
+    setStartDate((deal.startDate ?? deal.start_date ?? "").slice(0, 10));
+    setEndDate((deal.endDate ?? deal.end_date ?? "").slice(0, 10));
+    setDescription(deal.description || "");
+    setShowAddModal(true);
+  };
+
+  const handleSaveDeal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !startDate || !endDate || discountValue <= 0 || !description.trim()) {
       setFeedback({ type: "error", message: "All fields are required." });
@@ -111,8 +136,8 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
     setFeedback(null);
 
     try {
-      const res = await fetch("/api/v1/deals", {
-        method: "POST",
+      const res = await fetch(editingId ? `/api/v1/deals/${editingId}` : "/api/v1/deals", {
+        method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: title.trim(),
@@ -122,14 +147,19 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
           start_date: startDate,
           end_date: endDate,
           description: description.trim(),
-          is_active: true,
+          // Editing keeps the current active state; use Activate/Deactivate to change it
+          ...(editingId ? {} : { is_active: true }),
         }),
       });
 
       const json = await res.json();
       if (res.ok && json.success) {
-        setFeedback({ type: "success", message: `Deal '${title}' created successfully!` });
+        setFeedback({
+          type: "success",
+          message: `Deal '${title}' ${editingId ? "updated" : "created"}.`,
+        });
         setShowAddModal(false);
+        setEditingId(null);
         setTitle("");
         setPromoCode("");
         setDescription("");
@@ -139,7 +169,7 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
       } else {
         setFeedback({
           type: "error",
-          message: json.error?.message || "Failed to create deal.",
+          message: json.error?.message || "Failed to save deal.",
         });
       }
     } catch {
@@ -227,7 +257,7 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
           </Text>
         </Box>
 
-        <Button size="sm" colorScheme="blue" onClick={() => setShowAddModal(true)}>
+        <Button size="sm" colorPalette="blue" onClick={openCreate}>
           <HStack gap={1}>
             <Icon as={FaPlus} boxSize={3} />
             <Text>Add Deal</Text>
@@ -253,7 +283,14 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
         </Box>
       )}
 
-      <Box bg="white" borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm" overflow="hidden">
+      <Box
+        bg="white"
+        borderRadius="lg"
+        border="1px solid"
+        borderColor="gray.200"
+        boxShadow="sm"
+        overflow="hidden"
+      >
         {loading ? (
           <Flex justify="center" p={12}>
             <Spinner size="lg" color="blue.500" />
@@ -261,7 +298,9 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
         ) : deals.length === 0 ? (
           <VStack py={12} px={4}>
             <Icon as={FaTags} boxSize={8} color="gray.400" mb={2} />
-            <Text fontWeight="semibold" color="gray.700">No active promotional deals</Text>
+            <Text fontWeight="semibold" color="gray.700">
+              No active promotional deals
+            </Text>
           </VStack>
         ) : (
           <Box overflowX="auto">
@@ -290,11 +329,13 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
                       <Table.Cell fontWeight="semibold">{d.title}</Table.Cell>
                       <Table.Cell>
                         {code ? (
-                          <Badge colorScheme="blue" fontSize="10px">
+                          <Badge colorPalette="blue" fontSize="10px">
                             {code}
                           </Badge>
                         ) : (
-                          <Text fontSize="xs" color="gray.400">Automatic</Text>
+                          <Text fontSize="xs" color="gray.400">
+                            Automatic
+                          </Text>
                         )}
                       </Table.Cell>
                       <Table.Cell fontWeight="bold" color="green.600">
@@ -304,7 +345,11 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
                         {sdate && edate ? `${sdate} to ${edate}` : "Ongoing"}
                       </Table.Cell>
                       <Table.Cell>
-                        <Badge colorScheme={active ? "green" : "gray"} textTransform="uppercase" fontSize="10px">
+                        <Badge
+                          colorPalette={active ? "green" : "gray"}
+                          textTransform="uppercase"
+                          fontSize="10px"
+                        >
                           {active ? "Active" : "Inactive"}
                         </Badge>
                       </Table.Cell>
@@ -313,7 +358,7 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
                           <Button
                             size="xs"
                             variant="outline"
-                            colorScheme={active ? "orange" : "green"}
+                            colorPalette={active ? "orange" : "green"}
                             onClick={() => handleToggleActive(d)}
                             loading={saving}
                           >
@@ -322,7 +367,17 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
                           <Button
                             size="xs"
                             variant="ghost"
-                            colorScheme="red"
+                            aria-label={`Edit deal ${d.title}`}
+                            onClick={() => openEdit(d)}
+                            disabled={saving}
+                          >
+                            <Icon as={FaEdit} boxSize={3} />
+                          </Button>
+                          <Button
+                            size="xs"
+                            variant="ghost"
+                            colorPalette="red"
+                            aria-label={`Delete deal ${d.title}`}
                             onClick={() => handleDelete(d.id, d.title)}
                             disabled={saving}
                           >
@@ -353,13 +408,15 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
         >
           <Box bg="white" maxW="500px" w="100%" p={6} borderRadius="lg" boxShadow="xl">
             <Flex justify="space-between" align="center" mb={4}>
-              <Heading size="sm">Create Promotional Deal</Heading>
+              <Heading size="sm">
+                {editingId ? "Edit Promotional Deal" : "Create Promotional Deal"}
+              </Heading>
               <Button size="xs" variant="ghost" onClick={() => setShowAddModal(false)}>
                 Close
               </Button>
             </Flex>
 
-            <form onSubmit={handleCreateDeal}>
+            <form onSubmit={handleSaveDeal}>
               <VStack gap={4} align="stretch">
                 <Box>
                   <Text fontSize="xs" fontWeight="bold" color="gray.700" mb={1}>
@@ -386,7 +443,12 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
                     <Text fontSize="xs" fontWeight="bold" color="gray.700">
                       Promo Code (Optional)
                     </Text>
-                    <Button size="xs" variant="ghost" colorScheme="blue" onClick={generatePromoCode}>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      colorPalette="blue"
+                      onClick={generatePromoCode}
+                    >
                       <HStack gap={1}>
                         <Icon as={FaMagic} boxSize={2.5} />
                         <Text>Generate</Text>
@@ -511,12 +573,18 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
                   />
                 </Box>
 
-                <Flex justify="flex-end" gap={2} pt={3} borderTop="1px solid" borderColor="gray.100">
+                <Flex
+                  justify="flex-end"
+                  gap={2}
+                  pt={3}
+                  borderTop="1px solid"
+                  borderColor="gray.100"
+                >
                   <Button size="sm" variant="outline" onClick={() => setShowAddModal(false)}>
                     Cancel
                   </Button>
-                  <Button size="sm" colorScheme="blue" type="submit" loading={saving}>
-                    Create Deal
+                  <Button size="sm" colorPalette="blue" type="submit" loading={saving}>
+                    {editingId ? "Save Changes" : "Create Deal"}
                   </Button>
                 </Flex>
               </VStack>

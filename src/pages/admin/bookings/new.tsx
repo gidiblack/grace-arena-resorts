@@ -18,6 +18,7 @@ import { FaUserPlus, FaCalendarAlt, FaCreditCard, FaExclamationCircle } from "re
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import { formatNgn } from "@/lib/formatters/currency";
+import { addCalendarDays, resortToday } from "@/domain/booking/time";
 
 interface NewAdminBookingPageProps {
   adminUser: AdminUserSession;
@@ -49,7 +50,7 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
   const [phone, setPhone] = useState("+234");
   const [specialRequests, setSpecialRequests] = useState("");
 
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+  const tomorrow = addCalendarDays(resortToday(), 1);
   const [checkInDate, setCheckInDate] = useState(tomorrow);
   const [nights, setNights] = useState(1);
   const [adults, setAdults] = useState(2);
@@ -58,7 +59,9 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
   const [selectedRoomTypeId, setSelectedRoomTypeId] = useState("");
   const [quantity, setQuantity] = useState(1);
 
-  const [paymentMethod, setPaymentMethod] = useState<"bank_transfer" | "cash" | "pos">("bank_transfer");
+  const [paymentMethod, setPaymentMethod] = useState<"bank_transfer" | "cash" | "pos">(
+    "bank_transfer"
+  );
   const [paymentReference, setPaymentReference] = useState("");
 
   useEffect(() => {
@@ -179,12 +182,21 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
             Create Reservation (Admin / Concierge)
           </Heading>
           <Text fontSize="sm" color="gray.600">
-            Create a confirmed walk-in, WhatsApp concierge, or phone reservation and settle payment immediately.
+            Create a confirmed walk-in, WhatsApp concierge, or phone reservation and settle payment
+            immediately.
           </Text>
         </Box>
 
         {error && (
-          <Box bg="red.50" color="red.700" p={4} borderRadius="md" mb={6} border="1px solid" borderColor="red.200">
+          <Box
+            bg="red.50"
+            color="red.700"
+            p={4}
+            borderRadius="md"
+            mb={6}
+            border="1px solid"
+            borderColor="red.200"
+          >
             <HStack gap={2}>
               <Icon as={FaExclamationCircle} />
               <Text fontWeight="semibold">{error}</Text>
@@ -192,7 +204,16 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
           </Box>
         )}
 
-        <Box as="form" onSubmit={handleSubmit} bg="white" p={6} borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm">
+        <Box
+          as="form"
+          onSubmit={handleSubmit}
+          bg="white"
+          p={6}
+          borderRadius="lg"
+          border="1px solid"
+          borderColor="gray.200"
+          boxShadow="sm"
+        >
           <VStack align="stretch" gap={6}>
             {/* Booking Channel / Source */}
             <Box>
@@ -228,7 +249,9 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
               </HStack>
               <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
                 <Box>
-                  <Text fontSize="xs" color="gray.600" mb={1}>Full Name *</Text>
+                  <Text fontSize="xs" color="gray.600" mb={1}>
+                    Full Name *
+                  </Text>
                   <Input
                     size="sm"
                     value={fullName}
@@ -238,7 +261,9 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
                   />
                 </Box>
                 <Box>
-                  <Text fontSize="xs" color="gray.600" mb={1}>Email Address *</Text>
+                  <Text fontSize="xs" color="gray.600" mb={1}>
+                    Email Address *
+                  </Text>
                   <Input
                     size="sm"
                     type="email"
@@ -249,7 +274,9 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
                   />
                 </Box>
                 <Box>
-                  <Text fontSize="xs" color="gray.600" mb={1}>Phone Number (+234) *</Text>
+                  <Text fontSize="xs" color="gray.600" mb={1}>
+                    Phone Number (+234) *
+                  </Text>
                   <Input
                     size="sm"
                     value={phone}
@@ -269,18 +296,22 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
               </HStack>
               <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} gap={4} mb={4}>
                 <Box>
-                  <Text fontSize="xs" color="gray.600" mb={1}>Check-In Date *</Text>
+                  <Text fontSize="xs" color="gray.600" mb={1}>
+                    Check-In Date *
+                  </Text>
                   <Input
                     size="sm"
                     type="date"
                     value={checkInDate}
                     onChange={(e) => setCheckInDate(e.target.value)}
-                    min={new Date().toISOString().split("T")[0]}
+                    min={resortToday()}
                     required
                   />
                 </Box>
                 <Box>
-                  <Text fontSize="xs" color="gray.600" mb={1}>Nights (1-30)</Text>
+                  <Text fontSize="xs" color="gray.600" mb={1}>
+                    Nights (1-30)
+                  </Text>
                   <Input
                     size="sm"
                     type="number"
@@ -292,7 +323,9 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
                   />
                 </Box>
                 <Box>
-                  <Text fontSize="xs" color="gray.600" mb={1}>Adults</Text>
+                  <Text fontSize="xs" color="gray.600" mb={1}>
+                    Adults
+                  </Text>
                   <Input
                     size="sm"
                     type="number"
@@ -303,7 +336,9 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
                   />
                 </Box>
                 <Box>
-                  <Text fontSize="xs" color="gray.600" mb={1}>Children</Text>
+                  <Text fontSize="xs" color="gray.600" mb={1}>
+                    Children
+                  </Text>
                   <Input
                     size="sm"
                     type="number"
@@ -317,7 +352,9 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
 
               <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                 <Box>
-                  <Text fontSize="xs" color="gray.600" mb={1}>Room Suite *</Text>
+                  <Text fontSize="xs" color="gray.600" mb={1}>
+                    Room Suite *
+                  </Text>
                   <select
                     style={{
                       height: "32px",
@@ -341,7 +378,9 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
                   </select>
                 </Box>
                 <Box>
-                  <Text fontSize="xs" color="gray.600" mb={1}>Quantity</Text>
+                  <Text fontSize="xs" color="gray.600" mb={1}>
+                    Quantity
+                  </Text>
                   <select
                     style={{
                       height: "32px",
@@ -357,7 +396,9 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
                     onChange={(e) => setQuantity(Number(e.target.value))}
                   >
                     {[1, 2, 3, 4, 5].map((q) => (
-                      <option key={q} value={q}>{q} room(s)</option>
+                      <option key={q} value={q}>
+                        {q} room(s)
+                      </option>
                     ))}
                   </select>
                 </Box>
@@ -372,7 +413,9 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
               </HStack>
               <SimpleGrid columns={{ base: 1, md: 2 }} gap={4} mb={3}>
                 <Box>
-                  <Text fontSize="xs" color="gray.600" mb={1}>Payment Method *</Text>
+                  <Text fontSize="xs" color="gray.600" mb={1}>
+                    Payment Method *
+                  </Text>
                   <select
                     style={{
                       height: "32px",
@@ -385,7 +428,9 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
                       width: "100%",
                     }}
                     value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value as "bank_transfer" | "pos" | "cash")}
+                    onChange={(e) =>
+                      setPaymentMethod(e.target.value as "bank_transfer" | "pos" | "cash")
+                    }
                   >
                     <option value="bank_transfer">Bank Transfer (Zenith/Access Concierge)</option>
                     <option value="pos">POS Terminal (Card at Front Desk)</option>
@@ -413,23 +458,35 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
               {/* Price Calculation Box */}
               <Box p={4} bg="gray.50" borderRadius="md" border="1px solid" borderColor="gray.200">
                 <HStack justify="space-between" fontSize="sm" mb={1}>
-                  <Text color="gray.600">Subtotal ({nights} nights × {quantity} room)</Text>
+                  <Text color="gray.600">
+                    Subtotal ({nights} nights × {quantity} room)
+                  </Text>
                   <Text fontWeight="medium">{formatNgn(estimatedSubtotal)}</Text>
                 </HStack>
                 <HStack justify="space-between" fontSize="sm" mb={2}>
                   <Text color="gray.600">VAT & Taxes (7.5%)</Text>
                   <Text fontWeight="medium">{formatNgn(estimatedTax)}</Text>
                 </HStack>
-                <HStack justify="space-between" fontSize="md" pt={2} borderTop="1px solid" borderColor="gray.200">
+                <HStack
+                  justify="space-between"
+                  fontSize="md"
+                  pt={2}
+                  borderTop="1px solid"
+                  borderColor="gray.200"
+                >
                   <Text fontWeight="bold">Total Due & Paid</Text>
-                  <Text fontWeight="bold" color="blue.600">{formatNgn(estimatedTotal)}</Text>
+                  <Text fontWeight="bold" color="blue.600">
+                    {formatNgn(estimatedTotal)}
+                  </Text>
                 </HStack>
               </Box>
             </Box>
 
             {/* Special Requests */}
             <Box>
-              <Text fontSize="xs" color="gray.600" mb={1}>Special Requests / Notes</Text>
+              <Text fontSize="xs" color="gray.600" mb={1}>
+                Special Requests / Notes
+              </Text>
               <Textarea
                 size="sm"
                 value={specialRequests}
@@ -444,7 +501,7 @@ export default function NewAdminBookingPage({ adminUser }: NewAdminBookingPagePr
               <Button size="sm" variant="outline" onClick={() => router.push("/admin/bookings")}>
                 Cancel
               </Button>
-              <Button size="sm" colorScheme="blue" type="submit" loading={submitting}>
+              <Button size="sm" colorPalette="blue" type="submit" loading={submitting}>
                 Create & Confirm Reservation
               </Button>
             </Flex>

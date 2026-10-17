@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { idOrSlugFilter } from "@/lib/supabase/filters";
 import { withApi } from "@/pages/api/v1/_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { MOCK_FACILITIES } from "@/data/mock/resort-data";
@@ -30,7 +31,7 @@ export default withApi(
       const { data: dbFacility } = await supabase
         .from("facilities")
         .select("*")
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .or(idOrSlugFilter(id))
         .maybeSingle();
 
       if (dbFacility) {
@@ -54,7 +55,12 @@ export default withApi(
         return fail(res, "UNAUTHORIZED", "Authentication required", 401);
       }
       if (!["content_manager", "resort_admin", "super_admin"].includes(user.role)) {
-        return fail(res, "FORBIDDEN", "Only content managers and administrators can edit facilities", 403);
+        return fail(
+          res,
+          "FORBIDDEN",
+          "Only content managers and administrators can edit facilities",
+          403
+        );
       }
 
       const updates = req.body as z.infer<typeof updateFacilitySchema>;
@@ -62,7 +68,7 @@ export default withApi(
       const { data: existing, error: fetchErr } = await supabase
         .from("facilities")
         .select("*")
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .or(idOrSlugFilter(id))
         .maybeSingle();
 
       if (fetchErr || !existing) {
@@ -110,23 +116,25 @@ export default withApi(
         return fail(res, "UNAUTHORIZED", "Authentication required", 401);
       }
       if (!["content_manager", "resort_admin", "super_admin"].includes(user.role)) {
-        return fail(res, "FORBIDDEN", "Only content managers and administrators can delete facilities", 403);
+        return fail(
+          res,
+          "FORBIDDEN",
+          "Only content managers and administrators can delete facilities",
+          403
+        );
       }
 
       const { data: existing } = await supabase
         .from("facilities")
         .select("id, name")
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .or(idOrSlugFilter(id))
         .maybeSingle();
 
       if (!existing) {
         return fail(res, "NOT_FOUND", `Facility '${id}' not found`, 404);
       }
 
-      const { error: deleteErr } = await supabase
-        .from("facilities")
-        .delete()
-        .eq("id", existing.id);
+      const { error: deleteErr } = await supabase.from("facilities").delete().eq("id", existing.id);
 
       if (deleteErr) {
         return fail(res, "DELETE_FAILED", "Failed to delete facility", 500);

@@ -21,7 +21,12 @@ export interface OccupancyHeatmapProps {
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-function getCellColor(rate: number): { bg: string; borderColor: string; color: string; label: string } {
+function getCellColor(rate: number): {
+  bg: string;
+  borderColor: string;
+  color: string;
+  label: string;
+} {
   if (rate === 0) {
     return { bg: "gray.50", borderColor: "gray.200", color: "gray.600", label: "Empty (0%)" };
   }
@@ -29,10 +34,20 @@ function getCellColor(rate: number): { bg: string; borderColor: string; color: s
     return { bg: "green.50", borderColor: "green.200", color: "green.800", label: "Low (1-40%)" };
   }
   if (rate <= 75) {
-    return { bg: "yellow.100", borderColor: "yellow.300", color: "yellow.900", label: "Moderate (41-75%)" };
+    return {
+      bg: "yellow.100",
+      borderColor: "yellow.300",
+      color: "yellow.900",
+      label: "Moderate (41-75%)",
+    };
   }
   if (rate < 100) {
-    return { bg: "orange.100", borderColor: "orange.300", color: "orange.900", label: "High (76-99%)" };
+    return {
+      bg: "orange.100",
+      borderColor: "orange.300",
+      color: "orange.900",
+      label: "High (76-99%)",
+    };
   }
   return { bg: "red.200", borderColor: "red.400", color: "red.900", label: "Sold Out (100%)" };
 }
@@ -55,8 +70,18 @@ export function OccupancyHeatmap({
     const [y, m] = firstDateStr.split("-").map(Number);
     const dateObj = new Date(Date.UTC(y, m - 1, 1));
     const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     monthTitle = `${monthNames[m - 1]} ${y}`;
 
@@ -67,14 +92,7 @@ export function OccupancyHeatmap({
   }
 
   return (
-    <Box
-      bg="white"
-      p={6}
-      borderRadius="lg"
-      borderWidth="1px"
-      borderColor="gray.200"
-      boxShadow="sm"
-    >
+    <Box bg="white" p={6} borderRadius="lg" borderWidth="1px" borderColor="gray.200" boxShadow="sm">
       <Flex
         direction={{ base: "column", sm: "row" }}
         justify="space-between"
@@ -87,7 +105,7 @@ export function OccupancyHeatmap({
             <Heading size="md" color="gray.800">
               Occupancy Heatmap
             </Heading>
-            <Badge colorScheme="teal" variant="subtle" fontSize="xs">
+            <Badge colorPalette="teal" variant="subtle" fontSize="xs">
               {monthTitle}
             </Badge>
           </HStack>
@@ -100,7 +118,7 @@ export function OccupancyHeatmap({
           <Button
             size="xs"
             variant={activeTab === "current" ? "solid" : "outline"}
-            colorScheme="teal"
+            colorPalette="teal"
             onClick={() => setActiveTab("current")}
           >
             Current Month
@@ -108,7 +126,7 @@ export function OccupancyHeatmap({
           <Button
             size="xs"
             variant={activeTab === "next" ? "solid" : "outline"}
-            colorScheme="teal"
+            colorPalette="teal"
             onClick={() => setActiveTab("next")}
           >
             Next Month
@@ -194,23 +212,58 @@ export function OccupancyHeatmap({
             color="gray.600"
           >
             <HStack gap={1.5}>
-              <Box w={3} h={3} borderRadius="sm" bg="gray.100" borderWidth="1px" borderColor="gray.300" />
+              <Box
+                w={3}
+                h={3}
+                borderRadius="sm"
+                bg="gray.100"
+                borderWidth="1px"
+                borderColor="gray.300"
+              />
               <Text>0% Available</Text>
             </HStack>
             <HStack gap={1.5}>
-              <Box w={3} h={3} borderRadius="sm" bg="green.100" borderWidth="1px" borderColor="green.300" />
+              <Box
+                w={3}
+                h={3}
+                borderRadius="sm"
+                bg="green.100"
+                borderWidth="1px"
+                borderColor="green.300"
+              />
               <Text>1–40%</Text>
             </HStack>
             <HStack gap={1.5}>
-              <Box w={3} h={3} borderRadius="sm" bg="yellow.100" borderWidth="1px" borderColor="yellow.400" />
+              <Box
+                w={3}
+                h={3}
+                borderRadius="sm"
+                bg="yellow.100"
+                borderWidth="1px"
+                borderColor="yellow.400"
+              />
               <Text>41–75%</Text>
             </HStack>
             <HStack gap={1.5}>
-              <Box w={3} h={3} borderRadius="sm" bg="orange.100" borderWidth="1px" borderColor="orange.400" />
+              <Box
+                w={3}
+                h={3}
+                borderRadius="sm"
+                bg="orange.100"
+                borderWidth="1px"
+                borderColor="orange.400"
+              />
               <Text>76–99%</Text>
             </HStack>
             <HStack gap={1.5}>
-              <Box w={3} h={3} borderRadius="sm" bg="red.200" borderWidth="1px" borderColor="red.400" />
+              <Box
+                w={3}
+                h={3}
+                borderRadius="sm"
+                bg="red.200"
+                borderWidth="1px"
+                borderColor="red.400"
+              />
               <Text>100% Sold Out</Text>
             </HStack>
           </Flex>

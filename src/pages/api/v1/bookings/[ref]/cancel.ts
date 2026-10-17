@@ -26,12 +26,14 @@ const POLICY_TIER = {
   none: "no_refund",
 } as const;
 
-const cancelRequestSchema = z.object({
-  refundAmountOverride: z.number().int().min(0).optional(),
-  overrideReason: z.string().trim().min(3).optional(),
-  refundMethod: z.enum(["bank_transfer", "cash", "pos_reversal"]).optional(),
-  forceManualRefund: z.boolean().optional(),
-}).optional();
+const cancelRequestSchema = z
+  .object({
+    refundAmountOverride: z.number().int().min(0).optional(),
+    overrideReason: z.string().trim().min(3).optional(),
+    refundMethod: z.enum(["bank_transfer", "cash", "pos_reversal"]).optional(),
+    forceManualRefund: z.boolean().optional(),
+  })
+  .optional();
 
 function describePolicy(refund: RefundCalculationResult, paid: number): string {
   if (paid === 0) return "No payment has been taken for this booking, so nothing will be refunded.";
@@ -69,6 +71,12 @@ async function loadBooking(req: NextApiRequest, user: AuthUser | undefined) {
 export default withApi(
   async (req, res, ctx) => {
     const user = ctx.user;
+
+    // Content Managers have read-only booking access (SRS 4.1)
+    if (user?.role === "content_manager") {
+      return fail(res, "FORBIDDEN", "Content Managers cannot cancel bookings", 403);
+    }
+
     const loaded = await loadBooking(req, user);
 
     if (!loaded) {
@@ -105,7 +113,19 @@ export default withApi(
     }
 
     const bodyParsed = cancelRequestSchema.safeParse(req.body || {});
-    const payload = bodyParsed.success ? bodyParsed.data : undefined;
+    if (!bodyParsed.success) {
+      return fail(
+        res,
+        "INVALID_REQUEST_BODY",
+        "Invalid request body payload",
+        400,
+        bodyParsed.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        }))
+      );
+    }
+    const payload = bodyParsed.data;
     const isAdmin = Boolean(user && ["resort_admin", "super_admin"].includes(user.role));
 
     // Handle Admin Refund Override
@@ -115,7 +135,12 @@ export default withApi(
         return fail(res, "FORBIDDEN", "Only administrators can override refund amounts", 403);
       }
       if (!payload.overrideReason || !payload.overrideReason.trim()) {
-        return fail(res, "MISSING_REASON", "A mandatory reason is required to override refund amounts", 400);
+        return fail(
+          res,
+          "MISSING_REASON",
+          "A mandatory reason is required to override refund amounts",
+          400
+        );
       }
       if (payload.refundAmountOverride < 0 || payload.refundAmountOverride > totalPaid) {
         return fail(
@@ -137,17 +162,17 @@ export default withApi(
       const isPaystack = payment.gateway === "paystack" && payment.gateway_reference;
       const isManualForced = Boolean(payload?.forceManualRefund);
 
-      chosenRefundMethod = payload?.refundMethod || (
-        payment.gateway === "bank_transfer"
+      chosenRefundMethod =
+        payload?.refundMethod ||
+        (payment.gateway === "bank_transfer"
           ? "bank_transfer"
           : payment.gateway === "pos"
             ? "pos_reversal"
             : payment.gateway === "cash"
               ? "cash"
-              : "bank_transfer"
-      );
+              : "bank_transfer");
 
-      const { data: claimed } = await supabase
+      const { data: claimed, error: claimError } = await supabase
         .from("payments")
         .update({
           status: "refund_pending",
@@ -159,6 +184,19 @@ export default withApi(
         .select()
         .maybeSingle();
 
+      if (claimError) {
+        logger.error("Failed to stage refund on payment", {
+          reference: booking.reference,
+          error: claimError,
+        });
+        return fail(
+          res,
+          "DB_ERROR",
+          "Failed to stage the refund. The booking was not cancelled.",
+          500
+        );
+      }
+
       if (!claimed) {
         return fail(res, "CONFLICT", "This booking is already being cancelled", 409);
       }
@@ -169,9 +207,10 @@ export default withApi(
             transactionReferenceOrId: payment.gateway_reference!,
             amountKobo: finalRefundAmount * 100,
             customerNote: `Cancellation refund for reservation ${booking.reference}`,
-            merchantNote: isAdmin && payload?.overrideReason
-              ? `Admin override (${payload.overrideReason})`
-              : `Guest cancellation (${refund.tier})`,
+            merchantNote:
+              isAdmin && payload?.overrideReason
+                ? `Admin override (${payload.overrideReason})`
+                : `Guest cancellation (${refund.tier})`,
           });
           await supabase
             .from("payments")
@@ -270,6 +309,15 @@ export default withApi(
         refundStatus,
         error: updateError,
       });
+      // Nothing was sent to the gateway for a manual refund, so release the staged claim.
+      // An initiated Paystack refund cannot be undone and is left for reconciliation.
+      if (payment && refundStatus === "manual") {
+        await supabase
+          .from("payments")
+          .update({ status: "success", refund_amount: null, refund_method: null })
+          .eq("id", payment.id)
+          .eq("status", "refund_pending");
+      }
       return fail(res, "CANCEL_FAILED", "Failed to cancel booking. Please contact us.", 500);
     }
 

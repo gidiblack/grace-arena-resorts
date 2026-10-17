@@ -239,7 +239,7 @@ export default function AdminUsersPage({ adminUser }: UsersPageProps) {
             <Heading as="h1" size="lg" color="gray.800">
               Staff & User Access Control
             </Heading>
-            <Badge colorScheme="red" fontSize="10px">
+            <Badge colorPalette="red" fontSize="10px">
               Super Admin Only
             </Badge>
           </HStack>
@@ -248,7 +248,7 @@ export default function AdminUsersPage({ adminUser }: UsersPageProps) {
           </Text>
         </Box>
 
-        <Button size="sm" colorScheme="blue" onClick={() => setShowCreateModal(true)}>
+        <Button size="sm" colorPalette="blue" onClick={() => setShowCreateModal(true)}>
           <HStack gap={1}>
             <Icon as={FaUserPlus} boxSize={3} />
             <Text>Create Admin User</Text>
@@ -313,7 +313,14 @@ export default function AdminUsersPage({ adminUser }: UsersPageProps) {
         </Flex>
       </Box>
 
-      <Box bg="white" borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm" overflow="hidden">
+      <Box
+        bg="white"
+        borderRadius="lg"
+        border="1px solid"
+        borderColor="gray.200"
+        boxShadow="sm"
+        overflow="hidden"
+      >
         {loading ? (
           <Flex justify="center" p={12}>
             <Spinner size="lg" color="blue.500" />
@@ -321,7 +328,9 @@ export default function AdminUsersPage({ adminUser }: UsersPageProps) {
         ) : users.length === 0 ? (
           <VStack py={12} px={4}>
             <Icon as={FaUsers} boxSize={8} color="gray.400" mb={2} />
-            <Text fontWeight="semibold" color="gray.700">No users found</Text>
+            <Text fontWeight="semibold" color="gray.700">
+              No users found
+            </Text>
           </VStack>
         ) : (
           <Box overflowX="auto">
@@ -345,17 +354,19 @@ export default function AdminUsersPage({ adminUser }: UsersPageProps) {
                           <HStack gap={2}>
                             <Text fontWeight="semibold">{u.full_name}</Text>
                             {isSelf && (
-                              <Badge colorScheme="blue" fontSize="9px">
+                              <Badge colorPalette="blue" fontSize="9px">
                                 You
                               </Badge>
                             )}
                           </HStack>
-                          <Text fontSize="xs" color="gray.500">{u.email}</Text>
+                          <Text fontSize="xs" color="gray.500">
+                            {u.email}
+                          </Text>
                         </Box>
                       </Table.Cell>
                       <Table.Cell>
                         <Badge
-                          colorScheme={getRoleBadgeColor(u.role)}
+                          colorPalette={getRoleBadgeColor(u.role)}
                           textTransform="uppercase"
                           fontSize="10px"
                         >
@@ -364,11 +375,11 @@ export default function AdminUsersPage({ adminUser }: UsersPageProps) {
                       </Table.Cell>
                       <Table.Cell>
                         {u.is_locked ? (
-                          <Badge colorScheme="red" fontSize="10px">
+                          <Badge colorPalette="red" fontSize="10px">
                             Locked
                           </Badge>
                         ) : (
-                          <Badge colorScheme="green" fontSize="10px">
+                          <Badge colorPalette="green" fontSize="10px">
                             Active
                           </Badge>
                         )}
@@ -381,7 +392,7 @@ export default function AdminUsersPage({ adminUser }: UsersPageProps) {
                           <Button
                             size="xs"
                             variant="outline"
-                            colorScheme="purple"
+                            colorPalette="purple"
                             onClick={() => {
                               setSelectedUserForRole(u);
                               setNewRole(u.role);
@@ -398,7 +409,7 @@ export default function AdminUsersPage({ adminUser }: UsersPageProps) {
                             <Button
                               size="xs"
                               variant="ghost"
-                              colorScheme={u.is_locked ? "green" : "red"}
+                              colorPalette={u.is_locked ? "green" : "red"}
                               onClick={() => handleToggleLock(u)}
                               disabled={saving}
                             >
@@ -542,11 +553,17 @@ export default function AdminUsersPage({ adminUser }: UsersPageProps) {
                   </Box>
                 </Flex>
 
-                <Flex justify="flex-end" gap={2} pt={3} borderTop="1px solid" borderColor="gray.100">
+                <Flex
+                  justify="flex-end"
+                  gap={2}
+                  pt={3}
+                  borderTop="1px solid"
+                  borderColor="gray.100"
+                >
                   <Button size="sm" variant="outline" onClick={() => setShowCreateModal(false)}>
                     Cancel
                   </Button>
-                  <Button size="sm" colorScheme="blue" type="submit" loading={saving}>
+                  <Button size="sm" colorPalette="blue" type="submit" loading={saving}>
                     Create Account
                   </Button>
                 </Flex>
@@ -577,7 +594,8 @@ export default function AdminUsersPage({ adminUser }: UsersPageProps) {
             </Flex>
 
             <Text fontSize="xs" color="gray.600" mb={4}>
-              Select new role for <strong>{selectedUserForRole.full_name}</strong> ({selectedUserForRole.email}).
+              Select new role for <strong>{selectedUserForRole.full_name}</strong> (
+              {selectedUserForRole.email}).
             </Text>
 
             <form onSubmit={handleChangeRole}>
@@ -605,7 +623,7 @@ export default function AdminUsersPage({ adminUser }: UsersPageProps) {
                 <Button size="sm" variant="outline" onClick={() => setSelectedUserForRole(null)}>
                   Cancel
                 </Button>
-                <Button size="sm" colorScheme="blue" type="submit" loading={saving}>
+                <Button size="sm" colorPalette="blue" type="submit" loading={saving}>
                   Update Role
                 </Button>
               </Flex>

@@ -21,6 +21,7 @@ import {
   FaExclamationCircle,
   FaTrash,
   FaUtensils,
+  FaEdit,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
@@ -41,11 +42,7 @@ interface MenuPageProps {
 }
 
 export const getServerSideProps: GetServerSideProps<MenuPageProps> = async (ctx) => {
-  return requireAdminPage<MenuPageProps>(ctx, [
-    "content_manager",
-    "resort_admin",
-    "super_admin",
-  ]);
+  return requireAdminPage<MenuPageProps>(ctx, ["content_manager", "resort_admin", "super_admin"]);
 };
 
 export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
@@ -63,6 +60,7 @@ export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
   );
 
   // New item form fields
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [name, setName] = useState("");
   const [category, setCategory] = useState<"starter" | "main" | "dessert" | "beverage">("main");
   const [price, setPrice] = useState<number>(3500);
@@ -97,7 +95,25 @@ export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
     fetchMenu();
   }, [fetchMenu]);
 
-  const handleCreateItem = async (e: React.FormEvent) => {
+  const openCreate = () => {
+    setEditingItem(null);
+    setName("");
+    setCategory("main");
+    setPrice(3500);
+    setDescription("");
+    setShowAddModal(true);
+  };
+
+  const openEdit = (item: MenuItem) => {
+    setEditingItem(item);
+    setName(item.name);
+    setCategory(item.category);
+    setPrice(item.price);
+    setDescription(item.description || "");
+    setShowAddModal(true);
+  };
+
+  const handleSaveItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || price < 0) {
       setFeedback({ type: "error", message: "Item name and valid price are required." });
@@ -109,21 +125,28 @@ export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
 
     try {
       const res = await fetch(`/api/v1/restaurants/${id}/menu`, {
-        method: "POST",
+        method: editingItem ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          ...(editingItem ? { id: editingItem.id } : {}),
           name: name.trim(),
           category,
           price: Number(price),
           description: description.trim() || null,
-          is_available: true,
+          is_available: editingItem
+            ? (editingItem.isAvailable ?? editingItem.is_available ?? true)
+            : true,
         }),
       });
 
       const json = await res.json();
       if (res.ok && json.success) {
-        setFeedback({ type: "success", message: `Menu item '${name}' added successfully!` });
+        setFeedback({
+          type: "success",
+          message: `Menu item '${name}' ${editingItem ? "updated" : "added"}.`,
+        });
         setShowAddModal(false);
+        setEditingItem(null);
         setName("");
         setPrice(3500);
         setDescription("");
@@ -131,7 +154,7 @@ export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
       } else {
         setFeedback({
           type: "error",
-          message: json.error?.message || "Failed to add menu item.",
+          message: json.error?.message || "Failed to save menu item.",
         });
       }
     } catch {
@@ -185,18 +208,14 @@ export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
     >
       <Box maxW="900px" mx="auto">
         <HStack mb={4} justify="space-between">
-          <Button
-            size="xs"
-            variant="ghost"
-            onClick={() => router.push("/admin/restaurants")}
-          >
+          <Button size="xs" variant="ghost" onClick={() => router.push("/admin/restaurants")}>
             <HStack gap={1}>
               <Icon as={FaArrowLeft} boxSize={3} />
               <Text>Back to Restaurants</Text>
             </HStack>
           </Button>
 
-          <Button size="xs" colorScheme="blue" onClick={() => setShowAddModal(true)}>
+          <Button size="xs" colorPalette="blue" onClick={openCreate}>
             <HStack gap={1}>
               <Icon as={FaPlus} boxSize={3} />
               <Text>Add Menu Item</Text>
@@ -204,8 +223,22 @@ export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
           </Button>
         </HStack>
 
-        <Box bg="white" p={6} borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm">
-          <Flex justify="space-between" align="center" mb={4} pb={3} borderBottom="1px solid" borderColor="gray.100">
+        <Box
+          bg="white"
+          p={6}
+          borderRadius="lg"
+          border="1px solid"
+          borderColor="gray.200"
+          boxShadow="sm"
+        >
+          <Flex
+            justify="space-between"
+            align="center"
+            mb={4}
+            pb={3}
+            borderBottom="1px solid"
+            borderColor="gray.100"
+          >
             <Box>
               <Heading size="md" color="gray.800">
                 Menu Items — {restaurantName}
@@ -260,7 +293,9 @@ export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
           ) : filteredItems.length === 0 ? (
             <VStack py={12} px={4} bg="gray.50" borderRadius="md">
               <Icon as={FaUtensils} boxSize={8} color="gray.400" mb={2} />
-              <Text fontWeight="semibold" color="gray.700">No menu items found</Text>
+              <Text fontWeight="semibold" color="gray.700">
+                No menu items found
+              </Text>
             </VStack>
           ) : (
             <Box overflowX="auto">
@@ -280,12 +315,19 @@ export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
                         <Box>
                           <Text fontWeight="semibold">{item.name}</Text>
                           {item.description && (
-                            <Text fontSize="xs" color="gray.500">{item.description}</Text>
+                            <Text fontSize="xs" color="gray.500">
+                              {item.description}
+                            </Text>
                           )}
                         </Box>
                       </Table.Cell>
                       <Table.Cell>
-                        <Badge variant="subtle" colorScheme="blue" textTransform="uppercase" fontSize="9px">
+                        <Badge
+                          variant="subtle"
+                          colorPalette="blue"
+                          textTransform="uppercase"
+                          fontSize="9px"
+                        >
                           {item.category}
                         </Badge>
                       </Table.Cell>
@@ -296,7 +338,17 @@ export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
                         <Button
                           size="xs"
                           variant="ghost"
-                          colorScheme="red"
+                          aria-label={`Edit menu item ${item.name}`}
+                          onClick={() => openEdit(item)}
+                          disabled={saving}
+                        >
+                          <Icon as={FaEdit} boxSize={3} />
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          colorPalette="red"
+                          aria-label={`Delete menu item ${item.name}`}
                           onClick={() => handleDeleteItem(item.id, item.name)}
                           disabled={saving}
                         >
@@ -326,13 +378,13 @@ export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
         >
           <Box bg="white" maxW="480px" w="100%" p={6} borderRadius="lg" boxShadow="xl">
             <Flex justify="space-between" align="center" mb={4}>
-              <Heading size="sm">Add Menu Item</Heading>
+              <Heading size="sm">{editingItem ? "Edit Menu Item" : "Add Menu Item"}</Heading>
               <Button size="xs" variant="ghost" onClick={() => setShowAddModal(false)}>
                 Close
               </Button>
             </Flex>
 
-            <form onSubmit={handleCreateItem}>
+            <form onSubmit={handleSaveItem}>
               <VStack gap={4} align="stretch">
                 <Box>
                   <Text fontSize="xs" fontWeight="bold" color="gray.700" mb={1}>
@@ -361,7 +413,9 @@ export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
                     </Text>
                     <select
                       value={category}
-                      onChange={(e) => setCategory(e.target.value as "starter" | "main" | "dessert" | "beverage")}
+                      onChange={(e) =>
+                        setCategory(e.target.value as "starter" | "main" | "dessert" | "beverage")
+                      }
                       style={{
                         width: "100%",
                         padding: "8px 12px",
@@ -419,12 +473,18 @@ export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
                   />
                 </Box>
 
-                <Flex justify="flex-end" gap={2} pt={3} borderTop="1px solid" borderColor="gray.100">
+                <Flex
+                  justify="flex-end"
+                  gap={2}
+                  pt={3}
+                  borderTop="1px solid"
+                  borderColor="gray.100"
+                >
                   <Button size="sm" variant="outline" onClick={() => setShowAddModal(false)}>
                     Cancel
                   </Button>
-                  <Button size="sm" colorScheme="blue" type="submit" loading={saving}>
-                    Add Item
+                  <Button size="sm" colorPalette="blue" type="submit" loading={saving}>
+                    {editingItem ? "Save Changes" : "Add Item"}
                   </Button>
                 </Flex>
               </VStack>

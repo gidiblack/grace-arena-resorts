@@ -13,10 +13,7 @@ import {
   Spinner,
   Table,
 } from "@chakra-ui/react";
-import {
-  FaNewspaper,
-  FaFileCsv,
-} from "react-icons/fa";
+import { FaNewspaper, FaFileCsv } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 
@@ -94,7 +91,7 @@ export default function AdminNewsletterPage({ adminUser }: NewsletterPageProps) 
         </Box>
 
         <HStack gap={2}>
-          <Button size="sm" variant="outline" colorScheme="blue" onClick={handleExportCsv}>
+          <Button size="sm" variant="outline" colorPalette="blue" onClick={handleExportCsv}>
             <HStack gap={1}>
               <Icon as={FaFileCsv} boxSize={3.5} />
               <Text>Export to CSV</Text>
@@ -122,7 +119,15 @@ export default function AdminNewsletterPage({ adminUser }: NewsletterPageProps) 
 
       {/* Metrics Row */}
       <Flex gap={4} mb={6} flexWrap="wrap">
-        <Box bg="white" p={4} borderRadius="lg" border="1px solid" borderColor="gray.200" flex="1" minW="180px">
+        <Box
+          bg="white"
+          p={4}
+          borderRadius="lg"
+          border="1px solid"
+          borderColor="gray.200"
+          flex="1"
+          minW="180px"
+        >
           <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="bold">
             Total In Database
           </Text>
@@ -130,7 +135,15 @@ export default function AdminNewsletterPage({ adminUser }: NewsletterPageProps) 
             {totalCount}
           </Text>
         </Box>
-        <Box bg="white" p={4} borderRadius="lg" border="1px solid" borderColor="gray.200" flex="1" minW="180px">
+        <Box
+          bg="white"
+          p={4}
+          borderRadius="lg"
+          border="1px solid"
+          borderColor="gray.200"
+          flex="1"
+          minW="180px"
+        >
           <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="bold">
             Confirmed Active
           </Text>
@@ -140,7 +153,14 @@ export default function AdminNewsletterPage({ adminUser }: NewsletterPageProps) 
         </Box>
       </Flex>
 
-      <Box bg="white" borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm" overflow="hidden">
+      <Box
+        bg="white"
+        borderRadius="lg"
+        border="1px solid"
+        borderColor="gray.200"
+        boxShadow="sm"
+        overflow="hidden"
+      >
         {loading ? (
           <Flex justify="center" p={12}>
             <Spinner size="lg" color="blue.500" />
@@ -148,7 +168,9 @@ export default function AdminNewsletterPage({ adminUser }: NewsletterPageProps) 
         ) : subscribers.length === 0 ? (
           <VStack py={12} px={4}>
             <Icon as={FaNewspaper} boxSize={8} color="gray.400" mb={2} />
-            <Text fontWeight="semibold" color="gray.700">No subscribers registered</Text>
+            <Text fontWeight="semibold" color="gray.700">
+              No subscribers registered
+            </Text>
           </VStack>
         ) : (
           <Box overflowX="auto">
@@ -167,7 +189,7 @@ export default function AdminNewsletterPage({ adminUser }: NewsletterPageProps) 
                     <Table.Cell fontWeight="semibold">{s.email}</Table.Cell>
                     <Table.Cell>
                       <Badge
-                        colorScheme={s.is_confirmed ? "green" : "yellow"}
+                        colorPalette={s.is_confirmed ? "green" : "yellow"}
                         textTransform="uppercase"
                         fontSize="10px"
                       >

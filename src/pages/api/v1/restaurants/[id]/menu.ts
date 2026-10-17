@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { idOrSlugFilter } from "@/lib/supabase/filters";
 import { withApi } from "@/pages/api/v1/_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { MOCK_RESTAURANTS } from "@/data/mock/resort-data";
@@ -7,7 +8,7 @@ import { recordAuditLog } from "@/pages/api/v1/_shared/audit-log";
 import type { MenuCategory } from "@/types/db";
 
 const menuItemSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: z.guid().optional(),
   name: z.string().trim().min(2, "Item name is required").max(100),
   description: z.string().trim().max(500).optional().nullable(),
   price: z.number().min(0, "Price must be >= 0"),
@@ -29,7 +30,7 @@ export default withApi(
     const { data: restaurant } = await supabase
       .from("restaurants")
       .select("id, name")
-      .or(`id.eq.${id},slug.eq.${id}`)
+      .or(idOrSlugFilter(id))
       .maybeSingle();
 
     // ==========================================
@@ -37,10 +38,7 @@ export default withApi(
     // ==========================================
     if (req.method === "GET") {
       if (restaurant) {
-        let query = supabase
-          .from("menu_items")
-          .select("*")
-          .eq("restaurant_id", restaurant.id);
+        let query = supabase.from("menu_items").select("*").eq("restaurant_id", restaurant.id);
 
         if (category && typeof category === "string") {
           query = query.eq("category", category as MenuCategory);
@@ -72,7 +70,12 @@ export default withApi(
       return fail(res, "UNAUTHORIZED", "Authentication required", 401);
     }
     if (!["content_manager", "resort_admin", "super_admin"].includes(user.role)) {
-      return fail(res, "FORBIDDEN", "Only content managers and administrators can manage menus", 403);
+      return fail(
+        res,
+        "FORBIDDEN",
+        "Only content managers and administrators can manage menus",
+        403
+      );
     }
 
     if (!restaurant) {
@@ -85,7 +88,12 @@ export default withApi(
     if (req.method === "POST") {
       const parse = menuItemSchema.safeParse(req.body);
       if (!parse.success) {
-        return fail(res, "VALIDATION_ERROR", parse.error.issues[0]?.message || "Invalid input", 400);
+        return fail(
+          res,
+          "VALIDATION_ERROR",
+          parse.error.issues[0]?.message || "Invalid input",
+          400
+        );
       }
       const body = parse.data;
 

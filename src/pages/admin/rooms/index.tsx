@@ -14,13 +14,7 @@ import {
   Icon,
   Table,
 } from "@chakra-ui/react";
-import {
-  FaBed,
-  FaTools,
-  FaCheckCircle,
-  FaExclamationCircle,
-  FaBell,
-} from "react-icons/fa";
+import { FaBed, FaTools, FaCheckCircle, FaExclamationCircle, FaBell } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import { formatNgn } from "@/lib/formatters/currency";
@@ -217,14 +211,13 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
             Room Status & Unit Operations
           </Heading>
           <Text fontSize="sm" color="gray.600">
-            Toggle under-construction status to trigger Notify-Me broadcasts, or manage physical unit maintenance.
+            Toggle under-construction status to trigger Notify-Me broadcasts, or manage physical
+            unit maintenance.
           </Text>
         </Box>
-        <NextLink href="/admin/rooms/new" passHref legacyBehavior>
-          <Button as="a" size="sm" colorScheme="blue">
-            + Add Room Suite
-          </Button>
-        </NextLink>
+        <Button asChild size="sm" colorPalette="blue">
+          <NextLink href="/admin/rooms/new">+ Add Room Suite</NextLink>
+        </Button>
       </Flex>
 
       {feedback && (
@@ -321,7 +314,9 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
           </Flex>
         ) : filteredRooms.length === 0 ? (
           <VStack py={12} px={4}>
-            <Text fontWeight="semibold" color="gray.700">No rooms matched the criteria</Text>
+            <Text fontWeight="semibold" color="gray.700">
+              No rooms matched the criteria
+            </Text>
           </VStack>
         ) : (
           <Box overflowX="auto">
@@ -330,8 +325,12 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
                 <Table.Row>
                   <Table.ColumnHeader py={3}>Room Suite</Table.ColumnHeader>
                   <Table.ColumnHeader py={3}>Campus / Tier</Table.ColumnHeader>
-                  <Table.ColumnHeader py={3} textAlign="right">Base Rate</Table.ColumnHeader>
-                  <Table.ColumnHeader py={3} textAlign="right">Units</Table.ColumnHeader>
+                  <Table.ColumnHeader py={3} textAlign="right">
+                    Base Rate
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader py={3} textAlign="right">
+                    Units
+                  </Table.ColumnHeader>
                   <Table.ColumnHeader py={3}>Status</Table.ColumnHeader>
                   <Table.ColumnHeader py={3}>Actions</Table.ColumnHeader>
                 </Table.Row>
@@ -348,7 +347,7 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
                         </HStack>
                       </Table.Cell>
                       <Table.Cell fontSize="xs">
-                        <Badge variant="subtle" colorScheme="blue" mr={1}>
+                        <Badge variant="subtle" colorPalette="blue" mr={1}>
                           {room.campus}
                         </Badge>
                         <Badge variant="outline">{room.tier}</Badge>
@@ -361,7 +360,7 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
                       </Table.Cell>
                       <Table.Cell>
                         <Badge
-                          colorScheme={isUC ? "yellow" : "green"}
+                          colorPalette={isUC ? "yellow" : "green"}
                           textTransform="uppercase"
                           fontSize="10px"
                         >
@@ -372,7 +371,7 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
                         <HStack gap={1} flexWrap="wrap">
                           <Button
                             size="xs"
-                            colorScheme={isUC ? "green" : "yellow"}
+                            colorPalette={isUC ? "green" : "yellow"}
                             variant="outline"
                             onClick={() => handleToggleRoomStatus(room)}
                             loading={actionLoading}
@@ -382,23 +381,15 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
                               <Text>{isUC ? "Mark Available" : "Set Construction"}</Text>
                             </HStack>
                           </Button>
-                          <Button
-                            size="xs"
-                            variant="ghost"
-                            onClick={() => handleOpenUnits(room)}
-                          >
+                          <Button size="xs" variant="ghost" onClick={() => handleOpenUnits(room)}>
                             Units
                           </Button>
-                          <NextLink href={`/admin/rooms/${room.id}/pricing`} passHref legacyBehavior>
-                            <Button as="a" size="xs" variant="ghost">
-                              Pricing
-                            </Button>
-                          </NextLink>
-                          <NextLink href={`/admin/rooms/${room.id}/edit`} passHref legacyBehavior>
-                            <Button as="a" size="xs" variant="ghost" colorScheme="blue">
-                              Edit
-                            </Button>
-                          </NextLink>
+                          <Button asChild size="xs" variant="ghost">
+                            <NextLink href={`/admin/rooms/${room.id}/pricing`}>Pricing</NextLink>
+                          </Button>
+                          <Button asChild size="xs" variant="ghost" colorPalette="blue">
+                            <NextLink href={`/admin/rooms/${room.id}/edit`}>Edit</NextLink>
+                          </Button>
                         </HStack>
                       </Table.Cell>
                     </Table.Row>
@@ -412,14 +403,35 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
 
       {/* UNITS MANAGEMENT MODAL */}
       {selectedRoomType && (
-        <Box position="fixed" inset={0} bg="blackAlpha.600" zIndex={200} display="flex" alignItems="center" justifyContent="center" p={4}>
-          <Box bg="white" maxW="600px" w="100%" p={6} borderRadius="lg" boxShadow="xl" maxH="80vh" overflowY="auto">
+        <Box
+          position="fixed"
+          inset={0}
+          bg="blackAlpha.600"
+          zIndex={200}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          p={4}
+        >
+          <Box
+            bg="white"
+            maxW="600px"
+            w="100%"
+            p={6}
+            borderRadius="lg"
+            boxShadow="xl"
+            maxH="80vh"
+            overflowY="auto"
+          >
             <Flex justify="space-between" align="center" mb={2}>
               <Heading size="md">Manage Physical Units</Heading>
-              <Button size="xs" variant="ghost" onClick={() => setSelectedRoomType(null)}>Close</Button>
+              <Button size="xs" variant="ghost" onClick={() => setSelectedRoomType(null)}>
+                Close
+              </Button>
             </Flex>
             <Text fontSize="sm" color="gray.600" mb={4}>
-              {selectedRoomType.name} ({selectedRoomType.campus}) — Set unit status to Available or Maintenance.
+              {selectedRoomType.name} ({selectedRoomType.campus}) — Set unit status to Available or
+              Maintenance.
             </Text>
 
             {loadingUnits ? (
@@ -451,9 +463,7 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
                         <Table.Cell fontSize="xs">{unit.floor || "Ground"}</Table.Cell>
                         <Table.Cell>
                           <Badge
-                            colorScheme={
-                              isOccupied ? "blue" : isMaint ? "orange" : "green"
-                            }
+                            colorPalette={isOccupied ? "blue" : isMaint ? "orange" : "green"}
                             fontSize="10px"
                           >
                             {unit.status.toUpperCase()}
@@ -478,7 +488,7 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
                             <Button
                               size="xs"
                               variant="outline"
-                              colorScheme={isMaint ? "green" : "orange"}
+                              colorPalette={isMaint ? "green" : "orange"}
                               onClick={() =>
                                 handleUpdateUnitStatus(
                                   unit.id,

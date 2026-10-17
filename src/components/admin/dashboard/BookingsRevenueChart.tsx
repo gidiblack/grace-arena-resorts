@@ -1,14 +1,5 @@
 import React, { useState, useSyncExternalStore } from "react";
-import {
-  Box,
-  Flex,
-  HStack,
-  VStack,
-  Text,
-  Heading,
-  Button,
-  Spinner,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, VStack, Text, Heading, Button, Spinner } from "@chakra-ui/react";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -39,13 +30,30 @@ export interface BookingsRevenueChartProps {
 const emptySubscribe = () => () => {};
 
 export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenueChartProps) {
-  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
   const [viewMode, setViewMode] = useState<"both" | "bookings" | "revenue">("both");
 
   const formattedData = data.map((d) => {
     // Format YYYY-MM-DD to "MMM D" e.g. "Oct 12"
     const [, month, day] = d.date.split("-");
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
     const label = `${monthNames[Number(month) - 1]} ${Number(day)}`;
     return {
       ...d,
@@ -55,14 +63,7 @@ export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenu
   });
 
   return (
-    <Box
-      bg="white"
-      p={6}
-      borderRadius="lg"
-      borderWidth="1px"
-      borderColor="gray.200"
-      boxShadow="sm"
-    >
+    <Box bg="white" p={6} borderRadius="lg" borderWidth="1px" borderColor="gray.200" boxShadow="sm">
       <Flex
         direction={{ base: "column", sm: "row" }}
         justify="space-between"
@@ -83,7 +84,7 @@ export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenu
           <Button
             size="xs"
             variant={viewMode === "both" ? "solid" : "outline"}
-            colorScheme="blue"
+            colorPalette="blue"
             onClick={() => setViewMode("both")}
           >
             Both
@@ -91,7 +92,7 @@ export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenu
           <Button
             size="xs"
             variant={viewMode === "bookings" ? "solid" : "outline"}
-            colorScheme="blue"
+            colorPalette="blue"
             onClick={() => setViewMode("bookings")}
           >
             Bookings
@@ -99,7 +100,7 @@ export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenu
           <Button
             size="xs"
             variant={viewMode === "revenue" ? "solid" : "outline"}
-            colorScheme="blue"
+            colorPalette="blue"
             onClick={() => setViewMode("revenue")}
           >
             Revenue
@@ -155,8 +156,8 @@ export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenu
                     val >= 1_000_000
                       ? `₦${(val / 1_000_000).toFixed(1)}M`
                       : val >= 1_000
-                      ? `₦${(val / 1_000).toFixed(0)}k`
-                      : `₦${val}`
+                        ? `₦${(val / 1_000).toFixed(0)}k`
+                        : `₦${val}`
                   }
                   label={{
                     value: "Net Revenue (₦)",
@@ -204,7 +205,12 @@ export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenu
                             </Text>
                           )}
                           {row.netRevenue !== undefined && (
-                            <Text fontWeight="bold" color="purple.700" pt={1} borderTop="1px solid #E2E8F0">
+                            <Text
+                              fontWeight="bold"
+                              color="purple.700"
+                              pt={1}
+                              borderTop="1px solid #E2E8F0"
+                            >
                               Net Revenue: {formatNgn(row.netRevenue)}
                             </Text>
                           )}

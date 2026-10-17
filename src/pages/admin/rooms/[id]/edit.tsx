@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
-import {
-  Box,
-  Flex,
-  VStack,
-  HStack,
-  Text,
-  Heading,
-  Button,
-  Icon,
-  Spinner,
-} from "@chakra-ui/react";
+import { Box, Flex, VStack, HStack, Text, Heading, Button, Icon, Spinner } from "@chakra-ui/react";
 import { FaBed, FaArrowLeft, FaCheckCircle, FaExclamationCircle, FaTrash } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
@@ -151,18 +141,11 @@ export default function AdminEditRoomPage({ adminUser }: EditRoomPageProps) {
     <AdminLayout
       title={`Edit Suite: ${name || "Loading..."}`}
       user={adminUser}
-      breadcrumbs={[
-        { label: "Rooms & Suites", href: "/admin/rooms" },
-        { label: "Edit Suite" },
-      ]}
+      breadcrumbs={[{ label: "Rooms & Suites", href: "/admin/rooms" }, { label: "Edit Suite" }]}
     >
       <Box maxW="720px" mx="auto">
         <HStack mb={4} justify="space-between">
-          <Button
-            size="xs"
-            variant="ghost"
-            onClick={() => router.push("/admin/rooms")}
-          >
+          <Button size="xs" variant="ghost" onClick={() => router.push("/admin/rooms")}>
             <HStack gap={1}>
               <Icon as={FaArrowLeft} boxSize={3} />
               <Text>Back to Rooms</Text>
@@ -180,8 +163,22 @@ export default function AdminEditRoomPage({ adminUser }: EditRoomPageProps) {
           )}
         </HStack>
 
-        <Box bg="white" p={6} borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm">
-          <Flex justify="space-between" align="center" mb={6} pb={4} borderBottom="1px solid" borderColor="gray.100">
+        <Box
+          bg="white"
+          p={6}
+          borderRadius="lg"
+          border="1px solid"
+          borderColor="gray.200"
+          boxShadow="sm"
+        >
+          <Flex
+            justify="space-between"
+            align="center"
+            mb={6}
+            pb={4}
+            borderBottom="1px solid"
+            borderColor="gray.100"
+          >
             <HStack gap={3}>
               <Icon as={FaBed} boxSize={5} color="blue.500" />
               <Box>
@@ -196,7 +193,7 @@ export default function AdminEditRoomPage({ adminUser }: EditRoomPageProps) {
 
             <Button
               size="xs"
-              colorScheme="red"
+              colorPalette="red"
               variant="ghost"
               onClick={handleDelete}
               disabled={loading || saving}
@@ -297,7 +294,9 @@ export default function AdminEditRoomPage({ adminUser }: EditRoomPageProps) {
                         }}
                       >
                         <option value="available">Available (Bookable Online)</option>
-                        <option value="under_construction">Under Construction (Notify-Me Only)</option>
+                        <option value="under_construction">
+                          Under Construction (Notify-Me Only)
+                        </option>
                       </select>
                     </Box>
                   </Flex>
@@ -386,7 +385,13 @@ export default function AdminEditRoomPage({ adminUser }: EditRoomPageProps) {
                     />
                   </Box>
 
-                  <Flex justify="flex-end" gap={3} pt={4} borderTop="1px solid" borderColor="gray.100">
+                  <Flex
+                    justify="flex-end"
+                    gap={3}
+                    pt={4}
+                    borderTop="1px solid"
+                    borderColor="gray.100"
+                  >
                     <Button
                       variant="outline"
                       size="sm"
@@ -395,12 +400,7 @@ export default function AdminEditRoomPage({ adminUser }: EditRoomPageProps) {
                     >
                       Cancel
                     </Button>
-                    <Button
-                      colorScheme="blue"
-                      size="sm"
-                      type="submit"
-                      loading={saving}
-                    >
+                    <Button colorPalette="blue" size="sm" type="submit" loading={saving}>
                       Update Suite
                     </Button>
                   </Flex>

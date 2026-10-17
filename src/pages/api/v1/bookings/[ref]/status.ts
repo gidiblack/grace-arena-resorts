@@ -3,7 +3,9 @@ import { withApi } from "@/pages/api/v1/_shared/handler";
 import { assertTransition, canMarkNoShow } from "@/domain/booking/state-machine";
 import { recordAuditLog } from "@/pages/api/v1/_shared/audit-log";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { mapRpcError } from "@/lib/supabase/rpc-errors";
 import { ok, fail } from "@/lib/http/response";
+import { logger } from "@/lib/logger";
 import type { BookingStatus, Json } from "@/types/db";
 
 const updateStatusSchema = z.object({
@@ -11,18 +13,45 @@ const updateStatusSchema = z.object({
   assignments: z
     .array(
       z.object({
-        bookingLineItemId: z.string().uuid("Invalid bookingLineItemId"),
-        roomId: z.string().uuid("Invalid roomId"),
+        bookingLineItemId: z.guid("Invalid bookingLineItemId"),
+        roomId: z.guid("Invalid roomId"),
       })
     )
     .optional(),
   note: z.string().optional(),
 });
 
+const CHECK_IN_ERRORS = {
+  BOOKING_NOT_FOUND: { message: "Booking not found", status: 404 },
+  INVALID_TRANSITION: { message: "Only confirmed bookings can be checked in", status: 400 },
+  MISSING_ASSIGNMENTS: { message: "Room unit assignments are required", status: 400 },
+  ROOM_NOT_FOUND: { message: "Assigned room unit does not exist", status: 400 },
+  ROOM_NOT_AVAILABLE: { message: "Assigned room unit is not available", status: 409 },
+  ROOM_TYPE_MISMATCH: {
+    message: "Assigned room unit does not match the booked room type",
+    status: 400,
+  },
+  INVALID_LINE_ITEM: { message: "Line item does not belong to this booking", status: 400 },
+  UNIQUE_VIOLATION: {
+    code: "ROOM_NOT_AVAILABLE",
+    message: "Assigned room unit is already assigned to another stay",
+    status: 409,
+  },
+};
+
+const CHECK_OUT_ERRORS = {
+  BOOKING_NOT_FOUND: { message: "Booking not found", status: 404 },
+  INVALID_TRANSITION: { message: "Only checked-in bookings can be checked out", status: 400 },
+};
+
 export default withApi(
   async (req, res, ctx) => {
     const { ref } = req.query;
-    const { status: targetStatus, assignments, note } = req.body as z.infer<typeof updateStatusSchema>;
+    const {
+      status: targetStatus,
+      assignments,
+      note,
+    } = req.body as z.infer<typeof updateStatusSchema>;
     const user = ctx.user!;
 
     if (!ref || typeof ref !== "string") {
@@ -44,16 +73,6 @@ export default withApi(
 
     const currentStatus = booking.status as BookingStatus;
 
-    // Reject transitions from pending to confirmed or any status to cancelled
-    if ((targetStatus as string) === "confirmed" || (targetStatus as string) === "cancelled") {
-      return fail(
-        res,
-        "INVALID_TRANSITION",
-        "Direct transitions to confirmed or cancelled are not permitted via this endpoint.",
-        400
-      );
-    }
-
     // 2. Validate state machine transition
     try {
       assertTransition(currentStatus, targetStatus as BookingStatus);
@@ -68,14 +87,13 @@ export default withApi(
       );
     }
 
-    // 3. Status-specific validation & handling
+    // 3. Status-specific validation & handling. booking_status_history is written by the
+    // trg_booking_status_history trigger, never here.
     if (targetStatus === "checked_in") {
-      // Must be confirmed
       if (currentStatus !== "confirmed") {
         return fail(res, "INVALID_TRANSITION", "Only confirmed bookings can be checked in", 400);
       }
 
-      // Fetch line items to verify unit count
       const { data: lineItems, error: liError } = await supabase
         .from("booking_line_items")
         .select("id, room_type_id, quantity")
@@ -98,10 +116,10 @@ export default withApi(
         );
       }
 
-      // Verify each bookingLineItemId belongs to this booking
-      const validLineItemIds = new Set((lineItems || []).map((li) => li.id));
+      const lineItemsById = new Map((lineItems || []).map((li) => [li.id, li]));
+      const perLineItem = new Map<string, number>();
       for (const assignment of assignments) {
-        if (!validLineItemIds.has(assignment.bookingLineItemId)) {
+        if (!lineItemsById.has(assignment.bookingLineItemId)) {
           return fail(
             res,
             "INVALID_LINE_ITEM",
@@ -109,9 +127,32 @@ export default withApi(
             400
           );
         }
+        perLineItem.set(
+          assignment.bookingLineItemId,
+          (perLineItem.get(assignment.bookingLineItemId) || 0) + 1
+        );
       }
 
-      // Call check_in_booking RPC
+      for (const li of lineItems || []) {
+        if ((perLineItem.get(li.id) || 0) !== li.quantity) {
+          return fail(
+            res,
+            "INVALID_ASSIGNMENTS",
+            `Line item ${li.id} requires ${li.quantity} room unit assignment(s)`,
+            400
+          );
+        }
+      }
+
+      if (new Set(assignments.map((a) => a.roomId)).size !== assignments.length) {
+        return fail(
+          res,
+          "DUPLICATE_UNIT",
+          "Each booked room must be assigned a different unit",
+          400
+        );
+      }
+
       const { error: rpcError } = await supabase.rpc("check_in_booking", {
         p_booking_id: booking.id,
         p_assignments: assignments.map((a) => ({
@@ -122,88 +163,33 @@ export default withApi(
       });
 
       if (rpcError) {
-        // Fallback for environments where RPC is missing/mocked
-        const assignmentInserts = assignments.map((a) => ({
-          booking_id: booking.id,
-          booking_line_item_id: a.bookingLineItemId,
-          room_id: a.roomId,
-          assigned_by: user.id,
-        }));
-
-        await supabase.from("booking_room_assignments").insert(assignmentInserts);
-        await supabase
-          .from("rooms")
-          .update({ status: "occupied" })
-          .in(
-            "id",
-            assignments.map((a) => a.roomId)
-          );
-        await supabase
-          .from("bookings")
-          .update({ status: "checked_in", status_changed_by: user.id, updated_at: new Date().toISOString() })
-          .eq("id", booking.id);
-
-        await supabase.from("booking_status_history").insert({
-          booking_id: booking.id,
-          from_status: currentStatus,
-          to_status: "checked_in",
-          changed_by: user.id,
-          note: note || null,
-        });
+        logger.error("check_in_booking failed", { error: rpcError, bookingId: booking.id });
+        const failure = mapRpcError(rpcError, CHECK_IN_ERRORS, "Failed to check in booking");
+        return fail(res, failure.code, failure.message, failure.status);
       }
     } else if (targetStatus === "checked_out") {
       if (currentStatus !== "checked_in") {
         return fail(res, "INVALID_TRANSITION", "Only checked-in bookings can be checked out", 400);
       }
 
-      // Call check_out_booking RPC
       const { error: rpcError } = await supabase.rpc("check_out_booking", {
         p_booking_id: booking.id,
         p_actor: user.id,
       });
 
       if (rpcError) {
-        // Fallback for environments where RPC is missing/mocked
-        const { data: activeAssignments } = await supabase
-          .from("booking_room_assignments")
-          .select("id, room_id")
-          .eq("booking_id", booking.id)
-          .is("released_at", null);
-
-        if (activeAssignments && activeAssignments.length > 0) {
-          await supabase
-            .from("booking_room_assignments")
-            .update({ released_at: new Date().toISOString() })
-            .in(
-              "id",
-              activeAssignments.map((a) => a.id)
-            );
-
-          await supabase
-            .from("rooms")
-            .update({ status: "available" })
-            .in(
-              "id",
-              activeAssignments.map((a) => a.room_id)
-            );
-        }
-
-        await supabase
-          .from("bookings")
-          .update({ status: "checked_out", status_changed_by: user.id, updated_at: new Date().toISOString() })
-          .eq("id", booking.id);
-
-        await supabase.from("booking_status_history").insert({
-          booking_id: booking.id,
-          from_status: currentStatus,
-          to_status: "checked_out",
-          changed_by: user.id,
-          note: note || null,
-        });
+        logger.error("check_out_booking failed", { error: rpcError, bookingId: booking.id });
+        const failure = mapRpcError(rpcError, CHECK_OUT_ERRORS, "Failed to check out booking");
+        return fail(res, failure.code, failure.message, failure.status);
       }
     } else if (targetStatus === "no_show") {
       if (currentStatus !== "confirmed") {
-        return fail(res, "INVALID_TRANSITION", "Only confirmed bookings can be marked as no-show", 400);
+        return fail(
+          res,
+          "INVALID_TRANSITION",
+          "Only confirmed bookings can be marked as no-show",
+          400
+        );
       }
 
       const isAllowed = canMarkNoShow(new Date(), booking.check_in_date);
@@ -216,22 +202,30 @@ export default withApi(
         );
       }
 
-      await supabase
+      const { data: updated, error: updateError } = await supabase
         .from("bookings")
         .update({
           status: "no_show",
           status_changed_by: user.id,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", booking.id);
+        .eq("id", booking.id)
+        .eq("status", "confirmed")
+        .select("id")
+        .maybeSingle();
 
-      await supabase.from("booking_status_history").insert({
-        booking_id: booking.id,
-        from_status: currentStatus,
-        to_status: "no_show",
-        changed_by: user.id,
-        note: note || null,
-      });
+      if (updateError) {
+        logger.error("no_show update failed", { error: updateError, bookingId: booking.id });
+        return fail(res, "DB_ERROR", "Failed to mark booking as no-show", 500);
+      }
+      if (!updated) {
+        return fail(
+          res,
+          "CONFLICT",
+          "Booking status changed while processing; reload and retry",
+          409
+        );
+      }
     }
 
     // Append admin note if provided

@@ -12,7 +12,7 @@ const createRestaurantSchema = z.object({
   description: z.string().trim().min(5),
   operating_hours: z.any().optional(),
   images: z.array(z.any()).default([]),
-  resort_id: z.string().uuid().optional().nullable(),
+  resort_id: z.guid().optional().nullable(),
 });
 
 export default withApi(
@@ -41,7 +41,8 @@ export default withApi(
             operatingHours: r.operating_hours,
             images: r.images,
             resortId: r.resort_id,
-            campus: resort?.slug || (r.name.toLowerCase().includes("village") ? "village" : "elysian"),
+            campus:
+              resort?.slug || (r.name.toLowerCase().includes("village") ? "village" : "elysian"),
           };
         });
 
@@ -69,7 +70,12 @@ export default withApi(
         return fail(res, "UNAUTHORIZED", "Authentication required", 401);
       }
       if (!["content_manager", "resort_admin", "super_admin"].includes(user.role)) {
-        return fail(res, "FORBIDDEN", "Only content managers and administrators can create restaurants", 403);
+        return fail(
+          res,
+          "FORBIDDEN",
+          "Only content managers and administrators can create restaurants",
+          403
+        );
       }
 
       const body = req.body as z.infer<typeof createRestaurantSchema>;

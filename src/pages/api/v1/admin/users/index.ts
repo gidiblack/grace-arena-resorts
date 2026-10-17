@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { buildIlikeOrFilter } from "@/lib/supabase/filters";
 import { withApi } from "../../_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
@@ -24,14 +25,20 @@ export default withApi(
       const { role, search, page = "1", limit = "20" } = req.query;
 
       const pageNum = Math.max(1, parseInt(typeof page === "string" ? page : "1", 10) || 1);
-      const limitNum = Math.min(100, Math.max(1, parseInt(typeof limit === "string" ? limit : "20", 10) || 20));
+      const limitNum = Math.min(
+        100,
+        Math.max(1, parseInt(typeof limit === "string" ? limit : "20", 10) || 20)
+      );
       const offset = (pageNum - 1) * limitNum;
 
       let query = supabase
         .from("users")
-        .select("id, email, full_name, phone, role, is_email_verified, is_locked, created_at, updated_at", {
-          count: "exact",
-        });
+        .select(
+          "id, email, full_name, phone, role, is_email_verified, is_locked, created_at, updated_at",
+          {
+            count: "exact",
+          }
+        );
 
       if (role && typeof role === "string" && role !== "all") {
         query = query.eq("role", role as UserRole);
@@ -39,10 +46,14 @@ export default withApi(
 
       if (search && typeof search === "string" && search.trim()) {
         const term = search.trim();
-        query = query.or(`email.ilike.%${term}%,full_name.ilike.%${term}%`);
+        query = query.or(buildIlikeOrFilter(["email", "full_name"], term));
       }
 
-      const { data: users, count, error } = await query
+      const {
+        data: users,
+        count,
+        error,
+      } = await query
         .order("created_at", { ascending: false })
         .range(offset, offset + limitNum - 1);
 
@@ -87,7 +98,12 @@ export default withApi(
       });
 
       if (authError || !authResult.user) {
-        return fail(res, "AUTH_CREATION_FAILED", authError?.message || "Failed to create user account", 400);
+        return fail(
+          res,
+          "AUTH_CREATION_FAILED",
+          authError?.message || "Failed to create user account",
+          400
+        );
       }
 
       const userId = authResult.user.id;
@@ -115,7 +131,12 @@ export default withApi(
         .single();
 
       if (profileError || !newProfile) {
-        return fail(res, "PROFILE_CREATION_FAILED", "User created in auth but profile setup failed", 500);
+        return fail(
+          res,
+          "PROFILE_CREATION_FAILED",
+          "User created in auth but profile setup failed",
+          500
+        );
       }
 
       // Record audit log

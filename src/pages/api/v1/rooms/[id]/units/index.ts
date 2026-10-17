@@ -1,4 +1,5 @@
 import { withApi } from "@/pages/api/v1/_shared/handler";
+import { idOrSlugFilter } from "@/lib/supabase/filters";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
 
@@ -16,7 +17,7 @@ export default withApi(
     const { data: roomType } = await supabase
       .from("room_types")
       .select("id, name, slug")
-      .or(`id.eq.${id},slug.eq.${id}`)
+      .or(idOrSlugFilter(id))
       .maybeSingle();
 
     const targetRoomTypeId = roomType?.id || id;
@@ -45,7 +46,9 @@ export default withApi(
     if (unitIds.length > 0) {
       const { data: assignments } = await supabase
         .from("booking_room_assignments")
-        .select("id, room_id, assigned_at, bookings(reference, guest_name, check_in_date, check_out_date)")
+        .select(
+          "id, room_id, assigned_at, bookings(reference, guest_name, check_in_date, check_out_date)"
+        )
         .in("room_id", unitIds)
         .is("released_at", null);
 

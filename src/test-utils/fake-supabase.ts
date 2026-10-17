@@ -34,12 +34,22 @@ function parseValue(raw: string): any {
   return raw;
 }
 
-/** Splits on commas that are not inside parentheses */
+/** Splits on commas that are not inside parentheses or double-quoted values */
 function splitTopLevel(input: string): string[] {
   const parts: string[] = [];
   let depth = 0;
   let current = "";
+  let quoted = false;
+  let escaped = false;
   for (const ch of input) {
+    if (quoted) {
+      current += ch;
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') quoted = false;
+      continue;
+    }
+    if (ch === '"') quoted = true;
     if (ch === "(") depth++;
     if (ch === ")") depth--;
     if (ch === "," && depth === 0) {
@@ -49,6 +59,24 @@ function splitTopLevel(input: string): string[] {
   }
   if (current) parts.push(current);
   return parts;
+}
+
+/** Strips PostgREST double quotes and unescapes backslash sequences inside them */
+function unquote(raw: string): string {
+  if (raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"')) {
+    return raw.slice(1, -1).replace(/\\(.)/g, "$1");
+  }
+  return raw;
+}
+
+function likeToRegExp(pattern: string): RegExp {
+  return new RegExp(
+    `^${pattern
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      .replace(/%/g, ".*")
+      .replace(/_/g, ".")}$`,
+    "i"
+  );
 }
 
 function parseOrExpression(expr: string): Filter {
@@ -62,8 +90,12 @@ function parseClause(clause: string): Filter {
     return (row) => inner.every((c) => c(row));
   }
   const [column, op, ...rest] = clause.split(".");
-  const value = rest.join(".");
+  const value = unquote(rest.join("."));
   switch (op) {
+    case "ilike": {
+      const re = likeToRegExp(value);
+      return (row) => re.test(String(row[column] ?? ""));
+    }
     case "eq":
       return (row) => String(row[column]) === value;
     case "neq":
@@ -285,13 +317,7 @@ class QueryBuilder implements PromiseLike<Result> {
     return this;
   }
   ilike(column: string, pattern: string) {
-    const re = new RegExp(
-      `^${pattern
-        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-        .replace(/%/g, ".*")
-        .replace(/_/g, ".")}$`,
-      "i"
-    );
+    const re = likeToRegExp(pattern);
     this.filters.push((r) => re.test(String(r[column] ?? "")));
     return this;
   }

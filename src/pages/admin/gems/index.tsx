@@ -19,6 +19,7 @@ import {
   FaCheckCircle,
   FaExclamationCircle,
   FaTrash,
+  FaEdit,
   FaMapMarkerAlt,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -38,11 +39,7 @@ interface GemsPageProps {
 }
 
 export const getServerSideProps: GetServerSideProps<GemsPageProps> = async (ctx) => {
-  return requireAdminPage<GemsPageProps>(ctx, [
-    "content_manager",
-    "resort_admin",
-    "super_admin",
-  ]);
+  return requireAdminPage<GemsPageProps>(ctx, ["content_manager", "resort_admin", "super_admin"]);
 };
 
 export default function AdminGemsPage({ adminUser }: GemsPageProps) {
@@ -55,8 +52,11 @@ export default function AdminGemsPage({ adminUser }: GemsPageProps) {
   );
 
   // New gem form fields
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<"nature" | "culture" | "adventure" | "spiritual">("culture");
+  const [category, setCategory] = useState<"nature" | "culture" | "adventure" | "spiritual">(
+    "culture"
+  );
   const [distance, setDistance] = useState("5 km");
   const [duration, setDuration] = useState("15 mins drive");
   const [description, setDescription] = useState("");
@@ -80,7 +80,27 @@ export default function AdminGemsPage({ adminUser }: GemsPageProps) {
     fetchGems();
   }, [fetchGems]);
 
-  const handleCreateGem = async (e: React.FormEvent) => {
+  const openCreate = () => {
+    setEditingId(null);
+    setName("");
+    setCategory("culture");
+    setDistance("5 km");
+    setDuration("15 mins drive");
+    setDescription("");
+    setShowAddModal(true);
+  };
+
+  const openEdit = (gem: GemItem) => {
+    setEditingId(gem.id);
+    setName(gem.name);
+    setCategory(gem.category);
+    setDistance(gem.distance);
+    setDuration(gem.duration);
+    setDescription(gem.description || "");
+    setShowAddModal(true);
+  };
+
+  const handleSaveGem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !distance.trim() || !duration.trim() || !description.trim()) {
       setFeedback({ type: "error", message: "All fields are required." });
@@ -91,8 +111,8 @@ export default function AdminGemsPage({ adminUser }: GemsPageProps) {
     setFeedback(null);
 
     try {
-      const res = await fetch("/api/v1/gems", {
-        method: "POST",
+      const res = await fetch(editingId ? `/api/v1/gems/${editingId}` : "/api/v1/gems", {
+        method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
@@ -105,8 +125,12 @@ export default function AdminGemsPage({ adminUser }: GemsPageProps) {
 
       const json = await res.json();
       if (res.ok && json.success) {
-        setFeedback({ type: "success", message: `Off-Beat Gem '${name}' created!` });
+        setFeedback({
+          type: "success",
+          message: `Off-Beat Gem '${name}' ${editingId ? "updated" : "created"}.`,
+        });
         setShowAddModal(false);
+        setEditingId(null);
         setName("");
         setDescription("");
         setDistance("5 km");
@@ -115,7 +139,7 @@ export default function AdminGemsPage({ adminUser }: GemsPageProps) {
       } else {
         setFeedback({
           type: "error",
-          message: json.error?.message || "Failed to create gem.",
+          message: json.error?.message || "Failed to save gem.",
         });
       }
     } catch {
@@ -154,22 +178,19 @@ export default function AdminGemsPage({ adminUser }: GemsPageProps) {
   };
 
   return (
-    <AdminLayout
-      title="Off-Beat Gems"
-      user={adminUser}
-      breadcrumbs={[{ label: "Off-Beat Gems" }]}
-    >
+    <AdminLayout title="Off-Beat Gems" user={adminUser} breadcrumbs={[{ label: "Off-Beat Gems" }]}>
       <Flex mb={6} justify="space-between" align="center" flexWrap="wrap" gap={3}>
         <Box>
           <Heading as="h1" size="lg" color="gray.800">
             Off-Beat Gems (Igbo-Ora Attractions)
           </Heading>
           <Text fontSize="sm" color="gray.600">
-            Curate local cultural excursions, nature trails, historical monoliths, and twin heritage sites.
+            Curate local cultural excursions, nature trails, historical monoliths, and twin heritage
+            sites.
           </Text>
         </Box>
 
-        <Button size="sm" colorScheme="blue" onClick={() => setShowAddModal(true)}>
+        <Button size="sm" colorPalette="blue" onClick={openCreate}>
           <HStack gap={1}>
             <Icon as={FaPlus} boxSize={3} />
             <Text>Add Attraction</Text>
@@ -195,7 +216,14 @@ export default function AdminGemsPage({ adminUser }: GemsPageProps) {
         </Box>
       )}
 
-      <Box bg="white" borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm" overflow="hidden">
+      <Box
+        bg="white"
+        borderRadius="lg"
+        border="1px solid"
+        borderColor="gray.200"
+        boxShadow="sm"
+        overflow="hidden"
+      >
         {loading ? (
           <Flex justify="center" p={12}>
             <Spinner size="lg" color="blue.500" />
@@ -203,7 +231,9 @@ export default function AdminGemsPage({ adminUser }: GemsPageProps) {
         ) : gems.length === 0 ? (
           <VStack py={12} px={4}>
             <Icon as={FaGem} boxSize={8} color="gray.400" mb={2} />
-            <Text fontWeight="semibold" color="gray.700">No off-beat gems registered</Text>
+            <Text fontWeight="semibold" color="gray.700">
+              No off-beat gems registered
+            </Text>
           </VStack>
         ) : (
           <Box overflowX="auto">
@@ -228,21 +258,33 @@ export default function AdminGemsPage({ adminUser }: GemsPageProps) {
                       </Box>
                     </Table.Cell>
                     <Table.Cell>
-                      <Badge colorScheme="blue" textTransform="uppercase" fontSize="10px">
+                      <Badge colorPalette="blue" textTransform="uppercase" fontSize="10px">
                         {g.category}
                       </Badge>
                     </Table.Cell>
                     <Table.Cell fontSize="xs">
                       <HStack gap={1} color="gray.600">
                         <Icon as={FaMapMarkerAlt} boxSize={2.5} color="gray.400" />
-                        <Text>{g.distance} • {g.duration}</Text>
+                        <Text>
+                          {g.distance} • {g.duration}
+                        </Text>
                       </HStack>
                     </Table.Cell>
                     <Table.Cell textAlign="right">
                       <Button
                         size="xs"
                         variant="ghost"
-                        colorScheme="red"
+                        aria-label={`Edit attraction ${g.name}`}
+                        onClick={() => openEdit(g)}
+                        disabled={saving}
+                      >
+                        <Icon as={FaEdit} boxSize={3} />
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        colorPalette="red"
+                        aria-label={`Delete attraction ${g.name}`}
                         onClick={() => handleDelete(g.id, g.name)}
                         disabled={saving}
                       >
@@ -271,13 +313,13 @@ export default function AdminGemsPage({ adminUser }: GemsPageProps) {
         >
           <Box bg="white" maxW="480px" w="100%" p={6} borderRadius="lg" boxShadow="xl">
             <Flex justify="space-between" align="center" mb={4}>
-              <Heading size="sm">Add Off-Beat Gem</Heading>
+              <Heading size="sm">{editingId ? "Edit Off-Beat Gem" : "Add Off-Beat Gem"}</Heading>
               <Button size="xs" variant="ghost" onClick={() => setShowAddModal(false)}>
                 Close
               </Button>
             </Flex>
 
-            <form onSubmit={handleCreateGem}>
+            <form onSubmit={handleSaveGem}>
               <VStack gap={4} align="stretch">
                 <Box>
                   <Text fontSize="xs" fontWeight="bold" color="gray.700" mb={1}>
@@ -305,7 +347,11 @@ export default function AdminGemsPage({ adminUser }: GemsPageProps) {
                   </Text>
                   <select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value as "nature" | "culture" | "adventure" | "spiritual")}
+                    onChange={(e) =>
+                      setCategory(
+                        e.target.value as "nature" | "culture" | "adventure" | "spiritual"
+                      )
+                    }
                     style={{
                       width: "100%",
                       padding: "8px 12px",
@@ -384,12 +430,18 @@ export default function AdminGemsPage({ adminUser }: GemsPageProps) {
                   />
                 </Box>
 
-                <Flex justify="flex-end" gap={2} pt={3} borderTop="1px solid" borderColor="gray.100">
+                <Flex
+                  justify="flex-end"
+                  gap={2}
+                  pt={3}
+                  borderTop="1px solid"
+                  borderColor="gray.100"
+                >
                   <Button size="sm" variant="outline" onClick={() => setShowAddModal(false)}>
                     Cancel
                   </Button>
-                  <Button size="sm" colorScheme="blue" type="submit" loading={saving}>
-                    Add Gem
+                  <Button size="sm" colorPalette="blue" type="submit" loading={saving}>
+                    {editingId ? "Save Changes" : "Add Gem"}
                   </Button>
                 </Flex>
               </VStack>

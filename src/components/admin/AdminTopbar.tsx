@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import NextLink from "next/link";
 import {
   Flex,
   HStack,
@@ -8,26 +9,69 @@ import {
   Icon,
   Link,
   Button,
+  Box,
+  Menu,
 } from "@chakra-ui/react";
 import { FaBars, FaExternalLinkAlt, FaBell, FaSignOutAlt } from "react-icons/fa";
 import type { AdminUserSession } from "@/lib/auth/admin-guard";
+import type { AdminNotificationCounts } from "@/services/analytics/analytics-service";
 
 export interface AdminTopbarProps {
   user: AdminUserSession;
   onToggleSidebar?: () => void;
-  notificationCount?: number;
+  notifications?: AdminNotificationCounts | null;
+  notificationsFailed?: boolean;
 }
 
-const ROLE_LABELS: Record<string, { label: string; colorScheme: string }> = {
-  super_admin: { label: "Super Admin", colorScheme: "red" },
-  resort_admin: { label: "Resort Admin", colorScheme: "blue" },
-  content_manager: { label: "Content Manager", colorScheme: "purple" },
+const ROLE_LABELS: Record<string, { label: string; colorPalette: string }> = {
+  super_admin: { label: "Super Admin", colorPalette: "red" },
+  resort_admin: { label: "Resort Admin", colorPalette: "blue" },
+  content_manager: { label: "Content Manager", colorPalette: "purple" },
 };
 
-export function AdminTopbar({ user, onToggleSidebar, notificationCount = 0 }: AdminTopbarProps) {
+function notificationLinks(counts: AdminNotificationCounts) {
+  return [
+    {
+      key: "pending",
+      label: "Pending bookings",
+      count: counts.pendingBookings,
+      href: "/admin/bookings?status=pending",
+    },
+    ...(counts.refundsToProcess !== undefined
+      ? [
+          {
+            key: "refunds",
+            label: "Refunds to process",
+            count: counts.refundsToProcess,
+            href: "/admin/bookings?refundQueue=true",
+          },
+        ]
+      : []),
+    {
+      key: "contact",
+      label: "Unread contact messages",
+      count: counts.unreadContactSubmissions,
+      href: "/admin/contact",
+    },
+    {
+      key: "inquiries",
+      label: "New event inquiries",
+      count: counts.unreadEventInquiries,
+      href: "/admin/events",
+    },
+  ];
+}
+
+export function AdminTopbar({
+  user,
+  onToggleSidebar,
+  notifications,
+  notificationsFailed = false,
+}: AdminTopbarProps) {
+  const notificationCount = notifications?.count ?? 0;
   const [loggingOut, setLoggingOut] = useState(false);
 
-  const roleInfo = ROLE_LABELS[user.role] || { label: user.role, colorScheme: "gray" };
+  const roleInfo = ROLE_LABELS[user.role] || { label: user.role, colorPalette: "gray" };
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -70,7 +114,7 @@ export function AdminTopbar({ user, onToggleSidebar, notificationCount = 0 }: Ad
             {user.fullName || user.email}
           </Text>
           <Badge
-            colorScheme={roleInfo.colorScheme}
+            colorPalette={roleInfo.colorPalette}
             variant="subtle"
             fontSize="xs"
             px={2}
@@ -97,36 +141,64 @@ export function AdminTopbar({ user, onToggleSidebar, notificationCount = 0 }: Ad
           <Icon as={FaExternalLinkAlt} boxSize={2.5} />
         </Link>
 
-        {/* Notification Bell */}
-        <HStack position="relative" cursor="pointer" title={`${notificationCount} notifications`}>
-          <IconButton
-            aria-label="Notifications"
-            variant="ghost"
-            size="sm"
-            color="gray.600"
-            _hover={{ bg: "gray.100" }}
-          >
-            <Icon as={FaBell} boxSize={4} />
-          </IconButton>
-          {notificationCount > 0 && (
-            <Badge
-              position="absolute"
-              top="-2px"
-              right="-2px"
-              colorScheme="red"
-              borderRadius="full"
-              fontSize="10px"
-              px={1.5}
-            >
-              {notificationCount}
-            </Badge>
-          )}
-        </HStack>
+        {/* Notification Bell: rendered without a Portal so it stays inside the admin light theme */}
+        <Menu.Root positioning={{ placement: "bottom-end" }}>
+          <Box position="relative">
+            <Menu.Trigger asChild>
+              <IconButton
+                aria-label={`Notifications (${notificationCount})`}
+                variant="ghost"
+                size="sm"
+                color="gray.600"
+                _hover={{ bg: "gray.100" }}
+              >
+                <Icon as={FaBell} boxSize={4} />
+              </IconButton>
+            </Menu.Trigger>
+            {notificationCount > 0 && (
+              <Badge
+                position="absolute"
+                top="-2px"
+                right="-2px"
+                colorPalette="red"
+                variant="solid"
+                borderRadius="full"
+                fontSize="10px"
+                px={1.5}
+                pointerEvents="none"
+              >
+                {notificationCount}
+              </Badge>
+            )}
+          </Box>
+          <Menu.Positioner>
+            <Menu.Content minW="240px">
+              {notifications ? (
+                notificationLinks(notifications).map((item) => (
+                  <Menu.Item key={item.key} value={item.key} asChild>
+                    <NextLink href={item.href}>
+                      <Flex justify="space-between" w="full" gap={4}>
+                        <Text fontSize="sm">{item.label}</Text>
+                        <Badge colorPalette={item.count > 0 ? "red" : "gray"}>{item.count}</Badge>
+                      </Flex>
+                    </NextLink>
+                  </Menu.Item>
+                ))
+              ) : (
+                <Menu.Item value="status" disabled>
+                  {notificationsFailed
+                    ? "Couldn't load notifications. Retrying shortly."
+                    : "Loading notifications…"}
+                </Menu.Item>
+              )}
+            </Menu.Content>
+          </Menu.Positioner>
+        </Menu.Root>
 
         <Button
           size="sm"
           variant="outline"
-          colorScheme="gray"
+          colorPalette="gray"
           onClick={handleLogout}
           loading={loggingOut}
         >

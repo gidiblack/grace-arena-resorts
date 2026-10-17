@@ -28,7 +28,10 @@ import {
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import { MetricCard } from "@/components/admin/dashboard/MetricCard";
-import { BookingsRevenueChart, type TimelineDataPoint } from "@/components/admin/dashboard/BookingsRevenueChart";
+import {
+  BookingsRevenueChart,
+  type TimelineDataPoint,
+} from "@/components/admin/dashboard/BookingsRevenueChart";
 import { OccupancyHeatmap } from "@/components/admin/dashboard/OccupancyHeatmap";
 import { ActivityFeed } from "@/components/admin/dashboard/ActivityFeed";
 import { QuickActions } from "@/components/admin/dashboard/QuickActions";
@@ -143,24 +146,33 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
     return Object.values(dateMap).sort((a, b) => a.date.localeCompare(b.date));
   }, [bookingsAnalytics, revenueAnalytics]);
 
-  const bellCount = summary?.notificationBell?.count || 0;
-
   return (
     <AdminLayout
       title="Dashboard"
       user={adminUser}
       breadcrumbs={[{ label: "Dashboard", href: "/admin" }]}
-      notificationCount={bellCount}
     >
       <VStack align="stretch" gap={6}>
         {/* Welcome Header */}
-        <Flex justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} gap={3}>
+        <Flex
+          justify="space-between"
+          align={{ base: "flex-start", md: "center" }}
+          direction={{ base: "column", md: "row" }}
+          gap={3}
+        >
           <Box>
             <HStack gap={2}>
               <Heading size="lg" color="gray.800">
                 Resort Operations Dashboard
               </Heading>
-              <Badge colorScheme="blue" variant="subtle" fontSize="xs" px={2} py={0.5} borderRadius="full">
+              <Badge
+                colorPalette="blue"
+                variant="subtle"
+                fontSize="xs"
+                px={2}
+                py={0.5}
+                borderRadius="full"
+              >
                 Live Overview
               </Badge>
             </HStack>
@@ -176,21 +188,28 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
             <HStack gap={3}>
               <Icon as={FaExclamationCircle} color="blue.500" boxSize={4} flexShrink={0} />
               <Text fontSize="xs" color="blue.800">
-                You are signed in as <strong>Content Manager</strong> with non-financial view privileges. Financial metrics, revenue analytics, and occupancy reports are restricted to Resort Administrators and Super Admins.
+                You are signed in as <strong>Content Manager</strong> with non-financial view
+                privileges. Financial metrics, revenue analytics, and occupancy reports are
+                restricted to Resort Administrators and Super Admins.
               </Text>
             </HStack>
           </Box>
         )}
 
         {/* Primary Metric Cards Grid */}
-        <SimpleGrid columns={{ base: 1, sm: 2, lg: isContentManager ? 4 : 3, xl: isContentManager ? 4 : 6 }} gap={4}>
+        <SimpleGrid
+          columns={{ base: 1, sm: 2, lg: isContentManager ? 4 : 3, xl: isContentManager ? 4 : 6 }}
+          gap={4}
+        >
           {/* Revenue Card (Resort Admin+ only) */}
           {!isContentManager && (
             <MetricCard
               title="Net Revenue (Month)"
-              value={formatNgn(summary?.revenue?.thisMonth ?? revenueAnalytics?.revenue?.thisMonth ?? 0)}
+              value={formatNgn(
+                summary?.revenue?.thisMonth ?? revenueAnalytics?.revenue?.thisMonth ?? 0
+              )}
               icon={FaMoneyBillWave}
-              colorScheme="green"
+              colorPalette="green"
               subtitle={`Today: ${formatNgn(summary?.revenue?.today ?? 0)} · Week: ${formatNgn(summary?.revenue?.thisWeek ?? 0)}`}
               isLoading={isLoading}
             />
@@ -201,7 +220,7 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
             title="Total Bookings (Month)"
             value={summary?.bookings?.thisMonth ?? bookingsAnalytics?.counts?.thisMonth ?? 0}
             icon={FaCalendarCheck}
-            colorScheme="blue"
+            colorPalette="blue"
             subtitle={`Today: ${summary?.bookings?.today ?? 0} · Week: ${summary?.bookings?.thisWeek ?? 0}`}
             isLoading={isLoading}
             href="/admin/bookings"
@@ -213,7 +232,7 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
               title="Today's Occupancy"
               value={`${summary?.occupancy?.rateToday ?? occupancyAnalytics?.today?.rate ?? 0}%`}
               icon={FaBed}
-              colorScheme="teal"
+              colorPalette="teal"
               subtitle={`${summary?.occupancy?.occupiedUnitsToday ?? occupancyAnalytics?.today?.occupiedUnits ?? 0} of ${summary?.occupancy?.bookableUnitsToday ?? occupancyAnalytics?.today?.totalBookableUnits ?? 0} units active`}
               isLoading={isLoading}
             />
@@ -224,9 +243,13 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
             title="Pending Bookings"
             value={summary?.bookings?.pending ?? 0}
             icon={FaClock}
-            colorScheme="yellow"
+            colorPalette="yellow"
             subtitle="Awaiting payment confirmation"
-            badge={(summary?.bookings?.pending ?? 0) > 0 ? { label: "Action Needed", colorScheme: "yellow" } : undefined}
+            badge={
+              (summary?.bookings?.pending ?? 0) > 0
+                ? { label: "Action Needed", colorPalette: "yellow" }
+                : undefined
+            }
             href="/admin/bookings?status=pending"
             isLoading={isLoading}
           />
@@ -237,10 +260,14 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
               title="Refunds to Process"
               value={summary?.inbox?.refundsToProcess ?? 0}
               icon={FaUndo}
-              colorScheme="purple"
-              subtitle="Pending or failed refunds"
-              badge={(summary?.inbox?.refundsToProcess ?? 0) > 0 ? { label: "Review", colorScheme: "red" } : undefined}
-              href="/admin/bookings?paymentStatus=refund_pending"
+              colorPalette="purple"
+              subtitle="Manual refunds pending or failed"
+              badge={
+                (summary?.inbox?.refundsToProcess ?? 0) > 0
+                  ? { label: "Review", colorPalette: "red" }
+                  : undefined
+              }
+              href="/admin/bookings?refundQueue=true"
               isLoading={isLoading}
             />
           )}
@@ -248,13 +275,18 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
           {/* Unread Inquiries & Messages */}
           <MetricCard
             title="Unread Inbox"
-            value={(summary?.inbox?.unreadContactSubmissions ?? 0) + (summary?.inbox?.unreadEventInquiries ?? 0)}
+            value={
+              (summary?.inbox?.unreadContactSubmissions ?? 0) +
+              (summary?.inbox?.unreadEventInquiries ?? 0)
+            }
             icon={FaEnvelope}
-            colorScheme="orange"
+            colorPalette="orange"
             subtitle={`${summary?.inbox?.unreadContactSubmissions ?? 0} contacts · ${summary?.inbox?.unreadEventInquiries ?? 0} events`}
             badge={
-              (summary?.inbox?.unreadContactSubmissions ?? 0) + (summary?.inbox?.unreadEventInquiries ?? 0) > 0
-                ? { label: "New", colorScheme: "orange" }
+              (summary?.inbox?.unreadContactSubmissions ?? 0) +
+                (summary?.inbox?.unreadEventInquiries ?? 0) >
+              0
+                ? { label: "New", colorPalette: "orange" }
                 : undefined
             }
             isLoading={isLoading}
@@ -266,7 +298,7 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
               title="Newsletter Audience"
               value={summary?.newsletter?.totalSubscribers ?? 0}
               icon={FaUsers}
-              colorScheme="purple"
+              colorPalette="purple"
               subtitle={`${summary?.newsletter?.confirmedSubscribers ?? 0} confirmed subscribers`}
               isLoading={isLoading}
             />
@@ -283,10 +315,7 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
         {!isContentManager && (
           <>
             {/* 30-Day Trends Chart */}
-            <BookingsRevenueChart
-              data={combinedTimeline}
-              isLoading={isLoading}
-            />
+            <BookingsRevenueChart data={combinedTimeline} isLoading={isLoading} />
 
             {/* Occupancy Heatmap */}
             <OccupancyHeatmap
@@ -298,7 +327,14 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
             {/* SRS 4.6 Metric Cards & Breakdowns */}
             <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
               {/* Average Stay Duration */}
-              <Box bg="white" p={5} borderRadius="lg" borderWidth="1px" borderColor="gray.200" boxShadow="sm">
+              <Box
+                bg="white"
+                p={5}
+                borderRadius="lg"
+                borderWidth="1px"
+                borderColor="gray.200"
+                boxShadow="sm"
+              >
                 <HStack justify="space-between" mb={2}>
                   <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" color="gray.500">
                     Avg. Stay Duration
@@ -314,7 +350,14 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
               </Box>
 
               {/* Deal Redemptions */}
-              <Box bg="white" p={5} borderRadius="lg" borderWidth="1px" borderColor="gray.200" boxShadow="sm">
+              <Box
+                bg="white"
+                p={5}
+                borderRadius="lg"
+                borderWidth="1px"
+                borderColor="gray.200"
+                boxShadow="sm"
+              >
                 <HStack justify="space-between" mb={2}>
                   <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" color="gray.500">
                     Deal Redemptions
@@ -330,7 +373,14 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
               </Box>
 
               {/* Expired Holds */}
-              <Box bg="white" p={5} borderRadius="lg" borderWidth="1px" borderColor="gray.200" boxShadow="sm">
+              <Box
+                bg="white"
+                p={5}
+                borderRadius="lg"
+                borderWidth="1px"
+                borderColor="gray.200"
+                boxShadow="sm"
+              >
                 <HStack justify="space-between" mb={2}>
                   <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" color="gray.500">
                     Expired Holds
@@ -349,7 +399,14 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
             {/* Gateway & Room Type Revenue Tables */}
             <SimpleGrid columns={{ base: 1, lg: 2 }} gap={6}>
               {/* Gateway Breakdown */}
-              <Box bg="white" p={5} borderRadius="lg" borderWidth="1px" borderColor="gray.200" boxShadow="sm">
+              <Box
+                bg="white"
+                p={5}
+                borderRadius="lg"
+                borderWidth="1px"
+                borderColor="gray.200"
+                boxShadow="sm"
+              >
                 <HStack gap={2} mb={4}>
                   <Icon as={FaCreditCard} color="blue.500" />
                   <Heading size="sm" color="gray.800">
@@ -374,7 +431,10 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
                         </Table.Cell>
                         <Table.Cell textAlign="right">{gw.paymentCount}</Table.Cell>
                         <Table.Cell textAlign="right">{formatNgn(gw.grossRevenue)}</Table.Cell>
-                        <Table.Cell textAlign="right" color={gw.refunds > 0 ? "red.500" : undefined}>
+                        <Table.Cell
+                          textAlign="right"
+                          color={gw.refunds > 0 ? "red.500" : undefined}
+                        >
                           {gw.refunds > 0 ? `-${formatNgn(gw.refunds)}` : "₦0"}
                         </Table.Cell>
                         <Table.Cell textAlign="right" fontWeight="bold" color="green.600">
@@ -387,7 +447,14 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
               </Box>
 
               {/* Revenue by Room Type */}
-              <Box bg="white" p={5} borderRadius="lg" borderWidth="1px" borderColor="gray.200" boxShadow="sm">
+              <Box
+                bg="white"
+                p={5}
+                borderRadius="lg"
+                borderWidth="1px"
+                borderColor="gray.200"
+                boxShadow="sm"
+              >
                 <HStack gap={2} mb={4}>
                   <Icon as={FaDoorOpen} color="teal.500" />
                   <Heading size="sm" color="gray.800">
@@ -428,10 +495,7 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
         )}
 
         {/* Activity Feed (Visible to all staff roles) */}
-        <ActivityFeed
-          activities={summary?.recentActivity || []}
-          isLoading={isLoading}
-        />
+        <ActivityFeed activities={summary?.recentActivity || []} isLoading={isLoading} />
       </VStack>
     </AdminLayout>
   );

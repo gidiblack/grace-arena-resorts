@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
-import {
-  Box,
-  Flex,
-  VStack,
-  HStack,
-  Text,
-  Heading,
-  Button,
-  Icon,
-} from "@chakra-ui/react";
+import { Box, Flex, VStack, HStack, Text, Heading, Button, Icon } from "@chakra-ui/react";
 import { FaBed, FaArrowLeft, FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
@@ -120,18 +111,11 @@ export default function AdminNewRoomPage({ adminUser }: NewRoomPageProps) {
     <AdminLayout
       title="Add New Room Suite"
       user={adminUser}
-      breadcrumbs={[
-        { label: "Rooms & Suites", href: "/admin/rooms" },
-        { label: "New Suite" },
-      ]}
+      breadcrumbs={[{ label: "Rooms & Suites", href: "/admin/rooms" }, { label: "New Suite" }]}
     >
       <Box maxW="720px" mx="auto">
         <HStack mb={4} justify="space-between">
-          <Button
-            size="xs"
-            variant="ghost"
-            onClick={() => router.push("/admin/rooms")}
-          >
+          <Button size="xs" variant="ghost" onClick={() => router.push("/admin/rooms")}>
             <HStack gap={1}>
               <Icon as={FaArrowLeft} boxSize={3} />
               <Text>Back to Rooms</Text>
@@ -139,7 +123,14 @@ export default function AdminNewRoomPage({ adminUser }: NewRoomPageProps) {
           </Button>
         </HStack>
 
-        <Box bg="white" p={6} borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm">
+        <Box
+          bg="white"
+          p={6}
+          borderRadius="lg"
+          border="1px solid"
+          borderColor="gray.200"
+          boxShadow="sm"
+        >
           <HStack gap={3} mb={6} pb={4} borderBottom="1px solid" borderColor="gray.100">
             <Icon as={FaBed} boxSize={5} color="blue.500" />
             <Box>
@@ -359,12 +350,7 @@ export default function AdminNewRoomPage({ adminUser }: NewRoomPageProps) {
                 >
                   Cancel
                 </Button>
-                <Button
-                  colorScheme="blue"
-                  size="sm"
-                  type="submit"
-                  loading={loading}
-                >
+                <Button colorPalette="blue" size="sm" type="submit" loading={loading}>
                   Save Suite
                 </Button>
               </Flex>

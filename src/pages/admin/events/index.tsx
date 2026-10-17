@@ -43,11 +43,7 @@ interface EventsPageProps {
 }
 
 export const getServerSideProps: GetServerSideProps<EventsPageProps> = async (ctx) => {
-  return requireAdminPage<EventsPageProps>(ctx, [
-    "content_manager",
-    "resort_admin",
-    "super_admin",
-  ]);
+  return requireAdminPage<EventsPageProps>(ctx, ["content_manager", "resort_admin", "super_admin"]);
 };
 
 export default function AdminEventsPage({ adminUser }: EventsPageProps) {
@@ -188,7 +184,14 @@ export default function AdminEventsPage({ adminUser }: EventsPageProps) {
         </Box>
       )}
 
-      <Box bg="white" borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm" overflow="hidden">
+      <Box
+        bg="white"
+        borderRadius="lg"
+        border="1px solid"
+        borderColor="gray.200"
+        boxShadow="sm"
+        overflow="hidden"
+      >
         {loading ? (
           <Flex justify="center" p={12}>
             <Spinner size="lg" color="blue.500" />
@@ -196,7 +199,9 @@ export default function AdminEventsPage({ adminUser }: EventsPageProps) {
         ) : inquiries.length === 0 ? (
           <VStack py={12} px={4}>
             <Icon as={FaGlassCheers} boxSize={8} color="gray.400" mb={2} />
-            <Text fontWeight="semibold" color="gray.700">No event inquiries found</Text>
+            <Text fontWeight="semibold" color="gray.700">
+              No event inquiries found
+            </Text>
           </VStack>
         ) : (
           <Box overflowX="auto">
@@ -217,22 +222,26 @@ export default function AdminEventsPage({ adminUser }: EventsPageProps) {
                     <Table.Cell>
                       <Box>
                         <Text fontWeight="semibold">{inq.contact_name}</Text>
-                        <Text fontSize="xs" color="gray.500">{inq.contact_email}</Text>
+                        <Text fontSize="xs" color="gray.500">
+                          {inq.contact_email}
+                        </Text>
                       </Box>
                     </Table.Cell>
                     <Table.Cell fontSize="xs">
-                      <Badge variant="subtle" colorScheme="blue">
+                      <Badge variant="subtle" colorPalette="blue">
                         {inq.event_categories?.name || "Event Package"}
                       </Badge>
                     </Table.Cell>
-                    <Table.Cell fontSize="xs">
-                      {inq.preferred_date || "Flexible"}
-                    </Table.Cell>
+                    <Table.Cell fontSize="xs">{inq.preferred_date || "Flexible"}</Table.Cell>
                     <Table.Cell fontSize="xs">
                       {inq.estimated_guests ? `${inq.estimated_guests} guests` : "—"}
                     </Table.Cell>
                     <Table.Cell>
-                      <Badge colorScheme={statusBadgeColor(inq.status)} textTransform="uppercase" fontSize="10px">
+                      <Badge
+                        colorPalette={statusBadgeColor(inq.status)}
+                        textTransform="uppercase"
+                        fontSize="10px"
+                      >
                         {inq.status.replace("_", " ")}
                       </Badge>
                     </Table.Cell>
@@ -240,7 +249,7 @@ export default function AdminEventsPage({ adminUser }: EventsPageProps) {
                       <Button
                         size="xs"
                         variant="outline"
-                        colorScheme="blue"
+                        colorPalette="blue"
                         onClick={() => {
                           setSelectedInquiry(inq);
                           setEditStatus(inq.status);
@@ -270,7 +279,14 @@ export default function AdminEventsPage({ adminUser }: EventsPageProps) {
           p={4}
         >
           <Box bg="white" maxW="540px" w="100%" p={6} borderRadius="lg" boxShadow="xl">
-            <Flex justify="space-between" align="center" mb={4} pb={2} borderBottom="1px solid" borderColor="gray.100">
+            <Flex
+              justify="space-between"
+              align="center"
+              mb={4}
+              pb={2}
+              borderBottom="1px solid"
+              borderColor="gray.100"
+            >
               <Heading size="sm">Inquiry from {selectedInquiry.contact_name}</Heading>
               <Button size="xs" variant="ghost" onClick={() => setSelectedInquiry(null)}>
                 Close
@@ -289,7 +305,8 @@ export default function AdminEventsPage({ adminUser }: EventsPageProps) {
               <HStack>
                 <Icon as={FaCalendarAlt} color="gray.400" boxSize={3.5} />
                 <Text color="gray.700">
-                  Date: {selectedInquiry.preferred_date || "Not specified"} ({selectedInquiry.estimated_guests || 0} guests)
+                  Date: {selectedInquiry.preferred_date || "Not specified"} (
+                  {selectedInquiry.estimated_guests || 0} guests)
                 </Text>
               </HStack>
 
@@ -331,7 +348,7 @@ export default function AdminEventsPage({ adminUser }: EventsPageProps) {
                 <Button size="sm" variant="outline" onClick={() => setSelectedInquiry(null)}>
                   Cancel
                 </Button>
-                <Button size="sm" colorScheme="blue" type="submit" loading={saving}>
+                <Button size="sm" colorPalette="blue" type="submit" loading={saving}>
                   Save Status
                 </Button>
               </Flex>

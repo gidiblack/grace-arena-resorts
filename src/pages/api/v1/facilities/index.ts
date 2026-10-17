@@ -13,7 +13,7 @@ const createFacilitySchema = z.object({
   images: z.array(z.any()).default([]),
   is_featured: z.boolean().default(false),
   sort_order: z.number().int().default(0),
-  resort_id: z.string().uuid().optional().nullable(),
+  resort_id: z.guid().optional().nullable(),
 });
 
 export default withApi(
@@ -43,7 +43,8 @@ export default withApi(
             isFeatured: f.is_featured,
             sortOrder: f.sort_order,
             resortId: f.resort_id,
-            campus: resort?.slug || (f.name.toLowerCase().includes("village") ? "village" : "elysian"),
+            campus:
+              resort?.slug || (f.name.toLowerCase().includes("village") ? "village" : "elysian"),
           };
         });
 
@@ -71,7 +72,12 @@ export default withApi(
         return fail(res, "UNAUTHORIZED", "Authentication required", 401);
       }
       if (!["content_manager", "resort_admin", "super_admin"].includes(user.role)) {
-        return fail(res, "FORBIDDEN", "Only content managers and administrators can create facilities", 403);
+        return fail(
+          res,
+          "FORBIDDEN",
+          "Only content managers and administrators can create facilities",
+          403
+        );
       }
 
       const body = req.body as z.infer<typeof createFacilitySchema>;

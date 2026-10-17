@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { buildIlikeOrFilter } from "@/lib/supabase/filters";
+import { REFUND_QUEUE_FILTER } from "@/services/payments/refund-queue";
 import { withApi } from "../_shared/handler";
 import { parsePagination, setPaginationHeaders } from "../_shared/pagination";
 import { generateBookingReference } from "@/domain/booking/reference";
@@ -52,7 +54,10 @@ export const createBookingSchema = z.object({
   }),
   dealId: z.guid().optional(),
   promoCode: z.string().trim().min(1).max(40).optional(),
-  paymentMethod: z.enum(["paystack", "cash", "pos", "bank_transfer"]).optional().default("paystack"),
+  paymentMethod: z
+    .enum(["paystack", "cash", "pos", "bank_transfer"])
+    .optional()
+    .default("paystack"),
   paymentReference: z.string().trim().max(100).optional(),
   // NDPR: guests consent at checkout because they may not have registered (SRS v1.3)
   privacyConsent: z.boolean().optional(),
@@ -79,6 +84,7 @@ export default withApi(
         checkInTo,
         channel,
         paymentStatus,
+        refundQueue,
         q,
       } = req.query;
 
@@ -116,20 +122,35 @@ export default withApi(
         }
         if (typeof q === "string" && q.trim()) {
           const term = q.trim();
-          query = query.or(
-            `reference.ilike.%${term}%,guest_name.ilike.%${term}%,guest_email.ilike.%${term}%`
-          );
+          query = query.or(buildIlikeOrFilter(["reference", "guest_name", "guest_email"], term));
         }
-        if (typeof paymentStatus === "string" && paymentStatus) {
-          const { data: matchedPayments } = await supabase
-            .from("payments")
-            .select("booking_id")
-            .eq("status", paymentStatus as PaymentStatus);
+        const restrictToBookingIds = async (
+          paymentQuery: PromiseLike<{ data: { booking_id: string }[] | null; error: unknown }>
+        ) => {
+          const { data: matchedPayments, error: matchError } = await paymentQuery;
+          if (matchError) throw matchError;
           const bookingIds = (matchedPayments || []).map((p) => p.booking_id);
           query = query.in(
             "id",
             bookingIds.length > 0 ? bookingIds : ["00000000-0000-0000-0000-000000000000"]
           );
+        };
+        try {
+          if (refundQueue === "true") {
+            await restrictToBookingIds(
+              supabase.from("payments").select("booking_id").or(REFUND_QUEUE_FILTER)
+            );
+          } else if (typeof paymentStatus === "string" && paymentStatus) {
+            await restrictToBookingIds(
+              supabase
+                .from("payments")
+                .select("booking_id")
+                .eq("status", paymentStatus as PaymentStatus)
+            );
+          }
+        } catch (matchError) {
+          logger.error("Failed to filter bookings by payment", { error: matchError });
+          return fail(res, "DB_ERROR", "Failed to load bookings", 500);
         }
       }
 
@@ -149,7 +170,10 @@ export default withApi(
 
       if (bookingIds.length > 0) {
         const [{ data: li }, { data: pm }] = await Promise.all([
-          supabase.from("booking_line_items").select("*").in("booking_id", bookingIds),
+          supabase
+            .from("booking_line_items")
+            .select("*, room_type:room_types(name)")
+            .in("booking_id", bookingIds),
           supabase.from("payments").select("*").in("booking_id", bookingIds),
         ]);
         lineItems = li || [];

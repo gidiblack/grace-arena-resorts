@@ -1,12 +1,23 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { Box, Flex, HStack, Icon, SimpleGrid, Stack, Text, Spinner } from "@chakra-ui/react";
 import AccountLayout from "@/features/account/components/AccountLayout";
 import BookingCard, { BookingRecord } from "@/features/account/components/BookingCard";
 import Button from "@/components/ui/button";
-import { FaCalendarCheck, FaClock, FaBed, FaPlus, FaShieldAlt } from "react-icons/fa";
+import {
+  FaCalendarCheck,
+  FaClock,
+  FaBed,
+  FaPlus,
+  FaShieldAlt,
+  FaExclamationCircle,
+} from "react-icons/fa";
+import { ADMIN_ACCESS_DENIED_NOTICE } from "@/lib/auth/admin-notices";
 
 export default function AccountOverviewPage() {
+  const router = useRouter();
+  const showAdminNotice = router.query.notice === ADMIN_ACCESS_DENIED_NOTICE;
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +45,23 @@ export default function AccountOverviewPage() {
 
   return (
     <AccountLayout title="Account Overview" activeTab="overview">
+      {showAdminNotice && (
+        <HStack
+          role="alert"
+          gap={3}
+          mb={6}
+          p={4}
+          borderRadius="12px"
+          bg="rgba(237, 137, 54, 0.12)"
+          border="1px solid rgba(237, 137, 54, 0.4)"
+        >
+          <Icon as={FaExclamationCircle} color="#ED8936" boxSize={5} />
+          <Text fontSize="14px" color="gray.100">
+            Your account does not have access to the admin panel. If you are resort staff, ask a
+            Super Admin to grant you a staff role.
+          </Text>
+        </HStack>
+      )}
       {/* Metric Cards */}
       <SimpleGrid columns={{ base: 1, sm: 3 }} gap={4} mb={8}>
         <Box bg="#0F172A" p={5} borderRadius="16px" border="1px solid #1E293B">

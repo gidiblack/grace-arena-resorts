@@ -20,6 +20,7 @@ import {
   FaCheckCircle,
   FaExclamationCircle,
   FaTrash,
+  FaEdit,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
@@ -56,6 +57,7 @@ export default function AdminRestaurantsPage({ adminUser }: RestaurantsPageProps
   );
 
   // New restaurant form fields
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [cuisineType, setCuisineType] = useState("");
   const [description, setDescription] = useState("");
@@ -79,7 +81,23 @@ export default function AdminRestaurantsPage({ adminUser }: RestaurantsPageProps
     fetchRestaurants();
   }, [fetchRestaurants]);
 
-  const handleCreateRestaurant = async (e: React.FormEvent) => {
+  const openCreate = () => {
+    setEditingId(null);
+    setName("");
+    setCuisineType("");
+    setDescription("");
+    setShowAddModal(true);
+  };
+
+  const openEdit = (restaurant: RestaurantItem) => {
+    setEditingId(restaurant.id);
+    setName(restaurant.name);
+    setCuisineType(restaurant.cuisineType ?? restaurant.cuisine_type ?? "");
+    setDescription(restaurant.description || "");
+    setShowAddModal(true);
+  };
+
+  const handleSaveRestaurant = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !cuisineType.trim() || !description.trim()) {
       setFeedback({ type: "error", message: "All fields are required." });
@@ -90,20 +108,27 @@ export default function AdminRestaurantsPage({ adminUser }: RestaurantsPageProps
     setFeedback(null);
 
     try {
-      const res = await fetch("/api/v1/restaurants", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          cuisine_type: cuisineType.trim(),
-          description: description.trim(),
-        }),
-      });
+      const res = await fetch(
+        editingId ? `/api/v1/restaurants/${editingId}` : "/api/v1/restaurants",
+        {
+          method: editingId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name.trim(),
+            cuisine_type: cuisineType.trim(),
+            description: description.trim(),
+          }),
+        }
+      );
 
       const json = await res.json();
       if (res.ok && json.success) {
-        setFeedback({ type: "success", message: `Restaurant '${name}' created successfully!` });
+        setFeedback({
+          type: "success",
+          message: `Restaurant '${name}' ${editingId ? "updated" : "created"}.`,
+        });
         setShowAddModal(false);
+        setEditingId(null);
         setName("");
         setCuisineType("");
         setDescription("");
@@ -111,7 +136,7 @@ export default function AdminRestaurantsPage({ adminUser }: RestaurantsPageProps
       } else {
         setFeedback({
           type: "error",
-          message: json.error?.message || "Failed to create restaurant.",
+          message: json.error?.message || "Failed to save restaurant.",
         });
       }
     } catch {
@@ -122,7 +147,11 @@ export default function AdminRestaurantsPage({ adminUser }: RestaurantsPageProps
   };
 
   const handleDelete = async (id: string, restaurantName: string) => {
-    if (!confirm(`Are you sure you want to delete '${restaurantName}'? All menu items will also be deleted.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete '${restaurantName}'? All menu items will also be deleted.`
+      )
+    ) {
       return;
     }
 
@@ -167,7 +196,7 @@ export default function AdminRestaurantsPage({ adminUser }: RestaurantsPageProps
           </Text>
         </Box>
 
-        <Button size="sm" colorScheme="blue" onClick={() => setShowAddModal(true)}>
+        <Button size="sm" colorPalette="blue" onClick={openCreate}>
           <HStack gap={1}>
             <Icon as={FaPlus} boxSize={3} />
             <Text>Add Restaurant</Text>
@@ -193,7 +222,14 @@ export default function AdminRestaurantsPage({ adminUser }: RestaurantsPageProps
         </Box>
       )}
 
-      <Box bg="white" borderRadius="lg" border="1px solid" borderColor="gray.200" boxShadow="sm" overflow="hidden">
+      <Box
+        bg="white"
+        borderRadius="lg"
+        border="1px solid"
+        borderColor="gray.200"
+        boxShadow="sm"
+        overflow="hidden"
+      >
         {loading ? (
           <Flex justify="center" p={12}>
             <Spinner size="lg" color="blue.500" />
@@ -201,7 +237,9 @@ export default function AdminRestaurantsPage({ adminUser }: RestaurantsPageProps
         ) : restaurants.length === 0 ? (
           <VStack py={12} px={4}>
             <Icon as={FaUtensils} boxSize={8} color="gray.400" mb={2} />
-            <Text fontWeight="semibold" color="gray.700">No restaurants found</Text>
+            <Text fontWeight="semibold" color="gray.700">
+              No restaurants found
+            </Text>
           </VStack>
         ) : (
           <Box overflowX="auto">
@@ -227,21 +265,29 @@ export default function AdminRestaurantsPage({ adminUser }: RestaurantsPageProps
                       {r.cuisineType || r.cuisine_type || "Continental / Nigerian"}
                     </Table.Cell>
                     <Table.Cell>
-                      <Badge colorScheme="purple" textTransform="uppercase" fontSize="10px">
+                      <Badge colorPalette="purple" textTransform="uppercase" fontSize="10px">
                         {r.campus || "Resort Wide"}
                       </Badge>
                     </Table.Cell>
                     <Table.Cell textAlign="right">
                       <HStack gap={2} justify="flex-end">
-                        <NextLink href={`/admin/restaurants/${r.id}/menu`} passHref legacyBehavior>
-                          <Button as="a" size="xs" colorScheme="blue" variant="outline">
-                            Manage Menu
-                          </Button>
-                        </NextLink>
+                        <Button asChild size="xs" colorPalette="blue" variant="outline">
+                          <NextLink href={`/admin/restaurants/${r.id}/menu`}>Manage Menu</NextLink>
+                        </Button>
                         <Button
                           size="xs"
                           variant="ghost"
-                          colorScheme="red"
+                          aria-label={`Edit restaurant ${r.name}`}
+                          onClick={() => openEdit(r)}
+                          disabled={saving}
+                        >
+                          <Icon as={FaEdit} boxSize={3} />
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          colorPalette="red"
+                          aria-label={`Delete restaurant ${r.name}`}
                           onClick={() => handleDelete(r.id, r.name)}
                           disabled={saving}
                         >
@@ -271,13 +317,13 @@ export default function AdminRestaurantsPage({ adminUser }: RestaurantsPageProps
         >
           <Box bg="white" maxW="500px" w="100%" p={6} borderRadius="lg" boxShadow="xl">
             <Flex justify="space-between" align="center" mb={4}>
-              <Heading size="sm">Add New Restaurant</Heading>
+              <Heading size="sm">{editingId ? "Edit Restaurant" : "Add New Restaurant"}</Heading>
               <Button size="xs" variant="ghost" onClick={() => setShowAddModal(false)}>
                 Close
               </Button>
             </Flex>
 
-            <form onSubmit={handleCreateRestaurant}>
+            <form onSubmit={handleSaveRestaurant}>
               <VStack gap={4} align="stretch">
                 <Box>
                   <Text fontSize="xs" fontWeight="bold" color="gray.700" mb={1}>
@@ -339,12 +385,18 @@ export default function AdminRestaurantsPage({ adminUser }: RestaurantsPageProps
                   />
                 </Box>
 
-                <Flex justify="flex-end" gap={2} pt={3} borderTop="1px solid" borderColor="gray.100">
+                <Flex
+                  justify="flex-end"
+                  gap={2}
+                  pt={3}
+                  borderTop="1px solid"
+                  borderColor="gray.100"
+                >
                   <Button size="sm" variant="outline" onClick={() => setShowAddModal(false)}>
                     Cancel
                   </Button>
-                  <Button size="sm" colorScheme="blue" type="submit" loading={saving}>
-                    Create Restaurant
+                  <Button size="sm" colorPalette="blue" type="submit" loading={saving}>
+                    {editingId ? "Save Changes" : "Create Restaurant"}
                   </Button>
                 </Flex>
               </VStack>

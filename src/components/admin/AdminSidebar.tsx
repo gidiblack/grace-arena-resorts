@@ -205,7 +205,7 @@ export function AdminSidebar({ userRole, isOpen = true }: AdminSidebarProps) {
                   <Text fontSize="sm">{item.label}</Text>
                 </HStack>
                 <Badge
-                  colorScheme="gray"
+                  colorPalette="gray"
                   fontSize="9px"
                   textTransform="uppercase"
                   variant="subtle"
@@ -218,22 +218,23 @@ export function AdminSidebar({ userRole, isOpen = true }: AdminSidebarProps) {
           }
 
           return (
-            <NextLink key={item.id} href={item.href} passHref legacyBehavior>
-              <HStack
-                as="a"
-                px={3}
-                py={2.5}
-                borderRadius="md"
-                bg={isActive ? "blue.600" : "transparent"}
-                color={isActive ? "white" : "gray.300"}
-                _hover={{
-                  bg: isActive ? "blue.600" : "gray.800",
-                  color: "white",
-                }}
-                transition="all 0.15s"
-                cursor="pointer"
-                justify="space-between"
-              >
+            <HStack
+              key={item.id}
+              asChild
+              px={3}
+              py={2.5}
+              borderRadius="md"
+              bg={isActive ? "blue.600" : "transparent"}
+              color={isActive ? "white" : "gray.300"}
+              _hover={{
+                bg: isActive ? "blue.600" : "gray.800",
+                color: "white",
+              }}
+              transition="all 0.15s"
+              cursor="pointer"
+              justify="space-between"
+            >
+              <NextLink href={item.href} aria-current={isActive ? "page" : undefined}>
                 <HStack gap={3}>
                   <Icon as={item.icon} boxSize={4} />
                   <Text fontSize="sm" fontWeight={isActive ? "semibold" : "normal"}>
@@ -241,12 +242,12 @@ export function AdminSidebar({ userRole, isOpen = true }: AdminSidebarProps) {
                   </Text>
                 </HStack>
                 {item.id === "bookings" && userRole === "content_manager" && (
-                  <Badge colorScheme="purple" fontSize="9px" textTransform="uppercase" px={1.5}>
+                  <Badge colorPalette="purple" fontSize="9px" textTransform="uppercase" px={1.5}>
                     Read-Only
                   </Badge>
                 )}
-              </HStack>
-            </NextLink>
+              </NextLink>
+            </HStack>
           );
         })}
       </VStack>

@@ -7,7 +7,7 @@ import type { InquiryStatus } from "@/types/db";
 
 const updateInquirySchema = z.object({
   status: z.enum(["new", "in_review", "responded", "closed"]).optional(),
-  assigned_to: z.string().uuid().optional().nullable(),
+  assigned_to: z.guid().optional().nullable(),
   special_requirements: z.string().trim().max(5000).optional(),
 });
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { idOrSlugFilter } from "@/lib/supabase/filters";
 import { withApi } from "@/pages/api/v1/_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { recordAuditLog } from "@/pages/api/v1/_shared/audit-log";
@@ -11,7 +12,9 @@ import type { Database } from "@/types/db";
 const updateRoomSchema = z.object({
   name: z.string().trim().min(2).max(100).optional(),
   status: z.enum(["available", "under_construction"]).optional(),
-  tier: z.enum(["budget", "standard", "deluxe", "premium", "executive", "presidential", "royal"]).optional(),
+  tier: z
+    .enum(["budget", "standard", "deluxe", "premium", "executive", "presidential", "royal"])
+    .optional(),
   description: z.string().trim().min(5).optional(),
   base_price: z.number().min(0).optional(),
   max_guests: z.number().int().min(1).optional(),
@@ -37,7 +40,7 @@ export default withApi(
       const { data: dbRoom } = await supabase
         .from("room_types")
         .select("*, buildings(*, resorts(*))")
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .or(idOrSlugFilter(id))
         .maybeSingle();
 
       if (dbRoom) {
@@ -82,7 +85,7 @@ export default withApi(
       const { data: roomType, error: fetchErr } = await supabase
         .from("room_types")
         .select("*")
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .or(idOrSlugFilter(id))
         .maybeSingle();
 
       if (fetchErr || !roomType) {
@@ -154,7 +157,7 @@ export default withApi(
       const { data: roomType } = await supabase
         .from("room_types")
         .select("id, name")
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .or(idOrSlugFilter(id))
         .maybeSingle();
 
       if (!roomType) {
@@ -186,10 +189,7 @@ export default withApi(
       await supabase.from("rooms").delete().eq("room_type_id", roomType.id);
       await supabase.from("seasonal_prices").delete().eq("room_type_id", roomType.id);
 
-      const { error: deleteErr } = await supabase
-        .from("room_types")
-        .delete()
-        .eq("id", roomType.id);
+      const { error: deleteErr } = await supabase.from("room_types").delete().eq("id", roomType.id);
 
       if (deleteErr) {
         return fail(res, "DELETE_FAILED", "Failed to delete room type", 500);

@@ -1,22 +1,6 @@
 import React from "react";
-import {
-  Box,
-  Flex,
-  HStack,
-  VStack,
-  Text,
-  Heading,
-  Badge,
-  Icon,
-  Spinner,
-} from "@chakra-ui/react";
-import {
-  FaExchangeAlt,
-  FaEnvelope,
-  FaCalendarCheck,
-  FaShieldAlt,
-  FaClock,
-} from "react-icons/fa";
+import { Box, Flex, HStack, VStack, Text, Heading, Badge, Icon, Spinner } from "@chakra-ui/react";
+import { FaExchangeAlt, FaEnvelope, FaCalendarCheck, FaShieldAlt, FaClock } from "react-icons/fa";
 
 export interface ActivityItem {
   id: string;
@@ -35,15 +19,15 @@ export interface ActivityFeedProps {
 function getEventIconAndColor(type: ActivityItem["type"]) {
   switch (type) {
     case "booking_status":
-      return { icon: FaExchangeAlt, colorScheme: "blue" };
+      return { icon: FaExchangeAlt, colorPalette: "blue" };
     case "contact_submission":
-      return { icon: FaEnvelope, colorScheme: "purple" };
+      return { icon: FaEnvelope, colorPalette: "purple" };
     case "event_inquiry":
-      return { icon: FaCalendarCheck, colorScheme: "teal" };
+      return { icon: FaCalendarCheck, colorPalette: "teal" };
     case "audit_log":
-      return { icon: FaShieldAlt, colorScheme: "orange" };
+      return { icon: FaShieldAlt, colorPalette: "orange" };
     default:
-      return { icon: FaClock, colorScheme: "gray" };
+      return { icon: FaClock, colorPalette: "gray" };
   }
 }
 
@@ -69,14 +53,7 @@ function formatRelativeTime(isoString: string): string {
 
 export function ActivityFeed({ activities, isLoading = false }: ActivityFeedProps) {
   return (
-    <Box
-      bg="white"
-      p={6}
-      borderRadius="lg"
-      borderWidth="1px"
-      borderColor="gray.200"
-      boxShadow="sm"
-    >
+    <Box bg="white" p={6} borderRadius="lg" borderWidth="1px" borderColor="gray.200" boxShadow="sm">
       <Flex justify="space-between" align="center" mb={4}>
         <Box>
           <Heading size="md" color="gray.800">
@@ -86,7 +63,7 @@ export function ActivityFeed({ activities, isLoading = false }: ActivityFeedProp
             Real-time feed of booking status changes, inquiries, and audit events
           </Text>
         </Box>
-        <Badge colorScheme="gray" variant="subtle" fontSize="xs">
+        <Badge colorPalette="gray" variant="subtle" fontSize="xs">
           Last 10 events
         </Badge>
       </Flex>
@@ -104,7 +81,7 @@ export function ActivityFeed({ activities, isLoading = false }: ActivityFeedProp
       ) : (
         <VStack align="stretch" gap={0}>
           {activities.map((item) => {
-            const { icon, colorScheme } = getEventIconAndColor(item.type);
+            const { icon, colorPalette } = getEventIconAndColor(item.type);
             const timeAgo = formatRelativeTime(item.timestamp);
 
             return (
@@ -122,8 +99,8 @@ export function ActivityFeed({ activities, isLoading = false }: ActivityFeedProp
                     w={8}
                     h={8}
                     borderRadius="full"
-                    bg={`${colorScheme}.50`}
-                    color={`${colorScheme}.600`}
+                    bg={`${colorPalette}.50`}
+                    color={`${colorPalette}.600`}
                     align="center"
                     justify="center"
                     flexShrink={0}
@@ -139,7 +116,7 @@ export function ActivityFeed({ activities, isLoading = false }: ActivityFeedProp
                       </Text>
                       <Badge
                         fontSize="10px"
-                        colorScheme={item.actor === "System" ? "gray" : "blue"}
+                        colorPalette={item.actor === "System" ? "gray" : "blue"}
                         variant="subtle"
                         borderRadius="full"
                         px={1.5}

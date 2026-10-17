@@ -39,10 +39,11 @@ export default withApi(
         return ok(res, dbGems, 200, { total: dbGems.length });
       }
 
-      let gems: Array<Record<string, unknown>> = [...MOCK_GEMS];
+      let gems: Array<Record<string, unknown>> = MOCK_GEMS.map((gem) => ({ ...gem }));
       if (category && typeof category === "string" && category !== "all") {
         gems = gems.filter(
-          (g) => typeof g.category === "string" && g.category.toLowerCase() === category.toLowerCase()
+          (g) =>
+            typeof g.category === "string" && g.category.toLowerCase() === category.toLowerCase()
         );
       }
 
@@ -58,7 +59,12 @@ export default withApi(
         return fail(res, "UNAUTHORIZED", "Authentication required", 401);
       }
       if (!["content_manager", "resort_admin", "super_admin"].includes(user.role)) {
-        return fail(res, "FORBIDDEN", "Only content managers and administrators can create gems", 403);
+        return fail(
+          res,
+          "FORBIDDEN",
+          "Only content managers and administrators can create gems",
+          403
+        );
       }
 
       const body = req.body as z.infer<typeof createGemSchema>;

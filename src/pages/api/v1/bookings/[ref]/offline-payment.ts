@@ -5,7 +5,7 @@ import { recordAuditLog } from "@/pages/api/v1/_shared/audit-log";
 import { runAfterResponse, sendBookingConfirmationEmail } from "@/services/booking/notifications";
 import { ok, fail } from "@/lib/http/response";
 import { logger } from "@/lib/logger";
-import type { Database } from "@/types/db";
+import { mapRpcError } from "@/lib/supabase/rpc-errors";
 
 const offlinePaymentSchema = z.object({
   method: z.enum(["bank_transfer", "cash", "pos"]),
@@ -14,6 +14,27 @@ const offlinePaymentSchema = z.object({
   paidAt: z.string().optional(),
   note: z.string().max(500).optional(),
 });
+
+const OFFLINE_PAYMENT_ERRORS = {
+  BOOKING_NOT_FOUND: { code: "NOT_FOUND", message: "Booking not found", status: 404 },
+  INVALID_BOOKING_STATUS: {
+    message: "Offline payments can only be recorded for pending bookings",
+    status: 400,
+  },
+  BOOKING_HOLD_EXPIRED: {
+    code: "HOLD_EXPIRED",
+    message:
+      "The inventory hold for this pending reservation has expired. Please create a new booking for the guest.",
+    status: 409,
+  },
+  AMOUNT_MISMATCH: { message: "Payment amount does not match booking total", status: 400 },
+  INVALID_PAYMENT_METHOD: { message: "Unsupported offline payment method", status: 400 },
+  UNIQUE_VIOLATION: {
+    code: "DUPLICATE_REFERENCE",
+    message: `A payment record with this reference already exists`,
+    status: 409,
+  },
+};
 
 export default withApi(
   async (req, res, ctx) => {
@@ -95,11 +116,8 @@ export default withApi(
       );
     }
 
-    // 5. Try atomic RPC first, with fallback to direct operations
-    let paymentRecord: Database["public"]["Tables"]["payments"]["Row"] | null = null;
-    let updatedBooking: Database["public"]["Tables"]["bookings"]["Row"] | null = null;
-
-    const { data: rpcPayment, error: rpcError } = await supabase.rpc("record_offline_payment", {
+    // 5. Record payment and confirm booking in one transaction
+    const { data: paymentRecord, error: rpcError } = await supabase.rpc("record_offline_payment", {
       p_booking_id: booking.id,
       p_method: method,
       p_amount: amount,
@@ -109,54 +127,21 @@ export default withApi(
       p_actor: user.id,
     });
 
-    if (!rpcError && rpcPayment) {
-      paymentRecord = rpcPayment;
-      const { data: b } = await supabase.from("bookings").select("*").eq("id", booking.id).single();
-      updatedBooking = b;
-    } else {
-      // Fallback
-      const { data: insertedPayment, error: pError } = await supabase
-        .from("payments")
-        .insert({
-          booking_id: booking.id,
-          gateway: method,
-          gateway_reference: reference,
-          amount,
-          currency: "NGN",
-          status: "success",
-          paid_at: paidAt || new Date().toISOString(),
-          metadata: {
-            recordedBy: user.id,
-            note: note || null,
-          },
-        })
-        .select()
-        .single();
-
-      if (pError || !insertedPayment) {
-        logger.error("Failed to insert offline payment", { error: pError });
-        return fail(res, "PAYMENT_RECORD_FAILED", "Failed to record payment in database", 500);
-      }
-      paymentRecord = insertedPayment;
-
-      const { data: b, error: bError } = await supabase
-        .from("bookings")
-        .update({
-          status: "confirmed",
-          hold_expires_at: null,
-          status_changed_by: user.id,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", booking.id)
-        .select()
-        .single();
-
-      if (bError || !b) {
-        logger.error("Failed to confirm booking after payment insertion", { error: bError });
-        return fail(res, "BOOKING_UPDATE_FAILED", "Payment recorded but booking confirmation failed", 500);
-      }
-      updatedBooking = b;
+    if (rpcError || !paymentRecord) {
+      logger.error("record_offline_payment failed", { error: rpcError, bookingId: booking.id });
+      const failure = mapRpcError(
+        rpcError || {},
+        OFFLINE_PAYMENT_ERRORS,
+        "Failed to record offline payment"
+      );
+      return fail(res, failure.code, failure.message, failure.status);
     }
+
+    const { data: updatedBooking } = await supabase
+      .from("bookings")
+      .select("*")
+      .eq("id", booking.id)
+      .single();
 
     // 6. Send confirmation email with PDF
     if (updatedBooking) {

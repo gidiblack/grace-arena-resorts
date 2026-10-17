@@ -7,12 +7,12 @@ export interface MetricCardProps {
   title: string;
   value: string | number;
   icon: IconType;
-  colorScheme?: string;
+  colorPalette?: string;
   subtitle?: string | React.ReactNode;
   href?: string;
   badge?: {
     label: string;
-    colorScheme: string;
+    colorPalette: string;
   };
   isLoading?: boolean;
 }
@@ -21,7 +21,7 @@ export function MetricCard({
   title,
   value,
   icon,
-  colorScheme = "blue",
+  colorPalette = "blue",
   subtitle,
   href,
   badge,
@@ -36,28 +36,37 @@ export function MetricCard({
       borderColor="gray.200"
       boxShadow="sm"
       transition="all 0.2s"
-      _hover={href ? { transform: "translateY(-2px)", boxShadow: "md", borderColor: `${colorScheme}.300` } : undefined}
+      _hover={
+        href
+          ? { transform: "translateY(-2px)", boxShadow: "md", borderColor: `${colorPalette}.300` }
+          : undefined
+      }
       cursor={href ? "pointer" : "default"}
       position="relative"
       overflow="hidden"
     >
       {/* Top color accent line */}
-      <Box
-        position="absolute"
-        top={0}
-        left={0}
-        right={0}
-        h="3px"
-        bg={`${colorScheme}.500`}
-      />
+      <Box position="absolute" top={0} left={0} right={0} h="3px" bg={`${colorPalette}.500`} />
 
       <Flex justify="space-between" align="flex-start" mb={2}>
         <VStack align="flex-start" gap={1}>
-          <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" color="gray.500" letterSpacing="wide">
+          <Text
+            fontSize="xs"
+            fontWeight="bold"
+            textTransform="uppercase"
+            color="gray.500"
+            letterSpacing="wide"
+          >
             {title}
           </Text>
           {badge && (
-            <Badge colorScheme={badge.colorScheme} fontSize="10px" px={2} py={0.5} borderRadius="full">
+            <Badge
+              colorPalette={badge.colorPalette}
+              fontSize="10px"
+              px={2}
+              py={0.5}
+              borderRadius="full"
+            >
               {badge.label}
             </Badge>
           )}
@@ -69,8 +78,8 @@ export function MetricCard({
           borderRadius="md"
           align="center"
           justify="center"
-          bg={`${colorScheme}.50`}
-          color={`${colorScheme}.600`}
+          bg={`${colorPalette}.50`}
+          color={`${colorPalette}.600`}
         >
           <Icon as={icon} boxSize={5} />
         </Flex>
@@ -78,7 +87,7 @@ export function MetricCard({
 
       {isLoading ? (
         <Flex py={3}>
-          <Spinner size="sm" color={`${colorScheme}.500`} />
+          <Spinner size="sm" color={`${colorPalette}.500`} />
         </Flex>
       ) : (
         <Heading size="lg" fontWeight="extrabold" color="gray.800" mb={1}>
@@ -87,7 +96,14 @@ export function MetricCard({
       )}
 
       {subtitle && (
-        <Box fontSize="xs" color="gray.500" mt={2} pt={2} borderTopWidth="1px" borderColor="gray.100">
+        <Box
+          fontSize="xs"
+          color="gray.500"
+          mt={2}
+          pt={2}
+          borderTopWidth="1px"
+          borderColor="gray.100"
+        >
           {subtitle}
         </Box>
       )}

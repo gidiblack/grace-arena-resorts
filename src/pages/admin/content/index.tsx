@@ -12,12 +12,7 @@ import {
   Spinner,
   Badge,
 } from "@chakra-ui/react";
-import {
-  FaFileAlt,
-  FaCheckCircle,
-  FaExclamationCircle,
-  FaGlobe,
-} from "react-icons/fa";
+import { FaFileAlt, FaCheckCircle, FaExclamationCircle, FaGlobe } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 
@@ -157,7 +152,14 @@ export default function AdminContentPage({ adminUser }: ContentPageProps) {
           boxShadow="sm"
           flexShrink={0}
         >
-          <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase" mb={3} px={2}>
+          <Text
+            fontSize="xs"
+            fontWeight="bold"
+            color="gray.500"
+            textTransform="uppercase"
+            mb={3}
+            px={2}
+          >
             Select Page
           </Text>
           <VStack align="stretch" gap={1}>
@@ -200,23 +202,25 @@ export default function AdminContentPage({ adminUser }: ContentPageProps) {
           minW={0}
           w="100%"
         >
-          <Flex justify="space-between" align="center" mb={4} pb={3} borderBottom="1px solid" borderColor="gray.100">
+          <Flex
+            justify="space-between"
+            align="center"
+            mb={4}
+            pb={3}
+            borderBottom="1px solid"
+            borderColor="gray.100"
+          >
             <HStack gap={2}>
               <Icon as={FaGlobe} color="blue.500" />
               <Heading size="md" color="gray.800">
                 {AVAILABLE_PAGES.find((p) => p.key === activePage)?.label}
               </Heading>
-              <Badge colorScheme="blue" fontSize="10px">
+              <Badge colorPalette="blue" fontSize="10px">
                 /{activePage}
               </Badge>
             </HStack>
 
-            <Button
-              size="sm"
-              colorScheme="blue"
-              onClick={handleSave}
-              loading={saving || loading}
-            >
+            <Button size="sm" colorPalette="blue" onClick={handleSave} loading={saving || loading}>
               Publish Changes
             </Button>
           </Flex>
