@@ -5,6 +5,7 @@ import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopbar } from "./AdminTopbar";
 import { AdminBreadcrumb, type BreadcrumbItem } from "./AdminBreadcrumb";
 import { IdleTimeout } from "./IdleTimeout";
+import { AdminDialogHost } from "./AdminDialog";
 import { useAdminNotifications } from "./useAdminNotifications";
 import type { AdminUserSession } from "@/lib/auth/admin-guard";
 
@@ -55,6 +56,7 @@ export function AdminLayout({ title, user, breadcrumbs, children }: AdminLayoutP
             </Box>
           </Flex>
         </Flex>
+        <AdminDialogHost />
       </Theme>
     </>
   );

@@ -22,6 +22,7 @@ import {
   FaExclamationCircle,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import { formatNgn } from "@/lib/formatters/currency";
 
@@ -138,7 +139,13 @@ export default function AdminSeasonalPricingPage({ adminUser }: PricingPageProps
   };
 
   const handleDeletePrice = async (pricingId: string) => {
-    if (!confirm("Are you sure you want to remove this seasonal price override?")) return;
+    const confirmed = await adminDialog.confirm({
+      title: "Remove seasonal rate?",
+      message:
+        "Bookings for these dates will use the suite's base price again. Existing bookings keep the price they were booked at.",
+      confirmLabel: "Remove Rate",
+    });
+    if (!confirmed) return;
 
     setSaving(true);
     setFeedback(null);

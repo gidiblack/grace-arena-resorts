@@ -31,6 +31,7 @@ import {
   FaCheck,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import { formatNgn } from "@/lib/formatters/currency";
 import { canMarkNoShow } from "@/domain/booking/state-machine";
@@ -284,12 +285,12 @@ export default function AdminBookingDetailPage({
 
   // Submit No-Show
   const handleMarkNoShow = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to mark this reservation as No-Show? This action cannot be reversed."
-      )
-    )
-      return;
+    const confirmed = await adminDialog.confirm({
+      title: `Mark ${booking.reference} as No-Show?`,
+      message: "The guest did not arrive. This cannot be reversed, and no refund is issued.",
+      confirmLabel: "Mark No-Show",
+    });
+    if (!confirmed) return;
     setActionLoading(true);
     setActionError(null);
     try {

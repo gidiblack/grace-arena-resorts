@@ -23,6 +23,7 @@ import {
   FaUserShield,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import type { UserRole } from "@/types/db";
 
@@ -173,16 +174,30 @@ export default function AdminUsersPage({ adminUser }: UsersPageProps) {
 
   const handleToggleLock = async (user: UserItem) => {
     if (user.id === adminUser.id) {
-      alert("You cannot lock your own administrator account.");
+      await adminDialog.notify({
+        title: "You can't lock your own account",
+        message: "Ask another Super Admin to lock or unlock your account.",
+        tone: "warning",
+      });
       return;
     }
 
     const newLockedState = !user.is_locked;
-    const confirmMsg = newLockedState
-      ? `Lock account for '${user.email}'? User will not be able to log in.`
-      : `Unlock account for '${user.email}'?`;
-
-    if (!confirm(confirmMsg)) return;
+    const confirmed = await adminDialog.confirm(
+      newLockedState
+        ? {
+            title: "Lock account?",
+            message: `${user.email} loses access immediately and can't log in until the account is unlocked.`,
+            confirmLabel: "Lock Account",
+          }
+        : {
+            title: "Unlock account?",
+            message: `${user.email} will be able to log in again.`,
+            confirmLabel: "Unlock Account",
+            tone: "warning",
+          }
+    );
+    if (!confirmed) return;
 
     setSaving(true);
     setFeedback(null);

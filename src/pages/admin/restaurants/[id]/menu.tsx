@@ -24,6 +24,7 @@ import {
   FaEdit,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import { formatNgn } from "@/lib/formatters/currency";
 
@@ -165,7 +166,12 @@ export default function AdminRestaurantMenuPage({ adminUser }: MenuPageProps) {
   };
 
   const handleDeleteItem = async (menuItemId: string, itemName: string) => {
-    if (!confirm(`Delete menu item '${itemName}'?`)) return;
+    const confirmed = await adminDialog.confirm({
+      title: "Delete menu item?",
+      message: `'${itemName}' will be removed from the menu. This cannot be undone.`,
+      confirmLabel: "Delete Item",
+    });
+    if (!confirmed) return;
 
     setSaving(true);
     setFeedback(null);

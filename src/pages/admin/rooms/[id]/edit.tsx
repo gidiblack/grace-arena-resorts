@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { Box, Flex, VStack, HStack, Text, Heading, Button, Icon, Spinner } from "@chakra-ui/react";
 import { FaBed, FaArrowLeft, FaCheckCircle, FaExclamationCircle, FaTrash } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 
 interface EditRoomPageProps {
@@ -108,9 +109,12 @@ export default function AdminEditRoomPage({ adminUser }: EditRoomPageProps) {
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete '${name}'? This cannot be undone.`)) {
-      return;
-    }
+    const confirmed = await adminDialog.confirm({
+      title: "Delete room suite?",
+      message: `'${name}', its units and its seasonal rates will be deleted. This cannot be undone.`,
+      confirmLabel: "Delete Suite",
+    });
+    if (!confirmed) return;
 
     setSaving(true);
     setFeedback(null);
@@ -122,7 +126,11 @@ export default function AdminEditRoomPage({ adminUser }: EditRoomPageProps) {
       const json = await res.json();
 
       if (res.ok && json.success) {
-        alert("Room suite deleted.");
+        await adminDialog.notify({
+          title: "Room suite deleted",
+          message: `'${name}' has been deleted.`,
+          tone: "success",
+        });
         router.push("/admin/rooms");
       } else {
         setFeedback({

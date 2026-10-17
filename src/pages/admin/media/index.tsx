@@ -23,6 +23,7 @@ import {
   FaEdit,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import type { MediaCategory } from "@/types/db";
 
@@ -199,7 +200,12 @@ export default function AdminMediaPage({ adminUser }: MediaPageProps) {
   };
 
   const handleDelete = async (id: string, fileName: string) => {
-    if (!confirm(`Delete media asset '${fileName}'?`)) return;
+    const confirmed = await adminDialog.confirm({
+      title: "Delete media asset?",
+      message: `'${fileName}' will be removed from the media library. This cannot be undone.`,
+      confirmLabel: "Delete Asset",
+    });
+    if (!confirmed) return;
 
     setUploading(true);
     setFeedback(null);
@@ -226,9 +232,21 @@ export default function AdminMediaPage({ adminUser }: MediaPageProps) {
     }
   };
 
-  const copyUrl = (url: string) => {
-    navigator.clipboard.writeText(url);
-    alert("Media URL copied to clipboard!");
+  const copyUrl = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      await adminDialog.notify({
+        title: "URL copied",
+        message: "The media URL is on your clipboard.",
+        tone: "success",
+      });
+    } catch {
+      await adminDialog.notify({
+        title: "Couldn't copy the URL",
+        message: url,
+        tone: "warning",
+      });
+    }
   };
 
   const formatBytes = (bytes: number) => {

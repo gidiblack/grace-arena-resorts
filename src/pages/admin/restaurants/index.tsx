@@ -23,6 +23,7 @@ import {
   FaEdit,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 
 interface RestaurantItem {
@@ -147,13 +148,12 @@ export default function AdminRestaurantsPage({ adminUser }: RestaurantsPageProps
   };
 
   const handleDelete = async (id: string, restaurantName: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete '${restaurantName}'? All menu items will also be deleted.`
-      )
-    ) {
-      return;
-    }
+    const confirmed = await adminDialog.confirm({
+      title: "Delete restaurant?",
+      message: `'${restaurantName}' and all of its menu items will be deleted. This cannot be undone.`,
+      confirmLabel: "Delete Restaurant",
+    });
+    if (!confirmed) return;
 
     setSaving(true);
     setFeedback(null);

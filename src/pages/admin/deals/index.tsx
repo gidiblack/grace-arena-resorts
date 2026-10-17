@@ -23,6 +23,7 @@ import {
   FaMagic,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import { formatNgn } from "@/lib/formatters/currency";
 
@@ -214,7 +215,12 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
   };
 
   const handleDelete = async (id: string, dealTitle: string) => {
-    if (!confirm(`Are you sure you want to delete '${dealTitle}'?`)) return;
+    const confirmed = await adminDialog.confirm({
+      title: "Delete deal?",
+      message: `'${dealTitle}' will be removed and its promo code will stop working. This cannot be undone.`,
+      confirmLabel: "Delete Deal",
+    });
+    if (!confirmed) return;
 
     setSaving(true);
     setFeedback(null);

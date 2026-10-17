@@ -23,6 +23,7 @@ import {
   FaMapMarkerAlt,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 
 interface GemItem {
@@ -150,7 +151,12 @@ export default function AdminGemsPage({ adminUser }: GemsPageProps) {
   };
 
   const handleDelete = async (id: string, gemName: string) => {
-    if (!confirm(`Are you sure you want to delete '${gemName}'?`)) return;
+    const confirmed = await adminDialog.confirm({
+      title: "Delete attraction?",
+      message: `'${gemName}' will be removed from Off-Beat Gems. This cannot be undone.`,
+      confirmLabel: "Delete Attraction",
+    });
+    if (!confirmed) return;
 
     setSaving(true);
     setFeedback(null);

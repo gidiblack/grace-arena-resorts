@@ -16,6 +16,7 @@ import {
 } from "@chakra-ui/react";
 import { FaBed, FaTools, FaCheckCircle, FaExclamationCircle, FaBell } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import { formatNgn } from "@/lib/formatters/currency";
 
@@ -97,12 +98,24 @@ export default function AdminRoomsPage({ adminUser }: AdminRoomsPageProps) {
   // Handle toggling room type status
   const handleToggleRoomStatus = async (room: AdminRoomItem) => {
     const newStatus = room.isUnderConstruction ? "available" : "under_construction";
-    const confirmMsg =
+    const confirmed = await adminDialog.confirm(
       newStatus === "available"
-        ? `Mark '${room.name}' as Available? This will automatically trigger 'Notify Me' alert emails to all waiting guests.`
-        : `Mark '${room.name}' as Under Construction? Guests will not be able to book this suite online.`;
-
-    if (!confirm(confirmMsg)) return;
+        ? {
+            title: `Mark '${room.name}' as Available?`,
+            message:
+              "Guests can book it online straight away, and everyone on its Notify-Me list is emailed now. Emails cannot be recalled.",
+            confirmLabel: "Mark Available",
+            tone: "warning",
+          }
+        : {
+            title: `Mark '${room.name}' as Under Construction?`,
+            message:
+              "Guests will no longer be able to book this suite online. Existing bookings are not affected.",
+            confirmLabel: "Set Under Construction",
+            tone: "warning",
+          }
+    );
+    if (!confirmed) return;
 
     setActionLoading(true);
     setFeedback(null);

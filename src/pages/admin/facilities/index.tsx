@@ -23,6 +23,7 @@ import {
   FaEdit,
 } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 
 interface FacilityItem {
@@ -147,7 +148,12 @@ export default function AdminFacilitiesPage({ adminUser }: FacilitiesPageProps) 
   };
 
   const handleDelete = async (id: string, facilityName: string) => {
-    if (!confirm(`Are you sure you want to delete '${facilityName}'?`)) return;
+    const confirmed = await adminDialog.confirm({
+      title: "Delete facility?",
+      message: `'${facilityName}' will be removed from the website. This cannot be undone.`,
+      confirmLabel: "Delete Facility",
+    });
+    if (!confirmed) return;
 
     setSaving(true);
     setFeedback(null);
