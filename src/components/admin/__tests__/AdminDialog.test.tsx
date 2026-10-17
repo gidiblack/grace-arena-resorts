@@ -41,9 +41,14 @@ describe("adminDialog", () => {
     act(() => {
       result = adminDialog.confirm({ title: "Lock account?", message: "x" });
     });
+    const settled = vi.fn();
+    void result!.then(settled);
     await screen.findByRole("alertdialog");
-    fireEvent.keyDown(screen.getByRole("alertdialog"), { key: "Escape" });
-    await expect(result!).resolves.toBe(false);
+    // Zag attaches its Escape listener a frame after opening, so press until it is handled
+    await waitFor(() => {
+      fireEvent.keyDown(screen.getByRole("alertdialog"), { key: "Escape" });
+      expect(settled).toHaveBeenCalledWith(false);
+    });
   });
 
   it("shows notices with a single OK button and queues requests in order", async () => {
