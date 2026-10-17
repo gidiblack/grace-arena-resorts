@@ -26,9 +26,40 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import type { MediaCategory } from "@/types/db";
+import { formatLimit, isAllowedMediaMimeType, maxBytesFor } from "@/services/media/media-rules";
 
-// Uploads travel as base64 JSON; the API body limit allows files up to 10 MB
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+/**
+ * Uploads the file body straight to Storage with the signed URL from /api/v1/media/upload-url.
+ * XMLHttpRequest rather than fetch so large videos can report progress.
+ */
+function putToSignedUrl(
+  signedUrl: string,
+  file: File,
+  onProgress: (percent: number) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", signedUrl);
+    xhr.setRequestHeader("content-type", file.type);
+    xhr.setRequestHeader("x-upsert", "false");
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
+    };
+    xhr.onload = () =>
+      xhr.status >= 200 && xhr.status < 300
+        ? resolve()
+        : reject(
+            new Error(
+              xhr.status === 413
+                ? "File is larger than storage allows."
+                : `Upload failed (${xhr.status}).`
+            )
+          );
+    xhr.onerror = () =>
+      reject(new Error("Network error while uploading. Check your connection and retry."));
+    xhr.send(file);
+  });
+}
 
 interface MediaItem {
   id: string;
@@ -53,6 +84,7 @@ export default function AdminMediaPage({ adminUser }: MediaPageProps) {
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(
@@ -107,58 +139,75 @@ export default function AdminMediaPage({ adminUser }: MediaPageProps) {
       setFeedback({ type: "error", message: "Please select a file and provide alt text." });
       return;
     }
-    if (selectedFile.size > MAX_UPLOAD_BYTES) {
-      setFeedback({ type: "error", message: "Files must be 10 MB or smaller." });
+    if (!isAllowedMediaMimeType(selectedFile.type)) {
+      setFeedback({
+        type: "error",
+        message: "Only JPEG, PNG, WebP, AVIF and MP4 files can be uploaded.",
+      });
+      return;
+    }
+    if (selectedFile.size > maxBytesFor(selectedFile.type)) {
+      setFeedback({
+        type: "error",
+        message: `File exceeds maximum permitted size (${formatLimit(selectedFile.type)}).`,
+      });
       return;
     }
 
     setUploading(true);
+    setUploadProgress(0);
     setFeedback(null);
 
     try {
-      // Read file as base64
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64Data = reader.result as string;
+      // 1. Ask the API for a signed upload URL (validates type and size)
+      const urlRes = await fetch("/api/v1/media/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: selectedFile.name,
+          mimeType: selectedFile.type,
+          sizeBytes: selectedFile.size,
+          category: uploadCategory,
+        }),
+      });
+      const urlJson = await urlRes.json();
+      if (!urlRes.ok || !urlJson.success) {
+        throw new Error(urlJson.error?.message || "Could not start the upload.");
+      }
 
-        const res = await fetch("/api/v1/media", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fileName: selectedFile.name,
-            mimeType: selectedFile.type,
-            sizeBytes: selectedFile.size,
-            category: uploadCategory,
-            altText: altText.trim(),
-            base64Data,
-          }),
-        });
+      // 2. Upload the file straight to Storage
+      await putToSignedUrl(urlJson.data.signedUrl, selectedFile, setUploadProgress);
 
-        const json = await res.json();
-        if (res.ok && json.success) {
-          setFeedback({ type: "success", message: `Asset '${selectedFile.name}' uploaded!` });
-          setShowUploadModal(false);
-          setSelectedFile(null);
-          setAltText("");
-          await fetchMedia();
-        } else {
-          setFeedback({
-            type: "error",
-            message: json.error?.message || "Failed to upload asset.",
-          });
-        }
-        setUploading(false);
-      };
+      // 3. Register it; the API verifies the stored bytes before adding it to the library
+      const res = await fetch("/api/v1/media", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: selectedFile.name,
+          mimeType: selectedFile.type,
+          category: uploadCategory,
+          altText: altText.trim(),
+          storagePath: urlJson.data.path,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error?.message || "Failed to upload asset.");
+      }
 
-      reader.onerror = () => {
-        setFeedback({ type: "error", message: "Error reading file." });
-        setUploading(false);
-      };
-
-      reader.readAsDataURL(selectedFile);
-    } catch {
-      setFeedback({ type: "error", message: "An unexpected error occurred." });
+      setFeedback({ type: "success", message: `Asset '${selectedFile.name}' uploaded.` });
+      setShowUploadModal(false);
+      setSelectedFile(null);
+      setAltText("");
+      await fetchMedia();
+    } catch (err) {
+      setFeedback({
+        type: "error",
+        message: err instanceof Error ? err.message : "An unexpected error occurred.",
+      });
+    } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -202,7 +251,7 @@ export default function AdminMediaPage({ adminUser }: MediaPageProps) {
   const handleDelete = async (id: string, fileName: string) => {
     const confirmed = await adminDialog.confirm({
       title: "Delete media asset?",
-      message: `'${fileName}' will be removed from the media library. This cannot be undone.`,
+      message: `'${fileName}' and its stored file will be deleted. Pages that still link to it will show it as missing. This cannot be undone.`,
       confirmLabel: "Delete Asset",
     });
     if (!confirmed) return;
@@ -539,7 +588,12 @@ export default function AdminMediaPage({ adminUser }: MediaPageProps) {
           <Box bg="white" maxW="460px" w="100%" p={6} borderRadius="lg" boxShadow="xl">
             <Flex justify="space-between" align="center" mb={4}>
               <Heading size="sm">Upload Media Asset</Heading>
-              <Button size="xs" variant="ghost" onClick={() => setShowUploadModal(false)}>
+              <Button
+                size="xs"
+                variant="ghost"
+                onClick={() => setShowUploadModal(false)}
+                disabled={uploading}
+              >
                 Close
               </Button>
             </Flex>
@@ -548,7 +602,7 @@ export default function AdminMediaPage({ adminUser }: MediaPageProps) {
               <VStack gap={4} align="stretch">
                 <Box>
                   <Text fontSize="xs" fontWeight="bold" color="gray.700" mb={1}>
-                    Select File (JPEG, PNG, WebP, AVIF or MP4, up to 10 MB) *
+                    Select File (JPEG, PNG, WebP, AVIF ≤ 10 MB; MP4 ≤ 50 MB) *
                   </Text>
                   <input
                     type="file"
@@ -612,10 +666,25 @@ export default function AdminMediaPage({ adminUser }: MediaPageProps) {
                   borderTop="1px solid"
                   borderColor="gray.100"
                 >
-                  <Button size="sm" variant="outline" onClick={() => setShowUploadModal(false)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowUploadModal(false)}
+                    disabled={uploading}
+                  >
                     Cancel
                   </Button>
-                  <Button size="sm" colorPalette="blue" type="submit" loading={uploading}>
+                  <Button
+                    size="sm"
+                    colorPalette="blue"
+                    type="submit"
+                    loading={uploading}
+                    loadingText={
+                      uploadProgress !== null && uploadProgress < 100
+                        ? `Uploading ${uploadProgress}%`
+                        : "Verifying…"
+                    }
+                  >
                     Upload Now
                   </Button>
                 </Flex>

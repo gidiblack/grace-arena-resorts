@@ -1296,7 +1296,7 @@ git commit -m "feat: admin dashboard KPIs, analytics endpoints, activity feed"
   - No session replay
 - [ ] Sentry alert rules (thresholds documented in the runbook): error-rate spike, API p95 > 300 ms, webhook failures, job failures, new `refund_failed`
 - [ ] GA4: strip `t` from `page_location` before `page_view`
-- [ ] **Schedule failed-email retry every 10 minutes** in `0010_job_schedules.sql`:
+- [ ] **Schedule failed-email retry every 10 minutes** in `0012_job_schedules.sql`:
   - pg_cron + pg_net POST to `/api/v1/internal/jobs/retry-failed-emails` with `Authorization: Bearer <CRON_SECRET from Supabase Vault>`
   - Alternative: `vercel.json` cron, which needs Vercel Pro because Hobby crons run at most daily
   - Set `CRON_SECRET` in Vercel
@@ -1318,7 +1318,7 @@ git commit -m "feat: admin dashboard KPIs, analytics endpoints, activity feed"
 - [ ] instrumentation.ts (+ Sentry client config)
 - [ ] src/lib/monitoring/sentry.ts
 - [ ] src/pages/api/v1/health.ts
-- [ ] supabase/migrations/0010_job_schedules.sql
+- [ ] supabase/migrations/0012_job_schedules.sql
 - [ ] supabase/config.toml
 - [ ] docs/operations/runbook.md
 
@@ -1350,7 +1350,7 @@ npx supabase db reset
 ### STOP & COMMIT
 
 ```powershell
-git add src/pages/sitemap.xml.ts src/pages/robots.txt.ts src/lib/seo src/lib/monitoring instrumentation.ts src/pages/api/v1/health.ts supabase/migrations/0010_job_schedules.sql supabase/config.toml docs/operations/runbook.md
+git add src/pages/sitemap.xml.ts src/pages/robots.txt.ts src/lib/seo src/lib/monitoring instrumentation.ts src/pages/api/v1/health.ts supabase/migrations/0012_job_schedules.sql supabase/config.toml docs/operations/runbook.md
 git commit -m "feat: observability, SEO completion, job scheduling, auth and reliability hardening"
 ```
 

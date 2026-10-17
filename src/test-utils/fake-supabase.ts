@@ -119,9 +119,25 @@ function parseClause(clause: string): Filter {
   }
 }
 
+export const FAKE_STORAGE_URL = "https://fake.supabase.test/storage/v1";
+
 export class FakeSupabase {
   tables: Record<string, Row[]> = {};
   rpcHandlers: Record<string, (args: any) => Result | Promise<Result>> = {};
+  /** Storage objects keyed by "<bucket>/<path>"; read back via storageFetch for public URLs */
+  storageObjects = new Map<string, { bytes: Uint8Array }>();
+
+  putStorageObject(bucket: string, path: string, bytes: Uint8Array) {
+    this.storageObjects.set(`${bucket}/${path}`, { bytes });
+  }
+
+  /** fetch stand-in serving public and signed object URLs from storageObjects */
+  storageFetch = async (url: string): Promise<Response> => {
+    const match = url.match(/\/object\/(?:public|sign)\/([^?]+)/);
+    const object = match ? this.storageObjects.get(decodeURIComponent(match[1])) : undefined;
+    if (!object) return new Response(null, { status: 404 });
+    return new Response(new Blob([object.bytes as BlobPart]), { status: 200 });
+  };
   authUsers: Array<{
     id: string;
     email: string;
@@ -155,6 +171,35 @@ export class FakeSupabase {
   get client(): any {
     return {
       from: (table: string) => new QueryBuilder(this, table),
+      storage: {
+        from: (bucket: string) => ({
+          createSignedUploadUrl: async (path: string) => ({
+            data: {
+              path,
+              token: `token-${path}`,
+              signedUrl: `${FAKE_STORAGE_URL}/object/upload/sign/${bucket}/${path}?token=t`,
+            },
+            error: null,
+          }),
+          info: async (path: string) => {
+            const object = this.storageObjects.get(`${bucket}/${path}`);
+            return object
+              ? { data: { name: path, size: object.bytes.length }, error: null }
+              : { data: null, error: { message: "Object not found" } };
+          },
+          createSignedUrl: async (path: string) => ({
+            data: { signedUrl: `${FAKE_STORAGE_URL}/object/sign/${bucket}/${path}?token=t` },
+            error: null,
+          }),
+          getPublicUrl: (path: string) => ({
+            data: { publicUrl: `${FAKE_STORAGE_URL}/object/public/${bucket}/${path}` },
+          }),
+          remove: async (paths: string[]) => {
+            for (const path of paths) this.storageObjects.delete(`${bucket}/${path}`);
+            return { data: paths.map((name) => ({ name })), error: null };
+          },
+        }),
+      },
       rpc: async (name: string, args: any) => {
         const handler = this.rpcHandlers[name];
         if (!handler) return { data: null, error: { message: `no rpc ${name}` }, status: 404 };
@@ -314,6 +359,13 @@ class QueryBuilder implements PromiseLike<Result> {
   }
   lte(column: string, value: any) {
     this.filters.push((r) => r[column] != null && compare(r[column], value) <= 0);
+    return this;
+  }
+  /** Array column contains every given value (PostgREST cs) */
+  contains(column: string, values: any[]) {
+    this.filters.push(
+      (r) => Array.isArray(r[column]) && values.every((v) => r[column].includes(v))
+    );
     return this;
   }
   ilike(column: string, pattern: string) {

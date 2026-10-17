@@ -3,6 +3,8 @@ import { withApi } from "@/pages/api/v1/_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
 import { recordAuditLog } from "@/pages/api/v1/_shared/audit-log";
+import { logger } from "@/lib/logger";
+import { MEDIA_BUCKET, mediaPathFromPublicUrl } from "@/services/media/uploads";
 import type { MediaCategory } from "@/types/db";
 
 const updateMediaSchema = z.object({
@@ -22,7 +24,12 @@ export default withApi(
       return fail(res, "UNAUTHORIZED", "Authentication required", 401);
     }
     if (!["content_manager", "resort_admin", "super_admin"].includes(user.role)) {
-      return fail(res, "FORBIDDEN", "Only content managers and administrators can manage media", 403);
+      return fail(
+        res,
+        "FORBIDDEN",
+        "Only content managers and administrators can manage media",
+        403
+      );
     }
 
     const supabase = getSupabaseAdminClient();
@@ -95,13 +102,24 @@ export default withApi(
         }
       }
 
-      const { error: deleteErr } = await supabase
-        .from("media_assets")
-        .delete()
-        .eq("id", id);
+      const { error: deleteErr } = await supabase.from("media_assets").delete().eq("id", id);
 
       if (deleteErr) {
         return fail(res, "DELETE_FAILED", "Failed to delete media asset", 500);
+      }
+
+      // Remove the stored file too (row first, so the library never lists a missing file)
+      const storagePath = mediaPathFromPublicUrl(supabase, existing.url);
+      if (storagePath) {
+        const { error: removeErr } = await supabase.storage
+          .from(MEDIA_BUCKET)
+          .remove([storagePath]);
+        if (removeErr) {
+          logger.error("Media row deleted but storage object remains", {
+            path: storagePath,
+            error: removeErr.message,
+          });
+        }
       }
 
       await recordAuditLog({

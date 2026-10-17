@@ -4,35 +4,42 @@ import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { MOCK_MEDIA } from "@/data/mock/resort-data";
 import { ok, fail } from "@/lib/http/response";
 import { recordAuditLog } from "@/pages/api/v1/_shared/audit-log";
-import { sniffMimeType } from "@/lib/security/file-signature";
 import { logger } from "@/lib/logger";
+import {
+  MEDIA_CATEGORIES,
+  formatLimit,
+  isAllowedMediaMimeType,
+  isIssuedMediaPath,
+  maxBytesFor,
+  verifyStoredUpload,
+} from "@/services/media/uploads";
 import type { MediaCategory } from "@/types/db";
 
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif", "video/mp4"];
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB
-
-const uploadMediaSchema = z.object({
-  fileName: z.string().trim().min(1, "File name is required"),
-  mimeType: z.string().refine((val) => ALLOWED_MIME_TYPES.includes(val.toLowerCase()), {
-    message: "Invalid file type. Only JPEG, PNG, WebP, AVIF and MP4 are allowed.",
-  }),
-  sizeBytes: z.number().positive("File size must be greater than 0"),
-  category: z.enum(["gallery", "room", "facility", "restaurant", "event", "deal"]),
-  altText: z.string().trim().min(1, "Alt text is required for accessibility").max(300),
-  url: z.string().url().optional(),
-  base64Data: z.string().optional(),
-});
-
-// Uploads arrive as base64 JSON (about 4/3 of the file size): allow a 10 MB image plus overhead.
-// Larger files (video) need direct-to-storage signed uploads; see the admin fix plan.
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "14mb",
-    },
-  },
-};
+/**
+ * Registers a media asset. Files are uploaded straight to Storage first (POST
+ * /api/v1/media/upload-url) and registered here by `storagePath`; an asset hosted elsewhere can be
+ * registered by `url` with its size.
+ */
+const registerMediaSchema = z
+  .object({
+    fileName: z.string().trim().min(1, "File name is required").max(255),
+    mimeType: z.string().refine((value) => isAllowedMediaMimeType(value.toLowerCase()), {
+      message: "Invalid file type. Only JPEG, PNG, WebP, AVIF and MP4 are allowed.",
+    }),
+    category: z.enum(MEDIA_CATEGORIES),
+    altText: z.string().trim().min(1, "Alt text is required for accessibility").max(300),
+    storagePath: z.string().trim().min(1).optional(),
+    url: z.string().url().optional(),
+    sizeBytes: z.number().int().positive("File size must be greater than 0").optional(),
+  })
+  .refine((body) => Boolean(body.storagePath) !== Boolean(body.url), {
+    message: "Provide either storagePath (uploaded file) or url (externally hosted file)",
+    path: ["storagePath"],
+  })
+  .refine((body) => !body.url || body.sizeBytes !== undefined, {
+    message: "sizeBytes is required when registering a url",
+    path: ["sizeBytes"],
+  });
 
 export default withApi(
   async (req, res, ctx) => {
@@ -117,68 +124,46 @@ export default withApi(
         );
       }
 
-      const body = req.body as z.infer<typeof uploadMediaSchema>;
+      const body = req.body as z.infer<typeof registerMediaSchema>;
+      const declaredMimeType = body.mimeType.toLowerCase();
+      let mimeType = declaredMimeType;
+      let sizeBytes = body.sizeBytes ?? 0;
+      let assetUrl = body.url ?? "";
 
-      if (!body.base64Data && !body.url) {
-        return fail(res, "MISSING_FILE", "Provide the file data or an existing asset URL", 400);
-      }
+      if (body.storagePath) {
+        if (!isIssuedMediaPath(body.storagePath, body.category)) {
+          return fail(res, "INVALID_STORAGE_PATH", "Unknown upload path for this category", 400);
+        }
+        // Trust the stored bytes, not the client: declared type and size are only hints
+        const check = await verifyStoredUpload(supabase, body.storagePath, declaredMimeType);
+        if (!check.ok) {
+          logger.warn("Rejected media upload", { path: body.storagePath, code: check.code });
+          return fail(res, check.code, check.message, check.status);
+        }
+        mimeType = check.mimeType;
+        sizeBytes = check.sizeBytes;
+        assetUrl = check.publicUrl;
 
-      let mimeType = body.mimeType.toLowerCase();
-      let sizeBytes = body.sizeBytes;
-      let buffer: Buffer | null = null;
-
-      if (body.base64Data) {
-        buffer = Buffer.from(body.base64Data.replace(/^data:.*?,/, ""), "base64");
-        // Trust the bytes, not the client: the declared type and size are only hints
-        const sniffed = sniffMimeType(buffer);
-        if (!sniffed) {
+        const { data: existing } = await supabase
+          .from("media_assets")
+          .select("id")
+          .eq("url", assetUrl)
+          .maybeSingle();
+        if (existing) {
           return fail(
             res,
-            "INVALID_FILE_CONTENT",
-            "File content is not a JPEG, PNG, WebP, AVIF or MP4 file.",
-            400
+            "ALREADY_REGISTERED",
+            "This upload is already in the media library",
+            409
           );
         }
-        if (sniffed !== mimeType) {
-          return fail(
-            res,
-            "MIME_TYPE_MISMATCH",
-            `File content is ${sniffed} but was declared as ${mimeType}.`,
-            400
-          );
-        }
-        mimeType = sniffed;
-        sizeBytes = buffer.length;
-      }
-
-      // Size validation on the actual bytes when present
-      const isVideo = mimeType === "video/mp4";
-      const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
-      if (sizeBytes > maxSize) {
+      } else if (sizeBytes > maxBytesFor(mimeType)) {
         return fail(
           res,
           "FILE_TOO_LARGE",
-          `File exceeds maximum permitted size (${isVideo ? "100 MB for video" : "10 MB for images"}).`,
+          `File exceeds maximum permitted size (${formatLimit(mimeType)}).`,
           400
         );
-      }
-
-      let assetUrl = body.url || "";
-
-      if (buffer) {
-        const safeName = `${Date.now()}-${body.fileName.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-        const filePath = `${body.category}/${safeName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("media-public")
-          .upload(filePath, buffer, { contentType: mimeType, upsert: false });
-
-        if (uploadError) {
-          logger.error("Media storage upload failed", { error: uploadError.message, filePath });
-          return fail(res, "STORAGE_UPLOAD_FAILED", "Failed to store the uploaded file", 502);
-        }
-
-        assetUrl = supabase.storage.from("media-public").getPublicUrl(filePath).data.publicUrl;
       }
 
       const { data: newAsset, error: insertErr } = await supabase
@@ -220,6 +205,6 @@ export default withApi(
   },
   {
     allowedMethods: ["GET", "POST"],
-    bodySchema: uploadMediaSchema,
+    bodySchema: registerMediaSchema,
   }
 );

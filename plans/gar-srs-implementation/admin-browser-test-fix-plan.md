@@ -19,7 +19,9 @@ Notes:
 
 - **Dev 404s:** the root cause was the Turbopack dev filesystem cache (default since 16.1), not `next build`; `next.config.ts` disables it for dev.
 - **`src/types/db.ts`** is hand-maintained (custom aliases such as `BookingChannel`) and already covers the 0009 tables, columns and RPCs, so it was not regenerated.
-- **Follow-up:** media uploads travel as base64 JSON (body limit 14 MB, so files up to 10 MB; Vercel caps request bodies at 4.5 MB). Videos up to 100 MB need direct-to-storage signed upload URLs.
+- **Media uploads (follow-up, done):** files now go from the browser straight to Storage. `POST /api/v1/media/upload-url` checks the declared type and size and issues a signed upload URL for a server-chosen path. `POST /api/v1/media` then registers the file by `storagePath` after checking the stored object's real size and magic bytes (read through a one-off signed URL so unverified files never enter the public CDN cache). Rejected files are deleted, and deleting an asset now deletes its stored file. Migration `0010_media_direct_uploads.sql` removes SVG from the `media-public` bucket, and `0011_media_upload_limit_50mb.sql` caps it at 50 MB (both applied). Images are limited to 10 MB and MP4 videos to 50 MB, matching the Supabase Free plan's per-upload limit. Verified in Chrome against the hosted project with a 6 MB image and a 20 MB MP4. Step 13's job-schedule migration is renumbered to `0012`.
+  - **If the project moves to a paid plan:** raise `MAX_VIDEO_BYTES` in `src/services/media/media-rules.ts` and the bucket limit (new migration) together.
+  - **Known:** deleted files can stay reachable from the CDN cache until it expires; uploads abandoned between upload and registration remain in the bucket (candidate for a Step 13 cleanup job).
 - **Not done:** `npm run format:check` still fails on 16 files this work did not touch (pre-existing from the Step 15 commit).
 
 ## What passed
