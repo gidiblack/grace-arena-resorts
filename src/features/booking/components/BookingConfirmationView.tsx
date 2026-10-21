@@ -13,6 +13,7 @@ import {
   FaLink,
   FaUserPlus,
 } from "react-icons/fa";
+import { formatLongDate } from "@/lib/formatters/date";
 
 export interface BookingConfirmationProps {
   reference: string;
@@ -252,7 +253,7 @@ export default function BookingConfirmationView({
             </Text>
           </HStack>
           <Text fontSize="16px" fontWeight="bold" color="white">
-            {checkInDate}
+            {formatLongDate(checkInDate)}
           </Text>
           <HStack gap={1} mt={1} color="gray.400" fontSize="12px">
             <Icon as={FaClock} boxSize={3} />
@@ -268,7 +269,7 @@ export default function BookingConfirmationView({
             </Text>
           </HStack>
           <Text fontSize="16px" fontWeight="bold" color="white">
-            {checkOutDate}
+            {formatLongDate(checkOutDate)}
           </Text>
           <HStack gap={1} mt={1} color="gray.400" fontSize="12px">
             <Icon as={FaClock} boxSize={3} />

@@ -17,6 +17,7 @@ import { FaEnvelope, FaCheckCircle, FaExclamationCircle, FaReply, FaUser } from 
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import type { ContactStatus } from "@/types/db";
+import { formatShortDate } from "@/lib/formatters/date";
 
 interface ContactSubmissionItem {
   id: string;
@@ -220,9 +221,7 @@ export default function AdminContactPage({ adminUser }: ContactPageProps) {
                         {sub.subject}
                       </Text>
                     </Table.Cell>
-                    <Table.Cell fontSize="xs">
-                      {new Date(sub.created_at).toLocaleDateString()}
-                    </Table.Cell>
+                    <Table.Cell fontSize="xs">{formatShortDate(sub.created_at)}</Table.Cell>
                     <Table.Cell>
                       <Badge
                         colorPalette={getStatusColor(sub.status)}

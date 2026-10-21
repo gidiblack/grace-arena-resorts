@@ -1,6 +1,7 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet, pdf } from "@react-pdf/renderer";
 import { formatCurrency } from "@/lib/formatters/currency";
+import { formatLongDate } from "@/lib/formatters/date";
 
 const styles = StyleSheet.create({
   page: {
@@ -189,10 +190,14 @@ export function renderBookingDocument(data: BookingPdfData) {
             </View>
             <View style={styles.col}>
               <Text style={styles.label}>Check-In Time</Text>
-              <Text style={styles.value}>{data.checkInDate} at 2:00 PM (14:00)</Text>
+              <Text style={styles.value}>
+                {formatLongDate(data.checkInDate)} at 2:00 PM (14:00)
+              </Text>
 
               <Text style={styles.label}>Check-Out Time</Text>
-              <Text style={styles.value}>{data.checkOutDate} at 11:00 AM (11:00)</Text>
+              <Text style={styles.value}>
+                {formatLongDate(data.checkOutDate)} at 11:00 AM (11:00)
+              </Text>
 
               <Text style={styles.label}>Duration of Stay</Text>
               <Text style={styles.value}>{data.nights} Night(s)</Text>

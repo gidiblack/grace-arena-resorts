@@ -12,6 +12,7 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import type { DailyOccupancy } from "@/services/analytics/analytics-service";
+import { formatShortDate } from "@/lib/formatters/date";
 
 export interface OccupancyHeatmapProps {
   currentMonth: DailyOccupancy[];
@@ -184,7 +185,7 @@ export function OccupancyHeatmap({
                     cursor="pointer"
                     transition="transform 0.1s"
                     _hover={{ transform: "scale(1.05)", zIndex: 1, boxShadow: "xs" }}
-                    title={`${day.date}: ${day.rate}% (${day.occupiedUnits}/${day.totalBookableUnits} units occupied)`}
+                    title={`${formatShortDate(day.date)}: ${day.rate}% (${day.occupiedUnits}/${day.totalBookableUnits} units occupied)`}
                   >
                     <Text fontSize="xs" fontWeight="bold">
                       {dayNum}

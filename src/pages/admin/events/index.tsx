@@ -24,6 +24,7 @@ import {
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import type { InquiryStatus } from "@/types/db";
+import { formatShortDate } from "@/lib/formatters/date";
 
 interface InquiryItem {
   id: string;
@@ -232,7 +233,9 @@ export default function AdminEventsPage({ adminUser }: EventsPageProps) {
                         {inq.event_categories?.name || "Event Package"}
                       </Badge>
                     </Table.Cell>
-                    <Table.Cell fontSize="xs">{inq.preferred_date || "Flexible"}</Table.Cell>
+                    <Table.Cell fontSize="xs">
+                      {inq.preferred_date ? formatShortDate(inq.preferred_date) : "Flexible"}
+                    </Table.Cell>
                     <Table.Cell fontSize="xs">
                       {inq.estimated_guests ? `${inq.estimated_guests} guests` : "—"}
                     </Table.Cell>
@@ -305,8 +308,11 @@ export default function AdminEventsPage({ adminUser }: EventsPageProps) {
               <HStack>
                 <Icon as={FaCalendarAlt} color="gray.400" boxSize={3.5} />
                 <Text color="gray.700">
-                  Date: {selectedInquiry.preferred_date || "Not specified"} (
-                  {selectedInquiry.estimated_guests || 0} guests)
+                  Date:{" "}
+                  {selectedInquiry.preferred_date
+                    ? formatShortDate(selectedInquiry.preferred_date)
+                    : "Not specified"}{" "}
+                  ({selectedInquiry.estimated_guests || 0} guests)
                 </Text>
               </HStack>
 

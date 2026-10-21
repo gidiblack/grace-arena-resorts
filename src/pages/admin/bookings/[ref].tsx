@@ -34,6 +34,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import { formatNgn } from "@/lib/formatters/currency";
+import { formatLongDate, formatShortDateTime } from "@/lib/formatters/date";
 import { canMarkNoShow } from "@/domain/booking/state-machine";
 
 interface AdminBookingDetailPageProps {
@@ -680,7 +681,7 @@ export default function AdminBookingDetailPage({
                 <Box>
                   <Text color="gray.500">Privacy Consent</Text>
                   <Text fontSize="xs" color="gray.700">
-                    {new Date(booking.privacy_consent_at).toLocaleString()}
+                    {formatShortDateTime(booking.privacy_consent_at)}
                   </Text>
                 </Box>
               )}
@@ -708,13 +709,13 @@ export default function AdminBookingDetailPage({
                 <Text color="gray.500" fontSize="xs">
                   Check-In
                 </Text>
-                <Text fontWeight="bold">{booking.check_in_date} (14:00)</Text>
+                <Text fontWeight="bold">{formatLongDate(booking.check_in_date)} (14:00)</Text>
               </Box>
               <Box>
                 <Text color="gray.500" fontSize="xs">
                   Check-Out
                 </Text>
-                <Text fontWeight="bold">{booking.check_out_date} (11:00)</Text>
+                <Text fontWeight="bold">{formatLongDate(booking.check_out_date)} (11:00)</Text>
               </Box>
               <Box>
                 <Text color="gray.500" fontSize="xs">
@@ -812,7 +813,7 @@ export default function AdminBookingDetailPage({
 
             {history.length === 0 ? (
               <Text fontSize="sm" color="gray.500">
-                Created on {new Date(booking.created_at).toLocaleString()}
+                Created on {formatShortDateTime(booking.created_at)}
               </Text>
             ) : (
               <VStack align="stretch" gap={3}>
@@ -833,7 +834,7 @@ export default function AdminBookingDetailPage({
                             : h.action.replace(/_/g, " ").toLowerCase()}
                         </Text>
                         <Text fontSize="xs" color="gray.500">
-                          {new Date(h.at).toLocaleString()}
+                          {formatShortDateTime(h.at)}
                         </Text>
                       </HStack>
                       <Text fontSize="xs" color="gray.600">
@@ -898,7 +899,7 @@ export default function AdminBookingDetailPage({
                     <Text color="gray.500" fontSize="xs">
                       Settled At
                     </Text>
-                    <Text fontSize="xs">{new Date(pmt.paid_at).toLocaleString()}</Text>
+                    <Text fontSize="xs">{formatShortDateTime(pmt.paid_at)}</Text>
                   </Box>
                 )}
 
@@ -929,9 +930,7 @@ export default function AdminBookingDetailPage({
                       </Text>
                     )}
                     {pmt.refunded_at && (
-                      <Text fontSize="xs">
-                        Processed: {new Date(pmt.refunded_at).toLocaleString()}
-                      </Text>
+                      <Text fontSize="xs">Processed: {formatShortDateTime(pmt.refunded_at)}</Text>
                     )}
                     {pmt.metadata?.refundDestination && (
                       <Text fontSize="xs">
@@ -979,10 +978,8 @@ export default function AdminBookingDetailPage({
                       </HStack>
                       <Text fontSize="xs" color="gray.500">
                         {lineItem?.room_type?.name || "Room"} · assigned{" "}
-                        {new Date(u.assignedAt).toLocaleString()}
-                        {u.releasedAt
-                          ? ` · released ${new Date(u.releasedAt).toLocaleString()}`
-                          : ""}
+                        {formatShortDateTime(u.assignedAt)}
+                        {u.releasedAt ? ` · released ${formatShortDateTime(u.releasedAt)}` : ""}
                       </Text>
                     </Box>
                   );

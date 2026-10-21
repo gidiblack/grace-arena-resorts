@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, Flex, HStack, VStack, Text, Heading, Badge, Icon, Spinner, Link } from "@chakra-ui/react";
 import { FaExchangeAlt, FaEnvelope, FaCalendarCheck, FaShieldAlt, FaClock } from "react-icons/fa";
+import { formatShortDate } from "@/lib/formatters/date";
 
 export interface ActivityItem {
   id: string;
@@ -42,10 +43,7 @@ function formatRelativeTime(isoString: string): string {
     if (diffHours < 24) return `${diffHours}h ago`;
     const diffDays = Math.floor(diffHours / 24);
     if (diffDays < 7) return `${diffDays}d ago`;
-    return new Date(isoString).toLocaleDateString("en-NG", {
-      month: "short",
-      day: "numeric",
-    });
+    return formatShortDate(isoString);
   } catch {
     return isoString;
   }

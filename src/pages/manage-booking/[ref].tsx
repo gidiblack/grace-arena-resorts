@@ -13,6 +13,7 @@ import PageWrapper from "@/components/layout/PageWrapper";
 import Button from "@/components/ui/button";
 import CancellationModal from "@/features/account/components/CancellationModal";
 import RequestManageLinkForm from "@/features/booking/components/RequestManageLinkForm";
+import { formatLongDate } from "@/lib/formatters/date";
 
 interface ManagedBooking {
   reference: string;
@@ -194,7 +195,8 @@ export default function ManageBookingPage() {
                       <Text>Stay</Text>
                     </HStack>
                     <Text fontWeight="bold">
-                      {booking.check_in_date} → {booking.check_out_date}
+                      {formatLongDate(booking.check_in_date)} →{" "}
+                      {formatLongDate(booking.check_out_date)}
                     </Text>
                     <Text fontSize="13px" color="gray.400">
                       {booking.nights} {booking.nights === 1 ? "night" : "nights"} •{" "}

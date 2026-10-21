@@ -26,6 +26,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import type { UserRole } from "@/types/db";
+import { formatShortDate } from "@/lib/formatters/date";
 
 interface UserItem {
   id: string;
@@ -399,9 +400,7 @@ export default function AdminUsersPage({ adminUser }: UsersPageProps) {
                           </Badge>
                         )}
                       </Table.Cell>
-                      <Table.Cell fontSize="xs">
-                        {new Date(u.created_at).toLocaleDateString()}
-                      </Table.Cell>
+                      <Table.Cell fontSize="xs">{formatShortDate(u.created_at)}</Table.Cell>
                       <Table.Cell textAlign="right">
                         <HStack gap={1} justify="flex-end">
                           <Button

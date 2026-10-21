@@ -12,6 +12,7 @@ import {
   Legend,
 } from "recharts";
 import { formatNgn } from "@/lib/formatters/currency";
+import { formatShortDate } from "@/lib/formatters/date";
 
 export interface TimelineDataPoint {
   date: string; // YYYY-MM-DD
@@ -183,7 +184,7 @@ export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenu
                         fontSize="xs"
                       >
                         <Text fontWeight="bold" color="gray.700" mb={2}>
-                          {row.date}
+                          {formatShortDate(row.date)}
                         </Text>
                         <VStack align="flex-start" gap={1}>
                           <Text color="blue.600">

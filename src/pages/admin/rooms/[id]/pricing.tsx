@@ -25,6 +25,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import { formatNgn } from "@/lib/formatters/currency";
+import { formatShortDate } from "@/lib/formatters/date";
 
 interface SeasonalPriceItem {
   id: string;
@@ -280,8 +281,8 @@ export default function AdminSeasonalPricingPage({ adminUser }: PricingPageProps
                   {prices.map((p) => (
                     <Table.Row key={p.id}>
                       <Table.Cell fontWeight="semibold">{p.label}</Table.Cell>
-                      <Table.Cell fontSize="xs">{p.start_date}</Table.Cell>
-                      <Table.Cell fontSize="xs">{p.end_date}</Table.Cell>
+                      <Table.Cell fontSize="xs">{formatShortDate(p.start_date)}</Table.Cell>
+                      <Table.Cell fontSize="xs">{formatShortDate(p.end_date)}</Table.Cell>
                       <Table.Cell textAlign="right" fontWeight="bold" color="blue.600">
                         {formatNgn(p.price)}
                       </Table.Cell>

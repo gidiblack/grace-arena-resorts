@@ -26,6 +26,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { adminDialog } from "@/components/admin/AdminDialog";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import { formatNgn } from "@/lib/formatters/currency";
+import { formatShortDate } from "@/lib/formatters/date";
 
 interface DealItem {
   id: string;
@@ -348,7 +349,9 @@ export default function AdminDealsPage({ adminUser }: DealsPageProps) {
                         {dtype === "percentage" ? `${dval}% OFF` : `${formatNgn(dval)} OFF`}
                       </Table.Cell>
                       <Table.Cell fontSize="xs">
-                        {sdate && edate ? `${sdate} to ${edate}` : "Ongoing"}
+                        {sdate && edate
+                          ? `${formatShortDate(sdate)} to ${formatShortDate(edate)}`
+                          : "Ongoing"}
                       </Table.Cell>
                       <Table.Cell>
                         <Badge

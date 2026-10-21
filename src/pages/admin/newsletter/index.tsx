@@ -16,6 +16,7 @@ import {
 import { FaNewspaper, FaFileCsv } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
+import { formatShortDate } from "@/lib/formatters/date";
 
 interface SubscriberItem {
   id: string;
@@ -196,11 +197,9 @@ export default function AdminNewsletterPage({ adminUser }: NewsletterPageProps) 
                         {s.is_confirmed ? "Confirmed" : "Pending Verification"}
                       </Badge>
                     </Table.Cell>
+                    <Table.Cell fontSize="xs">{formatShortDate(s.created_at)}</Table.Cell>
                     <Table.Cell fontSize="xs">
-                      {new Date(s.created_at).toLocaleDateString()}
-                    </Table.Cell>
-                    <Table.Cell fontSize="xs">
-                      {s.confirmed_at ? new Date(s.confirmed_at).toLocaleDateString() : "—"}
+                      {s.confirmed_at ? formatShortDate(s.confirmed_at) : "—"}
                     </Table.Cell>
                   </Table.Row>
                 ))}

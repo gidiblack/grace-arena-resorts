@@ -20,6 +20,7 @@ import { FaPlus, FaUndo, FaExclamationTriangle } from "react-icons/fa";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { requireAdminPage, type AdminUserSession } from "@/lib/auth/admin-guard";
 import { formatNgn } from "@/lib/formatters/currency";
+import { formatShortDate } from "@/lib/formatters/date";
 
 interface AdminBookingsPageProps {
   adminUser: AdminUserSession;
@@ -442,9 +443,9 @@ export default function AdminBookingsPage({ adminUser }: AdminBookingsPageProps)
                         </Badge>
                       </Table.Cell>
                       <Table.Cell fontSize="xs">
-                        <Text>{booking.check_in_date}</Text>
+                        <Text>{formatShortDate(booking.check_in_date)}</Text>
                         <Text color="gray.500">
-                          to {booking.check_out_date} ({booking.nights}n)
+                          to {formatShortDate(booking.check_out_date)} ({booking.nights}n)
                         </Text>
                       </Table.Cell>
                       <Table.Cell fontSize="xs">
