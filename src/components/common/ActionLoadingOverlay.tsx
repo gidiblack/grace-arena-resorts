@@ -94,8 +94,8 @@ export const ActionLoadingOverlay: React.FC<ActionLoadingOverlayProps> = ({
       bottom={0}
       w="100vw"
       h="100vh"
-      bg="rgba(10, 9, 8, 0.82)"
-      backdropFilter="blur(6px)"
+      bg="rgba(10, 9, 8, 0.45)"
+      backdropFilter="blur(5px)"
       display="flex"
       flexDirection="column"
       alignItems="center"
@@ -104,7 +104,7 @@ export const ActionLoadingOverlay: React.FC<ActionLoadingOverlayProps> = ({
       pointerEvents="all"
       userSelect="none"
       style={{
-        WebkitBackdropFilter: "blur(6px)",
+        WebkitBackdropFilter: "blur(5px)",
       }}
     >
       <style>{`
@@ -197,6 +197,7 @@ export const ActionLoadingOverlay: React.FC<ActionLoadingOverlayProps> = ({
             willChange: "transform, opacity, filter",
           }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/gar-icon-only.svg"
             alt="Grace Arena Resorts"
