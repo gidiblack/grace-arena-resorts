@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import NextLink from "next/link";
 import { Box, Button, Input, Stack, Text } from "@chakra-ui/react";
 import AuthLayout from "@/features/auth/components/AuthLayout";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import { ROUTES } from "@/constants/ROUTES";
 
 export default function ForgotPasswordPage() {
@@ -42,6 +43,7 @@ export default function ForgotPasswordPage() {
       title="Reset Password"
       subtitle="Enter your registered email address and we will send you a secure password reset link"
     >
+      <ActionLoadingOverlay isOpen={isLoading} message="Sending recovery link..." />
       {isSubmitted ? (
         <Stack gap={4} textAlign="center">
           <Box p={4} bg="blue.50" borderRadius="lg" border="1px solid" borderColor="blue.200">

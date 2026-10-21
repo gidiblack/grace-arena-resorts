@@ -15,6 +15,7 @@ import {
 } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
 import Button from "@/components/ui/button";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import BookingConfirmationView from "@/features/booking/components/BookingConfirmationView";
 import { step1DatesGuestsSchema, step3GuestSchema } from "@/features/booking/schemas";
 
@@ -665,6 +666,7 @@ export default function BookingPage() {
       title="Reserve Your Stay — Grace Arena Resorts"
       description="Select your campus, dates, and accommodation at Grace Arena Resorts. Faith, hospitality, and serene retreat."
     >
+      <ActionLoadingOverlay isOpen={isProcessingPayment} message="Securing your reservation..." />
       <Box
         bg="#0B132B"
         color="white"

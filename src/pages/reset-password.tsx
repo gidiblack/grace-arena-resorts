@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import NextLink from "next/link";
 import { Box, Button, Input, Stack, Text } from "@chakra-ui/react";
 import AuthLayout from "@/features/auth/components/AuthLayout";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import { ROUTES } from "@/constants/ROUTES";
 
 export default function ResetPasswordPage() {
@@ -64,6 +65,7 @@ export default function ResetPasswordPage() {
         email ? `Enter a new secure password for ${email}` : "Enter your new password below"
       }
     >
+      <ActionLoadingOverlay isOpen={isLoading} message="Updating password..." />
       {isSuccess ? (
         <Stack gap={4} textAlign="center">
           <Box p={4} bg="green.50" borderRadius="lg" border="1px solid" borderColor="green.200">

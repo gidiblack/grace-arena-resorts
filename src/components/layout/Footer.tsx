@@ -26,6 +26,7 @@ import { ROUTES } from "@/constants/ROUTES";
 import { FaLocationDot } from "react-icons/fa6";
 import Button from "../ui/button";
 import { getRecaptchaToken } from "@/lib/recaptcha/client";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import {
   isNewsletterSubscribed,
   setNewsletterSubscribedCookie,
@@ -113,6 +114,8 @@ export const Footer = () => {
 
   return (
     <Box as="footer" w="full" bg="#F8FAFC" borderTop="1px solid #E2E8F0" color="#334155">
+      <ActionLoadingOverlay isOpen={newsletterLoading} message="Joining newsletter..." />
+
       {/* Newsletter Banner - Hidden once the user has added their email (tracked via cookie) */}
       {!isSubscribed && (
         <Box

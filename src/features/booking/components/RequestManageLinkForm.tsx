@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, Input, Stack, Text } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 
 /**
  * "Email me a new manage link": for guests who lost their private booking link.
@@ -52,6 +53,7 @@ export default function RequestManageLinkForm({
 
   return (
     <form onSubmit={handleSubmit}>
+      <ActionLoadingOverlay isOpen={sending} message="Sending your booking link..." />
       <Stack gap={3}>
         <Box>
           <label

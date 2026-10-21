@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import NextLink from "next/link";
 import { Box, Button, Flex, Input, Stack, Text } from "@chakra-ui/react";
 import AuthLayout from "@/features/auth/components/AuthLayout";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import { ROUTES } from "@/constants/ROUTES";
 import { safeRedirectPath } from "@/lib/http/redirect";
 import { getRecaptchaToken } from "@/lib/recaptcha/client";
@@ -56,6 +57,7 @@ export default function LoginPage() {
       title="Welcome Back"
       subtitle="Sign in to your account to manage your reservations and experiences"
     >
+      <ActionLoadingOverlay isOpen={isLoading} message="Signing in..." />
       <form onSubmit={handleSubmit}>
         <Stack gap={4}>
           {errorMsg && (
