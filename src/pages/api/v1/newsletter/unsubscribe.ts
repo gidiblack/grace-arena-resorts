@@ -1,6 +1,7 @@
 import { withApi } from "../_shared/handler";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { isValidUnsubscribeToken } from "@/services/newsletter/tokens";
+import { createNewsletterSubscribedSetCookie } from "@/services/newsletter/cookie";
 import { escapeHtml } from "@/services/email/templates";
 import { ok, fail } from "@/lib/http/response";
 import { logger } from "@/lib/logger";
@@ -29,6 +30,15 @@ export default withApi(
       logger.error("Failed to unsubscribe newsletter recipient", { error });
       return fail(res, "UNSUBSCRIBE_FAILED", "Unable to unsubscribe right now", 503);
     }
+
+    const clearCookie = createNewsletterSubscribedSetCookie(false);
+    const existingSetCookie = res.getHeader("Set-Cookie");
+    const current = Array.isArray(existingSetCookie)
+      ? existingSetCookie
+      : existingSetCookie
+        ? [String(existingSetCookie)]
+        : [];
+    res.setHeader("Set-Cookie", [...current, clearCookie]);
 
     if (req.method === "GET") {
       res.setHeader("Content-Type", "text/html; charset=utf-8");

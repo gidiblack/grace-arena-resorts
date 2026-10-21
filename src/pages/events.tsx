@@ -14,6 +14,7 @@ import {
 import PageWrapper from "@/components/layout/PageWrapper";
 import { generateEventJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import elysian from "@/assets/gar-elysian.jpg";
 import village from "@/assets/gar-village.jpg";
 import hut from "@/assets/hut.jpg";
@@ -114,6 +115,7 @@ export default function EventsPage() {
         "Host your church retreats, Christian weddings, family reunions, and executive conferences at Grace Arena Resorts."
       )}
     >
+      <ActionLoadingOverlay isOpen={loading} message="Submitting your event inquiry..." />
       {/* Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"

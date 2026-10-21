@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, Flex, HStack, Icon, Text, Badge, SimpleGrid } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import {
   FaFilePdf,
   FaEnvelope,
@@ -12,6 +13,7 @@ import {
   FaInfoCircle,
 } from "react-icons/fa";
 import CancellationModal from "./CancellationModal";
+import { formatLongDate } from "@/lib/formatters/date";
 
 export interface BookingRecord {
   id: string;
@@ -178,6 +180,10 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
 
   return (
     <>
+      <ActionLoadingOverlay
+        isOpen={resending || paying}
+        message={paying ? "Redirecting to secure payment..." : "Resending confirmation email..."}
+      />
       <Box
         bg="#0F172A"
         borderRadius="18px"
@@ -194,7 +200,7 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
             {getStatusBadge(booking.status)}
           </HStack>
           <Text fontSize="12px" color="gray.400">
-            Booked on {new Date(booking.created_at).toLocaleDateString()}
+            Booked on {formatLongDate(booking.created_at)}
           </Text>
         </Flex>
 
@@ -208,7 +214,8 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
               </Text>
             </HStack>
             <Text fontSize="14px" fontWeight="bold">
-              {booking.check_in_date} &rarr; {booking.check_out_date}
+              {formatLongDate(booking.check_in_date)} &rarr;{" "}
+              {formatLongDate(booking.check_out_date)}
             </Text>
             <Text fontSize="12px" color="gray.400">
               {booking.nights} {booking.nights === 1 ? "Night" : "Nights"} • {booking.adults} Adults

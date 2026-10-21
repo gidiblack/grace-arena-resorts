@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 
 export const toaster = createToaster({
-  placement: "bottom-end",
+  placement: "top-end",
   pauseOnPageIdle: true,
 });
 
@@ -30,10 +30,12 @@ export const Toaster = () => {
               {toast.description && <Toast.Description>{toast.description}</Toast.Description>}
             </Stack>
             {toast.action && <Toast.ActionTrigger>{toast.action.label}</Toast.ActionTrigger>}
-            {toast.closable && <Toast.CloseTrigger />}
+            {toast.closable !== false && <Toast.CloseTrigger />}
           </Toast.Root>
         )}
       </ChakraToaster>
     </Portal>
   );
 };
+
+export { showServerErrorToast, setupGlobalErrorToaster } from "@/lib/http/error-toast";

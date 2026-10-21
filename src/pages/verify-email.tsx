@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import NextLink from "next/link";
 import { Box, Button, Input, Stack, Text } from "@chakra-ui/react";
 import AuthLayout from "@/features/auth/components/AuthLayout";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import { ROUTES } from "@/constants/ROUTES";
 
 export default function VerifyEmailPage() {
@@ -96,6 +97,10 @@ export default function VerifyEmailPage() {
             : `We sent a confirmation link to ${email || "your email address"}`
       }
     >
+      <ActionLoadingOverlay
+        isOpen={isVerifying || isResending}
+        message={isVerifying ? "Confirming your email address..." : "Sending verification email..."}
+      />
       <Stack gap={6} textAlign="center">
         {isVerified ? (
           <Box p={4} bg="green.50" borderRadius="lg" border="1px solid" borderColor="green.200">

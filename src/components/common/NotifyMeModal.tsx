@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, Flex, HStack, Icon, Input, Stack, Text, Dialog, Portal } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import { cleanupModalLocks, useModalCleanup } from "@/helpers/modal-cleanup";
 import { FaBell, FaCheckCircle, FaHardHat, FaTimes } from "react-icons/fa";
 
@@ -104,6 +105,7 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
             boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.75)"
             tabIndex={-1}
           >
+            <ActionLoadingOverlay isOpen={isLoading} message="Subscribing to notifications..." />
             <Flex justify="space-between" align="center" mb={4}>
               <HStack gap={2}>
                 <Box bg="amber.500/20" color="#F59E0B" p={2} borderRadius="10px">

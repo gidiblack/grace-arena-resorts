@@ -7,6 +7,7 @@ import { ROUTES } from "@/constants/ROUTES";
 import Link from "next/link";
 import { MOCK_DEALS } from "@/data/mock/resort-data";
 import { FaTag } from "react-icons/fa";
+import { formatLongDate } from "@/lib/formatters/date";
 
 interface DealItem {
   id: string;
@@ -31,11 +32,7 @@ const DEALS_DATA: DealItem[] = MOCK_DEALS.map((deal) => ({
       ? `${deal.discountValue}% OFF`
       : `₦${deal.discountValue.toLocaleString()} OFF`,
   promoCode: deal.promoCode,
-  validUntil: new Date(`${deal.validTo}T00:00:00`).toLocaleDateString("en-NG", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }),
+  validUntil: formatLongDate(deal.validTo),
   image: deal.image,
   description: deal.description,
   terms: deal.terms.join(" • "),

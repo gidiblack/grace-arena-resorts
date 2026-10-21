@@ -33,6 +33,57 @@ const handlers: Record<string, (params: Params) => Promise<EmailSendResult>> = {
     if (!booking) return { success: false, error: "Booking no longer exists" };
     return sendBookingConfirmationEmail(supabase, booking, { queueOnFailure: false });
   },
+  room_now_available: async (p) => {
+    const supabase = getSupabaseAdminClient();
+    const { data: reg } = await supabase
+      .from("notify_me_registrations")
+      .select("id, email, is_notified")
+      .eq("id", String(p.registrationId))
+      .maybeSingle();
+
+    if (!reg || reg.is_notified) {
+      return { success: true };
+    }
+
+    const { data: roomType } = await supabase
+      .from("room_types")
+      .select("id, name, tier, base_price, description, images")
+      .eq("id", String(p.roomTypeId))
+      .maybeSingle();
+
+    if (!roomType) return { success: false, error: "Room type no longer exists" };
+
+    let heroImageUrl = "";
+    if (Array.isArray(roomType.images) && roomType.images.length > 0) {
+      const first = roomType.images[0];
+      if (typeof first === "string") heroImageUrl = first;
+      else if (first && typeof first === "object" && "url" in first)
+        heroImageUrl = String((first as { url: string }).url);
+    }
+
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://gracearenaresorts.com").replace(/\/$/, "");
+    const result = await sendEmail({
+      to: reg.email,
+      templateId: "room_now_available",
+      templateData: {
+        roomName: roomType.name,
+        tier: roomType.tier,
+        pricePerNight: roomType.base_price,
+        heroImageUrl,
+        description: roomType.description,
+        bookUrl: `${appUrl}/booking?room=${roomType.id}`,
+      },
+      queueOnFailure: false,
+    });
+
+    if (result.success) {
+      await supabase
+        .from("notify_me_registrations")
+        .update({ is_notified: true, notified_at: new Date().toISOString() })
+        .eq("id", reg.id);
+    }
+    return result;
+  },
 };
 
 export interface RetryRunSummary {

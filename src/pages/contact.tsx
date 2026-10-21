@@ -15,6 +15,7 @@ import MapSection from "@/components/common/MapSection";
 import { generateContactPageJsonLd } from "@/lib/seo/meta";
 import Button from "@/components/ui/button";
 import { getRecaptchaToken } from "@/lib/recaptcha/client";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import {
   FaPhoneAlt,
   FaEnvelope,
@@ -78,6 +79,7 @@ export default function ContactPage() {
       description="Get in touch with Grace Arena Resorts in Igbo-Ora, Oyo State, Nigeria. Bookings, directions, and WhatsApp inquiries."
       jsonLd={generateContactPageJsonLd()}
     >
+      <ActionLoadingOverlay isOpen={loading} message="Sending your message..." />
       {/* Header */}
       <Box
         bg="linear-gradient(rgba(7, 7, 7, 0.75), rgba(7, 7, 7, 0.95)), #070707"

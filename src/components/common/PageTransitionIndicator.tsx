@@ -55,7 +55,7 @@ export const PageTransitionIndicator: React.FC = () => {
       <Box
         height="100%"
         width={`${progress}%`}
-        bg="#C5A880"
+        bg="#da9535"
         boxShadow="0 0 10px #C5A880, 0 0 5px #B38E5D"
         transition="width 0.2s ease-out, opacity 0.25s ease"
       />

@@ -9,6 +9,7 @@ import AnalyticsLoader from "@/components/common/AnalyticsLoader";
 import SkipToContent from "@/components/common/SkipToContent";
 import PageTransitionIndicator from "@/components/common/PageTransitionIndicator";
 import GlobalNetworkStatus from "@/components/common/GlobalNetworkStatus";
+import PublicActionLoadingHost from "@/components/common/PublicActionLoadingHost";
 import { Box } from "@chakra-ui/react";
 
 interface PageWrapperProps {
@@ -65,6 +66,7 @@ export const PageWrapper: React.FC<PageWrapperProps> = ({
         <WhatsAppFab />
         <CookieConsentBanner />
         <AnalyticsLoader />
+        <PublicActionLoadingHost />
       </Box>
     </>
   );

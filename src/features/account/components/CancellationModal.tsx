@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Flex, HStack, Icon, Stack, Text, Badge, Textarea, Spinner } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import { FaExclamationTriangle, FaTimes, FaUndo } from "react-icons/fa";
 
 interface CancellationModalProps {
@@ -100,6 +101,7 @@ export default function CancellationModal({
       justifyContent="center"
       p={4}
     >
+      <ActionLoadingOverlay isOpen={cancelling} message="Processing cancellation..." />
       <Box
         bg="#0F172A"
         color="white"

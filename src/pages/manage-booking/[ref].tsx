@@ -10,9 +10,11 @@ import {
   FaUserPlus,
 } from "react-icons/fa";
 import PageWrapper from "@/components/layout/PageWrapper";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import Button from "@/components/ui/button";
 import CancellationModal from "@/features/account/components/CancellationModal";
 import RequestManageLinkForm from "@/features/booking/components/RequestManageLinkForm";
+import { formatLongDate } from "@/lib/formatters/date";
 
 interface ManagedBooking {
   reference: string;
@@ -41,6 +43,12 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   checked_out: { label: "Checked Out", color: "#A0AEC0" },
   cancelled: { label: "Cancelled", color: "#FC8181" },
   no_show: { label: "No Show", color: "#ED8936" },
+};
+
+const BUSY_MESSAGE: Record<string, string> = {
+  pay: "Redirecting to secure payment...",
+  resend: "Sending confirmation email...",
+  claim: "Adding booking to your account...",
 };
 
 export default function ManageBookingPage() {
@@ -140,23 +148,23 @@ export default function ManageBookingPage() {
     : null;
   const refund = booking?.payments.find((p) => p.refund_amount);
   const canCancel = booking && ["pending", "confirmed"].includes(booking.status);
+  const overlayMessage = loading
+    ? "Loading your reservation..."
+    : busy
+      ? BUSY_MESSAGE[busy]
+      : undefined;
 
   return (
     <PageWrapper
       title="Manage Your Booking — Grace Arena Resorts"
       description="View, download, or cancel your Grace Arena Resorts reservation."
     >
+      <ActionLoadingOverlay isOpen={Boolean(overlayMessage)} message={overlayMessage} />
       <Box bg="#0B132B" color="white" minH="80vh" py={{ base: 8, md: 14 }} px={4}>
         <Box maxW="760px" mx="auto">
           <Text as="h1" fontSize={{ base: "26px", md: "34px" }} fontWeight="extrabold" mb={6}>
             Manage Your Booking
           </Text>
-
-          {loading && (
-            <Text color="gray.400" role="status">
-              Loading your reservation…
-            </Text>
-          )}
 
           {!loading && notFound && (
             <Box bg="#0F172A" p={6} borderRadius="16px" border="1px solid #1E293B">
@@ -194,7 +202,8 @@ export default function ManageBookingPage() {
                       <Text>Stay</Text>
                     </HStack>
                     <Text fontWeight="bold">
-                      {booking.check_in_date} → {booking.check_out_date}
+                      {formatLongDate(booking.check_in_date)} →{" "}
+                      {formatLongDate(booking.check_out_date)}
                     </Text>
                     <Text fontSize="13px" color="gray.400">
                       {booking.nights} {booking.nights === 1 ? "night" : "nights"} •{" "}

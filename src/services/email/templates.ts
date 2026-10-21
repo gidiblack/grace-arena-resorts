@@ -5,6 +5,7 @@ export type EmailTemplateId =
   | "newsletter_confirmation"
   | "inquiry_acknowledgment"
   | "room_notify_alert"
+  | "room_now_available"
   | "booking_refund_initiated"
   | "booking_refund_completed"
   | "staff_submission_alert"
@@ -100,6 +101,36 @@ export function renderEmailTemplate(
       };
     }
 
+    case "room_now_available": {
+      const roomName = data.roomName || "Your requested suite";
+      const tier = data.tier ? ` (${data.tier})` : "";
+      const priceFormatted = data.pricePerNight ? `₦${Number(data.pricePerNight).toLocaleString()}` : "Contact Concierge";
+      const heroImageHtml = data.heroImageUrl
+        ? `<div style="margin: 16px 0;"><img src="${data.heroImageUrl}" alt="${roomName}" style="width: 100%; max-height: 280px; object-fit: cover; border-radius: 8px;" /></div>`
+        : "";
+      const bookUrl = data.bookUrl || "#";
+
+      return {
+        subject: `Great News — ${roomName} is Now Available at Grace Arena Resorts!`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1a202c;">
+            <h2 style="color: #2b6cb0;">${roomName} is Now Open for Booking!</h2>
+            ${heroImageHtml}
+            <p>We are delighted to share that <strong>${roomName}</strong>${tier} has finished construction and is officially available for reservations.</p>
+            <p style="font-size: 16px; margin: 16px 0;"><strong>Starting Rate:</strong> ${priceFormatted} / night</p>
+            ${data.description ? `<p style="color: #4a5568; line-height: 1.5;">${data.description}</p>` : ""}
+            <p style="margin: 24px 0;">
+              <a href="${bookUrl}" style="background-color: #2b6cb0; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">
+                Book Now
+              </a>
+            </p>
+            <p style="font-size: 13px; color: #718096;">You received this notification because you subscribed to updates when this suite opened.</p>
+          </div>
+        `,
+        text: `Great News — ${roomName} is now available at Grace Arena Resorts! Starting rate: ${priceFormatted}/night. Book now: ${bookUrl}`,
+      };
+    }
+
     case "email_verification": {
       const verifyUrl = data.verifyUrl || "#";
       return {
@@ -169,16 +200,20 @@ export function renderEmailTemplate(
     case "booking_refund_initiated": {
       const ref = data.reference || "N/A";
       const amount = data.amount || 0;
+      const defaultMessage =
+        data.refundMethod === "bank_transfer"
+          ? "Your refund will be sent by bank transfer. Our resort staff will contact you to confirm account details."
+          : "We will notify you once processing is complete.";
       return {
         subject: `Booking Refund Initiated: ${ref} — Grace Arena Resorts`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1a202c;">
             <h2 style="color: #2b6cb0;">Refund Initiated</h2>
             <p>A refund of <strong>₦${Number(amount).toLocaleString()}</strong> for reservation <strong>${ref}</strong> has been initiated.</p>
-            <p>${data.message || "We will notify you once processing is complete."}</p>
+            <p>${data.message || defaultMessage}</p>
           </div>
         `,
-        text: `A refund of ₦${Number(amount).toLocaleString()} for reservation ${ref} has been initiated.`,
+        text: `A refund of ₦${Number(amount).toLocaleString()} for reservation ${ref} has been initiated. ${data.message || defaultMessage}`,
       };
     }
 

@@ -78,8 +78,15 @@ export function withApi<TBody = unknown, TQuery = unknown>(
 
     // 4. Enforce rate limiting if configured
     if (options.rateLimit) {
-      const allowed = await enforceRateLimit(req, res, options.rateLimit);
-      if (!allowed) return;
+      const currentMethod = (req.method || "").toUpperCase();
+      const shouldLimit =
+        !options.rateLimit.methods ||
+        options.rateLimit.methods.map((m) => m.toUpperCase()).includes(currentMethod);
+
+      if (shouldLimit) {
+        const allowed = await enforceRateLimit(req, res, options.rateLimit);
+        if (!allowed) return;
+      }
     }
 
     // 5. Authentication & Role checks

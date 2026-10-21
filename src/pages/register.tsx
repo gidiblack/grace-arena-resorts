@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import NextLink from "next/link";
 import { Box, Button, Input, Stack, Text } from "@chakra-ui/react";
 import AuthLayout from "@/features/auth/components/AuthLayout";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import { ROUTES } from "@/constants/ROUTES";
 
 export default function RegisterPage() {
@@ -80,6 +81,7 @@ export default function RegisterPage() {
       title="Create Guest Account"
       subtitle="Register to book rooms, access personalized hospitality, and view stay history"
     >
+      <ActionLoadingOverlay isOpen={isLoading} message="Creating your account..." />
       <form onSubmit={handleSubmit}>
         <Stack gap={4}>
           {errorMsg && (
