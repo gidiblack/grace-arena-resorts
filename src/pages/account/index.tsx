@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Box, Flex, HStack, Icon, SimpleGrid, Stack, Text, Spinner } from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 import AccountLayout from "@/features/account/components/AccountLayout";
 import BookingCard, { BookingRecord } from "@/features/account/components/BookingCard";
 import Button from "@/components/ui/button";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import {
   FaCalendarCheck,
   FaClock,
@@ -200,9 +201,7 @@ export default function AccountOverviewPage() {
         </Flex>
 
         {loading ? (
-          <Flex justify="center" py={12}>
-            <Spinner color="accent.500" size="lg" />
-          </Flex>
+          <ActionLoadingOverlay message="Loading your bookings..." />
         ) : bookings.length === 0 ? (
           <Box bg="#0F172A" p={8} borderRadius="18px" border="1px solid #1E293B" textAlign="center">
             <Text fontSize="16px" fontWeight="bold" mb={2}>

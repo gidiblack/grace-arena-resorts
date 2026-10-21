@@ -161,6 +161,8 @@ export default function BookingPage() {
 
   // Step 4: Payment & Fallback State
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  // Verifying the Paystack callback before the confirmation (or outcome) is shown
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [isGatewayDowntimeActive, setIsGatewayDowntimeActive] = useState(false);
   // Pending booking created for the current selection; reused if payment initiation is retried
@@ -350,6 +352,7 @@ export default function BookingPage() {
 
     let cancelled = false;
     async function loadPaymentResult() {
+      setIsVerifyingPayment(true);
       try {
         const res = await fetch(
           `/api/v1/payments/verify?reference=${encodeURIComponent(paymentRef!)}`
@@ -418,11 +421,14 @@ export default function BookingPage() {
             bookingRef: bookingReference,
           });
         }
+      } finally {
+        if (!cancelled) setIsVerifyingPayment(false);
       }
     }
     loadPaymentResult();
     return () => {
       cancelled = true;
+      setIsVerifyingPayment(false);
     };
   }, [router, router.isReady, router.query]);
 
@@ -667,7 +673,10 @@ export default function BookingPage() {
       title="Reserve Your Stay — Grace Arena Resorts"
       description="Select your campus, dates, and accommodation at Grace Arena Resorts. Faith, hospitality, and serene retreat."
     >
-      <ActionLoadingOverlay isOpen={isProcessingPayment} message="Securing your reservation..." />
+      <ActionLoadingOverlay
+        isOpen={isProcessingPayment || isVerifyingPayment}
+        message={isVerifyingPayment ? "Confirming your payment..." : "Securing your reservation..."}
+      />
       <Box
         bg="#0B132B"
         color="white"

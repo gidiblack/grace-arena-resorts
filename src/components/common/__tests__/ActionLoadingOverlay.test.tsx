@@ -59,6 +59,17 @@ describe("ActionLoadingOverlay", () => {
     expect(document.body.style.overflow).toBe("");
   });
 
+  it("keeps scrolling locked until every overlapping overlay has closed", () => {
+    const first = renderWithChakra(<ActionLoadingOverlay isOpen={true} />);
+    const second = renderWithChakra(<ActionLoadingOverlay isOpen={true} />);
+
+    first.unmount();
+    expect(document.body.style.overflow).toBe("hidden");
+
+    second.unmount();
+    expect(document.body.style.overflow).toBe("");
+  });
+
   it("PublicActionLoadingHost responds to showActionLoading and hideActionLoading", () => {
     renderWithChakra(<PublicActionLoadingHost />);
 

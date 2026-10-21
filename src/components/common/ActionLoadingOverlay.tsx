@@ -27,6 +27,10 @@ export interface ActionLoadingOverlayProps {
   usePortal?: boolean;
 }
 
+// Shared across overlay instances so overlapping overlays don't restore scrolling too early
+let scrollLockCount = 0;
+let originalBodyOverflow = "";
+
 export const SHOW_ACTION_LOADING_EVENT = "gar:show-action-loading";
 export const HIDE_ACTION_LOADING_EVENT = "gar:hide-action-loading";
 
@@ -67,11 +71,17 @@ export const ActionLoadingOverlay: React.FC<ActionLoadingOverlayProps> = ({
   useEffect(() => {
     if (!active || typeof document === "undefined") return;
 
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (scrollLockCount === 0) {
+      originalBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+    }
+    scrollLockCount += 1;
 
     return () => {
-      document.body.style.overflow = originalOverflow;
+      scrollLockCount -= 1;
+      if (scrollLockCount === 0) {
+        document.body.style.overflow = originalBodyOverflow;
+      }
     };
   }, [active]);
 

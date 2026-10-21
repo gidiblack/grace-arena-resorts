@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Box, Flex, HStack, Icon, Stack, Text, Badge, SimpleGrid } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import {
   FaCheckCircle,
   FaFilePdf,
@@ -91,6 +92,7 @@ export default function BookingConfirmationView({
       maxWidth="800px"
       mx="auto"
     >
+      <ActionLoadingOverlay isOpen={resending} message="Resending confirmation email..." />
       <Flex direction="column" align="center" textAlign="center" mb={8}>
         <Flex
           w="72px"

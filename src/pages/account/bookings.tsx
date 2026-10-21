@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { Box, Flex, HStack, Stack, Text, Spinner } from "@chakra-ui/react";
+import { Box, HStack, Stack, Text } from "@chakra-ui/react";
 import AccountLayout from "@/features/account/components/AccountLayout";
 import BookingCard, { BookingRecord } from "@/features/account/components/BookingCard";
 import Button from "@/components/ui/button";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 
 type FilterTab = "all" | "active" | "pending" | "past" | "cancelled";
 
@@ -92,9 +93,7 @@ export default function AccountBookingsPage() {
 
       {/* Bookings List */}
       {loading ? (
-        <Flex justify="center" py={16}>
-          <Spinner color="accent.500" size="xl" />
-        </Flex>
+        <ActionLoadingOverlay message="Loading your bookings..." />
       ) : filteredBookings.length === 0 ? (
         <Box bg="#0F172A" p={10} borderRadius="20px" border="1px solid #1E293B" textAlign="center">
           <Text fontSize="18px" fontWeight="bold" mb={2}>

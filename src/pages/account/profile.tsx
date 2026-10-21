@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box, Flex, HStack, Icon, Input, SimpleGrid, Stack, Text, Badge } from "@chakra-ui/react";
 import AccountLayout from "@/features/account/components/AccountLayout";
 import Button from "@/components/ui/button";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import { FaUser, FaKey, FaShieldAlt, FaInfoCircle, FaCheck } from "react-icons/fa";
 import { passwordPolicy } from "@/features/auth/schemas";
 
@@ -10,6 +11,7 @@ export default function AccountProfilePage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -34,6 +36,8 @@ export default function AccountProfilePage() {
         }
       } catch {
         // Silently handled
+      } finally {
+        setLoadingProfile(false);
       }
     }
     loadUser();
@@ -123,6 +127,16 @@ export default function AccountProfilePage() {
 
   return (
     <AccountLayout title="Profile & Security Settings" activeTab="profile">
+      <ActionLoadingOverlay
+        isOpen={loadingProfile || savingProfile || savingPassword}
+        message={
+          loadingProfile
+            ? "Loading your profile..."
+            : savingPassword
+              ? "Updating password..."
+              : "Saving your profile..."
+        }
+      />
       <SimpleGrid columns={{ base: 1, lg: 2 }} gap={8}>
         {/* Form 1: Profile Information */}
         <Box

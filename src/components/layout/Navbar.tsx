@@ -20,6 +20,7 @@ import logoLight from "../../../public/grace_arena_logo-light.svg";
 import { AiOutlineClose, AiOutlineMenu } from "react-icons/ai";
 import Button from "../ui/button";
 import { ROUTES } from "@/constants/ROUTES";
+import { showActionLoading, hideActionLoading } from "@/components/common/ActionLoadingOverlay";
 import { FaWhatsapp, FaUser, FaCalendarCheck, FaSignOutAlt } from "react-icons/fa";
 
 const NAV_ITEMS = [
@@ -153,13 +154,15 @@ export const Navbar = () => {
 
   const handleLogout = async () => {
     setIsUserMenuOpen(false);
+    showActionLoading("Signing out...");
     try {
       await fetch("/api/v1/auth/logout", { method: "POST" });
     } catch {
       // Continue redirect even if API call fails
     }
     setUser(null);
-    router.push(ROUTES.home);
+    await router.push(ROUTES.home);
+    hideActionLoading();
   };
 
   const NavItem = ({ label, href, isLight }: { label: string; href: string; isLight: boolean }) => {

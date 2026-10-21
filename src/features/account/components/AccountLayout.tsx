@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Box, Flex, HStack, Icon, Text, Badge, Spinner } from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, Text, Badge } from "@chakra-ui/react";
 import PageWrapper from "@/components/layout/PageWrapper";
+import ActionLoadingOverlay, {
+  showActionLoading,
+  hideActionLoading,
+} from "@/components/common/ActionLoadingOverlay";
 import Button from "@/components/ui/button";
 import { FaCalendarCheck, FaKey, FaSignOutAlt, FaPlus } from "react-icons/fa";
 
@@ -50,12 +54,14 @@ export default function AccountLayout({ children, title, activeTab }: AccountLay
   }, [router]);
 
   const handleSignOut = async () => {
+    showActionLoading("Signing out...");
     try {
       await fetch("/api/v1/auth/logout", { method: "POST" });
-      router.push("/");
     } catch {
-      router.push("/");
+      // Continue redirect even if API call fails
     }
+    await router.push("/");
+    hideActionLoading();
   };
 
   if (loading) {
@@ -68,7 +74,7 @@ export default function AccountLayout({ children, title, activeTab }: AccountLay
           bg="#0B132B"
           pt={{ base: "110px", md: "140px" }}
         >
-          <Spinner color="accent.500" size="xl" />
+          <ActionLoadingOverlay message="Loading your account..." />
         </Flex>
       </PageWrapper>
     );

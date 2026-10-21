@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, Flex, HStack, Icon, Text, Badge, SimpleGrid } from "@chakra-ui/react";
 import Button from "@/components/ui/button";
+import ActionLoadingOverlay from "@/components/common/ActionLoadingOverlay";
 import {
   FaFilePdf,
   FaEnvelope,
@@ -179,6 +180,10 @@ export default function BookingCard({ booking, onRefresh }: BookingCardProps) {
 
   return (
     <>
+      <ActionLoadingOverlay
+        isOpen={resending || paying}
+        message={paying ? "Redirecting to secure payment..." : "Resending confirmation email..."}
+      />
       <Box
         bg="#0F172A"
         borderRadius="18px"
