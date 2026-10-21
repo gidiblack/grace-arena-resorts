@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Flex,
   GridItem,
@@ -26,12 +26,40 @@ import { ROUTES } from "@/constants/ROUTES";
 import { FaLocationDot } from "react-icons/fa6";
 import Button from "../ui/button";
 import { getRecaptchaToken } from "@/lib/recaptcha/client";
+import {
+  isNewsletterSubscribed,
+  setNewsletterSubscribedCookie,
+} from "@/services/newsletter/cookie";
 
 export const Footer = () => {
   const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [justSubscribed, setJustSubscribed] = useState(false);
   const [newsletterLoading, setNewsletterLoading] = useState(false);
   const [newsletterError, setNewsletterError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isNewsletterSubscribed()) {
+      setIsSubscribed(true);
+    }
+
+    const handleSubscribed = () => {
+      setIsSubscribed(true);
+    };
+
+    const handleUnsubscribed = () => {
+      setIsSubscribed(false);
+      setJustSubscribed(false);
+    };
+
+    window.addEventListener("gar:newsletter-subscribed", handleSubscribed);
+    window.addEventListener("gar:newsletter-unsubscribed", handleUnsubscribed);
+
+    return () => {
+      window.removeEventListener("gar:newsletter-subscribed", handleSubscribed);
+      window.removeEventListener("gar:newsletter-unsubscribed", handleUnsubscribed);
+    };
+  }, []);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +82,9 @@ export const Footer = () => {
         throw new Error(data.error?.message || "Failed to join newsletter.");
       }
 
-      setSubscribed(true);
+      setNewsletterSubscribedCookie();
+      setIsSubscribed(true);
+      setJustSubscribed(true);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to join newsletter. Please try again.";
@@ -83,42 +113,42 @@ export const Footer = () => {
 
   return (
     <Box as="footer" w="full" bg="#F8FAFC" borderTop="1px solid #E2E8F0" color="#334155">
-      {/* Newsletter Banner */}
-      <Box bg="#0F172A" color="white" py={{ base: 10, md: 12 }} px={{ base: 5, md: 8 }}>
-        <Flex
-          maxW={{ base: "100vw", "2xl": "90rem" }}
-          mx="auto"
-          flexDir={{ base: "column", md: "row" }}
-          align={{ base: "flex-start", md: "center" }}
-          justify="space-between"
-          gap={6}
+      {/* Newsletter Banner - Hidden once the user has added their email (tracked via cookie) */}
+      {!isSubscribed && (
+        <Box
+          data-testid="newsletter-cta-section"
+          bg="#0F172A"
+          color="white"
+          py={{ base: 10, md: 12 }}
+          px={{ base: 5, md: 8 }}
         >
-          <Stack gap={1} maxW="36rem">
-            <Text
-              fontSize="13px"
-              fontWeight="bold"
-              color="accent.500"
-              letterSpacing="wider"
-              textTransform="uppercase"
-            >
-              Stay Connected With Serenity
-            </Text>
-            <Text fontSize={{ base: "20px", md: "24px" }} fontWeight="bold">
-              Subscribe to GAR Special Retreats &amp; Deals
-            </Text>
-            <Text fontSize="14px" color="gray.300">
-              Receive updates on seasonal specials, spiritual retreat schedules, and campus
-              additions.
-            </Text>
-          </Stack>
-
-          {subscribed ? (
-            <Box bg="whiteAlpha.200" px={5} py={3} borderRadius="10px" border="1px solid #22c55e">
-              <Text fontSize="14px" fontWeight="semibold" color="#4ade80">
-                ✓ Thank you for subscribing! Please check your email for confirmation.
+          <Flex
+            maxW={{ base: "100vw", "2xl": "90rem" }}
+            mx="auto"
+            flexDir={{ base: "column", md: "row" }}
+            align={{ base: "flex-start", md: "center" }}
+            justify="space-between"
+            gap={6}
+          >
+            <Stack gap={1} maxW="36rem">
+              <Text
+                fontSize="13px"
+                fontWeight="bold"
+                color="accent.500"
+                letterSpacing="wider"
+                textTransform="uppercase"
+              >
+                Stay Connected With Serenity
               </Text>
-            </Box>
-          ) : (
+              <Text fontSize={{ base: "20px", md: "24px" }} fontWeight="bold">
+                Subscribe to GAR Special Retreats &amp; Deals
+              </Text>
+              <Text fontSize="14px" color="gray.300">
+                Receive updates on seasonal specials, spiritual retreat schedules, and campus
+                additions.
+              </Text>
+            </Stack>
+
             <Box as="form" onSubmit={handleSubscribe} w={{ base: "full", sm: "auto" }}>
               <Flex gap={2} flexDir={{ base: "column", sm: "row" }}>
                 <Input
@@ -164,9 +194,56 @@ export const Footer = () => {
                 We honor your privacy under NDPR. Unsubscribe anytime.
               </Text>
             </Box>
-          )}
-        </Flex>
-      </Box>
+          </Flex>
+        </Box>
+      )}
+
+      {/* Post-Subscription Confirmation Message */}
+      {justSubscribed && (
+        <Box
+          data-testid="newsletter-success-banner"
+          bg="#0F172A"
+          color="white"
+          py={4}
+          px={{ base: 5, md: 8 }}
+          borderBottom="1px solid #1E293B"
+        >
+          <Flex
+            maxW={{ base: "100vw", "2xl": "90rem" }}
+            mx="auto"
+            justify="space-between"
+            align="center"
+            gap={4}
+          >
+            <Box
+              bg="whiteAlpha.200"
+              px={5}
+              py={3}
+              borderRadius="10px"
+              border="1px solid #22c55e"
+              flex={1}
+            >
+              <Text fontSize="14px" fontWeight="semibold" color="#4ade80">
+                ✓ Thank you for subscribing! Please check your email for confirmation.
+              </Text>
+            </Box>
+            <Box
+              as="button"
+              onClick={() => setJustSubscribed(false)}
+              aria-label="Dismiss confirmation"
+              color="gray.400"
+              _hover={{ color: "white" }}
+              cursor="pointer"
+              fontSize="16px"
+              bg="transparent"
+              border="none"
+              p={2}
+            >
+              ✕
+            </Box>
+          </Flex>
+        </Box>
+      )}
 
       {/* Main Footer Links */}
       <Box py={{ base: 12, md: 16 }} px={{ base: 5, md: 8, xl: 12 }}>

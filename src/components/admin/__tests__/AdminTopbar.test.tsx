@@ -10,9 +10,6 @@ const mockUser: AdminUserSession = {
   email: "admin@gracearena.com",
   fullName: "Grace Admin",
   role: "super_admin",
-  isSuperAdmin: true,
-  isResortAdmin: true,
-  isContentManager: false,
 };
 
 describe("AdminTopbar Component", () => {

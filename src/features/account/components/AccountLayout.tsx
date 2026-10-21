@@ -147,7 +147,7 @@ export default function AccountLayout({ children, title, activeTab }: AccountLay
           </Flex>
 
           {/* Navigation Tabs */}
-          <HStack gap={2} borderBottom="1px solid #1E293B" pb={3} mb={8} overflowX="auto">
+          <HStack gap={2} borderBottom="1px solid #1E293B" pb={3} px={1} mb={8} overflowX="auto">
             <Link href="/account" style={{ textDecoration: "none" }}>
               <Button variant={activeTab === "overview" ? "primary" : "secondary"} size="sm">
                 Overview

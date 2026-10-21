@@ -4,6 +4,7 @@ import { verifyRecaptcha } from "../_shared/recaptcha";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
 import { sendNewsletterConfirmation } from "@/services/newsletter/confirmation";
+import { createNewsletterSubscribedSetCookie } from "@/services/newsletter/cookie";
 import { logger } from "@/lib/logger";
 
 const subscribeSchema = z.object({
@@ -49,6 +50,16 @@ export default withApi(
       // Double opt-in: nothing is sent to the address until it confirms
       await sendNewsletterConfirmation(normalizedEmail);
     }
+
+    // Set cookie to remember that user added their email for newsletter
+    const cookieHeader = createNewsletterSubscribedSetCookie(true);
+    const existingSetCookie = res.getHeader("Set-Cookie");
+    const current = Array.isArray(existingSetCookie)
+      ? existingSetCookie
+      : existingSetCookie
+        ? [String(existingSetCookie)]
+        : [];
+    res.setHeader("Set-Cookie", [...current, cookieHeader]);
 
     // Same response either way (no subscription status disclosure)
     return ok(res, {

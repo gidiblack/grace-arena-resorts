@@ -301,6 +301,10 @@ describe("Public Content API Endpoints (Step 6)", () => {
       const subMock = createMockReqRes({ method: "POST", body: { email: "Guest@Example.com" } });
       await newsletterSubscribeHandler(subMock.req, subMock.res);
       expect(subMock.getStatusCode()).toBe(200);
+      expect(subMock.res.setHeader).toHaveBeenCalledWith(
+        "Set-Cookie",
+        expect.arrayContaining([expect.stringContaining("gar_newsletter_subscribed=true")])
+      );
       const [subscriber] = db.current.rows("newsletter_subscribers");
       expect(subscriber.email).toBe("guest@example.com");
       expect(subscriber.is_confirmed).toBeFalsy();
@@ -338,6 +342,10 @@ describe("Public Content API Endpoints (Step 6)", () => {
       await newsletterUnsubscribeHandler(unsubMock.req, unsubMock.res);
       expect(unsubMock.getStatusCode()).toBe(200);
       expect(unsubMock.getData().data.unsubscribed).toBe(true);
+      expect(unsubMock.res.setHeader).toHaveBeenCalledWith(
+        "Set-Cookie",
+        expect.arrayContaining([expect.stringContaining("gar_newsletter_subscribed=;")])
+      );
       expect(db.current.rows("newsletter_subscribers")[0].unsubscribed_at).toBeTruthy();
     });
 
