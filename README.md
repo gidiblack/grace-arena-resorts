@@ -97,6 +97,20 @@ npm run format:check
 npm run ci
 ```
 
+> **Dynamic routes 404 in dev?** With Next 16.2.1, a dev session restored from the Turbopack
+> filesystem cache stops matching `[param]` pages and API routes (they all return the 404 page), so
+> `next.config.ts` sets `experimental.turbopackFileSystemCacheForDev: false`. If you re-enable it
+> and hit this, delete the cache and restart: `rm -rf .next && npm run dev`.
+
+> **Database migrations:** the admin features (Step 12A onward) need every file in
+> `supabase/migrations` applied to the project in `.env.local` (`npx supabase db push`). If an admin
+> action fails with `SCHEMA_OUT_OF_DATE`, a migration is missing.
+
+> **Media uploads** go from the browser straight to Supabase Storage with a signed upload URL, so
+> they are not limited by the API body size. Images are capped at 10 MB and MP4 videos at 50 MB
+> (the Supabase Free plan's per-upload limit; bucket limit set by migration 0011). If the project moves
+> to a paid plan, raise `MAX_VIDEO_BYTES` and the bucket limit together.
+
 ## Delivery Milestones
 
 - **Milestone 1:** Marketing Site (Foundations, Global Shell, Public Pages, Rooms Catalog)

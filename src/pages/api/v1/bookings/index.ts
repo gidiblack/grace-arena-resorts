@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { buildIlikeOrFilter } from "@/lib/supabase/filters";
+import { REFUND_QUEUE_FILTER } from "@/services/payments/refund-queue";
 import { withApi } from "../_shared/handler";
 import { parsePagination, setPaginationHeaders } from "../_shared/pagination";
 import { generateBookingReference } from "@/domain/booking/reference";
@@ -15,7 +17,8 @@ import { enforceRateLimit } from "../_shared/rate-limit";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { ok, fail } from "@/lib/http/response";
 import { logger } from "@/lib/logger";
-import type { BookingChannel, BookingStatus, Database } from "@/types/db";
+import { recordAuditLog } from "../_shared/audit-log";
+import type { BookingChannel, BookingStatus, PaymentStatus, Database } from "@/types/db";
 
 /** Anti-abuse limits for online bookings (product decision 2026-10-15; reCAPTCHA deferred) */
 export const GUEST_BOOKINGS_PER_IP_PER_HOUR = 10;
@@ -51,7 +54,11 @@ export const createBookingSchema = z.object({
   }),
   dealId: z.guid().optional(),
   promoCode: z.string().trim().min(1).max(40).optional(),
-  paymentMethod: z.enum(["paystack", "cash", "pos"]).optional().default("paystack"),
+  paymentMethod: z
+    .enum(["paystack", "cash", "pos", "bank_transfer"])
+    .optional()
+    .default("paystack"),
+  paymentReference: z.string().trim().max(100).optional(),
   // NDPR: guests consent at checkout because they may not have registered (SRS v1.3)
   privacyConsent: z.boolean().optional(),
 });
@@ -69,7 +76,17 @@ export default withApi(
         return fail(res, "UNAUTHORIZED", "Authentication required to access this resource", 401);
       }
       const { page, limit, offset } = parsePagination(req);
-      const { status, reference, guestEmail } = req.query;
+      const {
+        status,
+        reference,
+        guestEmail,
+        checkInFrom,
+        checkInTo,
+        channel,
+        paymentStatus,
+        refundQueue,
+        q,
+      } = req.query;
 
       const isAdmin = ["resort_admin", "super_admin", "content_manager"].includes(user.role);
 
@@ -91,6 +108,50 @@ export default withApi(
         if (typeof guestEmail === "string" && guestEmail) {
           query = query.eq("guest_email", guestEmail.toLowerCase().trim());
         }
+        if (typeof checkInFrom === "string" && checkInFrom) {
+          query = query.gte("check_in_date", checkInFrom);
+        }
+        if (typeof checkInTo === "string" && checkInTo) {
+          query = query.lte("check_in_date", checkInTo);
+        }
+        if (
+          typeof channel === "string" &&
+          ["online_guest", "online_account", "walk_in"].includes(channel)
+        ) {
+          query = query.eq("channel", channel as BookingChannel);
+        }
+        if (typeof q === "string" && q.trim()) {
+          const term = q.trim();
+          query = query.or(buildIlikeOrFilter(["reference", "guest_name", "guest_email"], term));
+        }
+        const restrictToBookingIds = async (
+          paymentQuery: PromiseLike<{ data: { booking_id: string }[] | null; error: unknown }>
+        ) => {
+          const { data: matchedPayments, error: matchError } = await paymentQuery;
+          if (matchError) throw matchError;
+          const bookingIds = (matchedPayments || []).map((p) => p.booking_id);
+          query = query.in(
+            "id",
+            bookingIds.length > 0 ? bookingIds : ["00000000-0000-0000-0000-000000000000"]
+          );
+        };
+        try {
+          if (refundQueue === "true") {
+            await restrictToBookingIds(
+              supabase.from("payments").select("booking_id").or(REFUND_QUEUE_FILTER)
+            );
+          } else if (typeof paymentStatus === "string" && paymentStatus) {
+            await restrictToBookingIds(
+              supabase
+                .from("payments")
+                .select("booking_id")
+                .eq("status", paymentStatus as PaymentStatus)
+            );
+          }
+        } catch (matchError) {
+          logger.error("Failed to filter bookings by payment", { error: matchError });
+          return fail(res, "DB_ERROR", "Failed to load bookings", 500);
+        }
       }
 
       query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
@@ -109,7 +170,10 @@ export default withApi(
 
       if (bookingIds.length > 0) {
         const [{ data: li }, { data: pm }] = await Promise.all([
-          supabase.from("booking_line_items").select("*").in("booking_id", bookingIds),
+          supabase
+            .from("booking_line_items")
+            .select("*, room_type:room_types(name)")
+            .in("booking_id", bookingIds),
           supabase.from("payments").select("*").in("booking_id", bookingIds),
         ]);
         lineItems = li || [];
@@ -142,7 +206,33 @@ export default withApi(
     const payload = parseResult.data;
     const isAdmin = Boolean(user && ["resort_admin", "super_admin"].includes(user.role));
     const isWalkInAdminBooking =
-      isAdmin && (payload.paymentMethod === "cash" || payload.paymentMethod === "pos");
+      isAdmin && ["cash", "pos", "bank_transfer"].includes(payload.paymentMethod);
+
+    if (isWalkInAdminBooking && payload.paymentMethod === "bank_transfer") {
+      if (!payload.paymentReference || !payload.paymentReference.trim()) {
+        return fail(
+          res,
+          "MISSING_PAYMENT_REFERENCE",
+          "Payment reference is required for bank transfer payments",
+          400
+        );
+      }
+      const { data: existingPayment } = await supabase
+        .from("payments")
+        .select("id")
+        .eq("gateway", "bank_transfer")
+        .eq("gateway_reference", payload.paymentReference.trim())
+        .maybeSingle();
+
+      if (existingPayment) {
+        return fail(
+          res,
+          "DUPLICATE_PAYMENT_REFERENCE",
+          "A payment with this transfer reference already exists",
+          409
+        );
+      }
+    }
 
     // Online bookings: no account or email verification required (SRS v1.3), but consent is
     if (!isWalkInAdminBooking) {
@@ -327,21 +417,45 @@ export default withApi(
       return fail(res, "CREATE_BOOKING_FAILED", "Unable to create booking reservation", 500);
     }
 
-    // 4. Walk-in (cash/POS): record settled payment and send confirmation
+    // 4. Walk-in / Admin booking (cash/POS/bank_transfer): record settled payment, audit log, and send confirmation
     if (isWalkInAdminBooking) {
+      const gatewayRef =
+        payload.paymentMethod === "bank_transfer" && payload.paymentReference
+          ? payload.paymentReference.trim()
+          : `${payload.paymentMethod.toUpperCase()}-WALKIN-${bookingRef}`;
+
       const { error: paymentError } = await supabase.from("payments").insert({
         booking_id: newBooking.id,
         gateway: payload.paymentMethod,
-        gateway_reference: `${payload.paymentMethod.toUpperCase()}-WALKIN-${bookingRef}`,
+        gateway_reference: gatewayRef,
         amount: quote.total,
         currency: "NGN",
         status: "success",
         paid_at: new Date().toISOString(),
-        metadata: { createdByAdmin: user!.id, paymentMethod: payload.paymentMethod },
+        metadata: {
+          createdByAdmin: user!.id,
+          paymentMethod: payload.paymentMethod,
+          reference: gatewayRef,
+        },
       });
       if (paymentError) {
         logger.error("Failed to record walk-in payment", { error: paymentError });
       }
+
+      await recordAuditLog({
+        userId: user!.id,
+        action: "CREATE_ADMIN_BOOKING",
+        entity: "booking",
+        entityId: newBooking.id,
+        newData: {
+          reference: newBooking.reference,
+          total: quote.total,
+          paymentMethod: payload.paymentMethod,
+          gatewayReference: gatewayRef,
+        },
+        req,
+      });
+
       runAfterResponse("walk-in confirmation email", () =>
         sendBookingConfirmationEmail(supabase, newBooking)
       );

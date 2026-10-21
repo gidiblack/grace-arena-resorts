@@ -13,7 +13,20 @@ export type RoomUnitStatus = "available" | "occupied" | "maintenance";
 export type BookingStatus =
   "pending" | "confirmed" | "checked_in" | "checked_out" | "cancelled" | "no_show";
 export type PaymentStatus =
-  "pending" | "success" | "failed" | "refund_pending" | "refunded" | "partially_refunded";
+  | "pending"
+  | "success"
+  | "failed"
+  | "refund_pending"
+  | "refunded"
+  | "partially_refunded"
+  | "refund_failed";
+export type CancellationReason =
+  | "guest_request"
+  | "admin_cancelled"
+  | "payment_timeout"
+  | "payment_after_expiry";
+export type RefundMethod = "paystack" | "bank_transfer" | "cash" | "pos_reversal";
+export type PaymentGateway = "paystack" | "cash" | "pos" | "bank_transfer";
 export type AuthTokenPurpose =
   | "email_verification"
   | "password_reset"
@@ -253,6 +266,10 @@ export interface Database {
           hold_expires_at: string | null;
           channel: BookingChannel;
           privacy_consent_at: string | null;
+          cancellation_reason: CancellationReason | null;
+          cancelled_at: string | null;
+          cancelled_by: string | null;
+          status_changed_by: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -278,6 +295,10 @@ export interface Database {
           hold_expires_at?: string | null;
           channel?: BookingChannel;
           privacy_consent_at?: string | null;
+          cancellation_reason?: CancellationReason | null;
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          status_changed_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -308,6 +329,50 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["booking_line_items"]["Insert"]>;
         Relationships: [];
       };
+      booking_status_history: {
+        Row: {
+          id: string;
+          booking_id: string;
+          from_status: string | null;
+          to_status: string;
+          changed_by: string | null;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          from_status?: string | null;
+          to_status: string;
+          changed_by?: string | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["booking_status_history"]["Insert"]>;
+        Relationships: [];
+      };
+      booking_room_assignments: {
+        Row: {
+          id: string;
+          booking_id: string;
+          booking_line_item_id: string;
+          room_id: string;
+          assigned_by: string | null;
+          assigned_at: string;
+          released_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          booking_line_item_id: string;
+          room_id: string;
+          assigned_by?: string | null;
+          assigned_at?: string;
+          released_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["booking_room_assignments"]["Insert"]>;
+        Relationships: [];
+      };
       payments: {
         Row: {
           id: string;
@@ -321,6 +386,10 @@ export interface Database {
           refunded_at: string | null;
           paid_at: string | null;
           metadata: Json;
+          refund_method: RefundMethod | null;
+          refund_reference: string | null;
+          refund_processed_by: string | null;
+          refund_note: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -336,6 +405,10 @@ export interface Database {
           refunded_at?: string | null;
           paid_at?: string | null;
           metadata?: Json;
+          refund_method?: RefundMethod | null;
+          refund_reference?: string | null;
+          refund_processed_by?: string | null;
+          refund_note?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -863,6 +936,45 @@ export interface Database {
       expire_stale_pending_bookings: {
         Args: Record<string, never>;
         Returns: number;
+      };
+      check_in_booking: {
+        Args: {
+          p_booking_id: string;
+          p_assignments: Json;
+          p_actor: string | null;
+        };
+        Returns: void;
+      };
+      check_out_booking: {
+        Args: {
+          p_booking_id: string;
+          p_actor: string | null;
+        };
+        Returns: void;
+      };
+      record_offline_payment: {
+        Args: {
+          p_booking_id: string;
+          p_method: string;
+          p_amount: number;
+          p_reference: string;
+          p_paid_at: string | null;
+          p_note: string | null;
+          p_actor: string | null;
+        };
+        Returns: Database["public"]["Tables"]["payments"]["Row"];
+      };
+      get_daily_occupancy_rates: {
+        Args: {
+          p_start_date: string;
+          p_end_date: string;
+        };
+        Returns: Array<{
+          stay_date: string;
+          occupied_units: number;
+          total_bookable_units: number;
+          occupancy_rate: number;
+        }>;
       };
     };
     CompositeTypes: Record<string, never>;

@@ -34,12 +34,22 @@ function parseValue(raw: string): any {
   return raw;
 }
 
-/** Splits on commas that are not inside parentheses */
+/** Splits on commas that are not inside parentheses or double-quoted values */
 function splitTopLevel(input: string): string[] {
   const parts: string[] = [];
   let depth = 0;
   let current = "";
+  let quoted = false;
+  let escaped = false;
   for (const ch of input) {
+    if (quoted) {
+      current += ch;
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') quoted = false;
+      continue;
+    }
+    if (ch === '"') quoted = true;
     if (ch === "(") depth++;
     if (ch === ")") depth--;
     if (ch === "," && depth === 0) {
@@ -49,6 +59,24 @@ function splitTopLevel(input: string): string[] {
   }
   if (current) parts.push(current);
   return parts;
+}
+
+/** Strips PostgREST double quotes and unescapes backslash sequences inside them */
+function unquote(raw: string): string {
+  if (raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"')) {
+    return raw.slice(1, -1).replace(/\\(.)/g, "$1");
+  }
+  return raw;
+}
+
+function likeToRegExp(pattern: string): RegExp {
+  return new RegExp(
+    `^${pattern
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      .replace(/%/g, ".*")
+      .replace(/_/g, ".")}$`,
+    "i"
+  );
 }
 
 function parseOrExpression(expr: string): Filter {
@@ -62,8 +90,12 @@ function parseClause(clause: string): Filter {
     return (row) => inner.every((c) => c(row));
   }
   const [column, op, ...rest] = clause.split(".");
-  const value = rest.join(".");
+  const value = unquote(rest.join("."));
   switch (op) {
+    case "ilike": {
+      const re = likeToRegExp(value);
+      return (row) => re.test(String(row[column] ?? ""));
+    }
     case "eq":
       return (row) => String(row[column]) === value;
     case "neq":
@@ -87,9 +119,25 @@ function parseClause(clause: string): Filter {
   }
 }
 
+export const FAKE_STORAGE_URL = "https://fake.supabase.test/storage/v1";
+
 export class FakeSupabase {
   tables: Record<string, Row[]> = {};
   rpcHandlers: Record<string, (args: any) => Result | Promise<Result>> = {};
+  /** Storage objects keyed by "<bucket>/<path>"; read back via storageFetch for public URLs */
+  storageObjects = new Map<string, { bytes: Uint8Array }>();
+
+  putStorageObject(bucket: string, path: string, bytes: Uint8Array) {
+    this.storageObjects.set(`${bucket}/${path}`, { bytes });
+  }
+
+  /** fetch stand-in serving public and signed object URLs from storageObjects */
+  storageFetch = async (url: string): Promise<Response> => {
+    const match = url.match(/\/object\/(?:public|sign)\/([^?]+)/);
+    const object = match ? this.storageObjects.get(decodeURIComponent(match[1])) : undefined;
+    if (!object) return new Response(null, { status: 404 });
+    return new Response(new Blob([object.bytes as BlobPart]), { status: 200 });
+  };
   authUsers: Array<{
     id: string;
     email: string;
@@ -123,6 +171,35 @@ export class FakeSupabase {
   get client(): any {
     return {
       from: (table: string) => new QueryBuilder(this, table),
+      storage: {
+        from: (bucket: string) => ({
+          createSignedUploadUrl: async (path: string) => ({
+            data: {
+              path,
+              token: `token-${path}`,
+              signedUrl: `${FAKE_STORAGE_URL}/object/upload/sign/${bucket}/${path}?token=t`,
+            },
+            error: null,
+          }),
+          info: async (path: string) => {
+            const object = this.storageObjects.get(`${bucket}/${path}`);
+            return object
+              ? { data: { name: path, size: object.bytes.length }, error: null }
+              : { data: null, error: { message: "Object not found" } };
+          },
+          createSignedUrl: async (path: string) => ({
+            data: { signedUrl: `${FAKE_STORAGE_URL}/object/sign/${bucket}/${path}?token=t` },
+            error: null,
+          }),
+          getPublicUrl: (path: string) => ({
+            data: { publicUrl: `${FAKE_STORAGE_URL}/object/public/${bucket}/${path}` },
+          }),
+          remove: async (paths: string[]) => {
+            for (const path of paths) this.storageObjects.delete(`${bucket}/${path}`);
+            return { data: paths.map((name) => ({ name })), error: null };
+          },
+        }),
+      },
       rpc: async (name: string, args: any) => {
         const handler = this.rpcHandlers[name];
         if (!handler) return { data: null, error: { message: `no rpc ${name}` }, status: 404 };
@@ -284,14 +361,15 @@ class QueryBuilder implements PromiseLike<Result> {
     this.filters.push((r) => r[column] != null && compare(r[column], value) <= 0);
     return this;
   }
-  ilike(column: string, pattern: string) {
-    const re = new RegExp(
-      `^${pattern
-        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-        .replace(/%/g, ".*")
-        .replace(/_/g, ".")}$`,
-      "i"
+  /** Array column contains every given value (PostgREST cs) */
+  contains(column: string, values: any[]) {
+    this.filters.push(
+      (r) => Array.isArray(r[column]) && values.every((v) => r[column].includes(v))
     );
+    return this;
+  }
+  ilike(column: string, pattern: string) {
+    const re = likeToRegExp(pattern);
     this.filters.push((r) => re.test(String(r[column] ?? "")));
     return this;
   }
