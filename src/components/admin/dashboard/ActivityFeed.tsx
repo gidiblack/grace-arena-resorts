@@ -1,5 +1,5 @@
-import React from "react";
-import { Box, Flex, HStack, VStack, Text, Heading, Badge, Icon, Spinner } from "@chakra-ui/react";
+import React, { useState } from "react";
+import { Box, Flex, HStack, VStack, Text, Heading, Badge, Icon, Spinner, Link } from "@chakra-ui/react";
 import { FaExchangeAlt, FaEnvelope, FaCalendarCheck, FaShieldAlt, FaClock } from "react-icons/fa";
 
 export interface ActivityItem {
@@ -52,6 +52,10 @@ function formatRelativeTime(isoString: string): string {
 }
 
 export function ActivityFeed({ activities, isLoading = false }: ActivityFeedProps) {
+  const [visibleCount, setVisibleCount] = useState(5);
+
+  const displayedActivities = activities.slice(0, visibleCount);
+
   return (
     <Box bg="white" p={6} borderRadius="lg" borderWidth="1px" borderColor="gray.200" boxShadow="sm">
       <Flex justify="space-between" align="center" mb={4}>
@@ -64,7 +68,7 @@ export function ActivityFeed({ activities, isLoading = false }: ActivityFeedProp
           </Text>
         </Box>
         <Badge colorPalette="gray" variant="subtle" fontSize="xs">
-          Last 10 events
+          {visibleCount === 5 && activities.length > 5 ? "Last 5 events" : `Last ${displayedActivities.length} events`}
         </Badge>
       </Flex>
 
@@ -79,64 +83,96 @@ export function ActivityFeed({ activities, isLoading = false }: ActivityFeedProp
           </Text>
         </Flex>
       ) : (
-        <VStack align="stretch" gap={0}>
-          {activities.map((item) => {
-            const { icon, colorPalette } = getEventIconAndColor(item.type);
-            const timeAgo = formatRelativeTime(item.timestamp);
+        <>
+          <VStack align="stretch" gap={0}>
+            {displayedActivities.map((item) => {
+              const { icon, colorPalette } = getEventIconAndColor(item.type);
+              const timeAgo = formatRelativeTime(item.timestamp);
 
-            return (
-              <Flex
-                key={item.id}
-                justify="space-between"
-                align="flex-start"
-                py={2.5}
-                borderBottomWidth="1px"
-                borderColor="gray.100"
-                gap={3}
-              >
-                <HStack align="flex-start" gap={3} flex="1" minW={0}>
-                  <Flex
-                    w={8}
-                    h={8}
-                    borderRadius="full"
-                    bg={`${colorPalette}.50`}
-                    color={`${colorPalette}.600`}
-                    align="center"
-                    justify="center"
-                    flexShrink={0}
-                    mt={0.5}
-                  >
-                    <Icon as={icon} boxSize={3.5} />
-                  </Flex>
+              return (
+                <Flex
+                  key={item.id}
+                  justify="space-between"
+                  align="flex-start"
+                  py={2.5}
+                  borderBottomWidth="1px"
+                  borderColor="gray.100"
+                  gap={3}
+                >
+                  <HStack align="flex-start" gap={3} flex="1" minW={0}>
+                    <Flex
+                      w={8}
+                      h={8}
+                      borderRadius="full"
+                      bg={`${colorPalette}.50`}
+                      color={`${colorPalette}.600`}
+                      align="center"
+                      justify="center"
+                      flexShrink={0}
+                      mt={0.5}
+                    >
+                      <Icon as={icon} boxSize={3.5} />
+                    </Flex>
 
-                  <Box flex="1" minW={0}>
-                    <HStack gap={2} wrap="wrap">
-                      <Text fontSize="xs" fontWeight="bold" color="gray.800" lineClamp={1}>
-                        {item.title}
+                    <Box flex="1" minW={0}>
+                      <HStack gap={2} wrap="wrap">
+                        <Text fontSize="xs" fontWeight="bold" color="gray.800" lineClamp={1}>
+                          {item.title}
+                        </Text>
+                        <Badge
+                          fontSize="10px"
+                          colorPalette={item.actor === "System" ? "gray" : "blue"}
+                          variant="subtle"
+                          borderRadius="full"
+                          px={1.5}
+                        >
+                          {item.actor}
+                        </Badge>
+                      </HStack>
+                      <Text fontSize="xs" color="gray.600" mt={0.5}>
+                        {item.description}
                       </Text>
-                      <Badge
-                        fontSize="10px"
-                        colorPalette={item.actor === "System" ? "gray" : "blue"}
-                        variant="subtle"
-                        borderRadius="full"
-                        px={1.5}
-                      >
-                        {item.actor}
-                      </Badge>
-                    </HStack>
-                    <Text fontSize="xs" color="gray.600" mt={0.5}>
-                      {item.description}
-                    </Text>
-                  </Box>
-                </HStack>
+                    </Box>
+                  </HStack>
 
-                <Text fontSize="11px" color="gray.400" whiteSpace="nowrap" flexShrink={0}>
-                  {timeAgo}
-                </Text>
-              </Flex>
-            );
-          })}
-        </VStack>
+                  <Text fontSize="11px" color="gray.400" whiteSpace="nowrap" flexShrink={0}>
+                    {timeAgo}
+                  </Text>
+                </Flex>
+              );
+            })}
+          </VStack>
+
+          {activities.length > 5 && (
+            <Flex justify="center" pt={3} borderTopWidth="1px" borderColor="gray.100" mt={2}>
+              {visibleCount < activities.length ? (
+                <Link
+                  as="button"
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  color="blue.600"
+                  _hover={{ textDecoration: "underline", color: "blue.700" }}
+                  cursor="pointer"
+                  onClick={() => setVisibleCount((prev) => Math.min(prev + 5, activities.length))}
+                >
+                  Show more
+                </Link>
+              ) : (
+                <Link
+                  as="button"
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  color="gray.500"
+                  _hover={{ textDecoration: "underline", color: "gray.700" }}
+                  cursor="pointer"
+                  onClick={() => setVisibleCount(5)}
+                >
+                  Show less
+                </Link>
+              )}
+            </Flex>
+          )}
+        </>
       )}
     </Box>
   );

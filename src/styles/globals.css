@@ -46,6 +46,11 @@ main {
   position: relative;
 }
 
+/* Allow admin layout main area to flex-shrink and scroll without clipping bottom */
+[data-theme="light"] main {
+  min-height: 0 !important;
+}
+
 /* Form Inputs & Placeholders Visibility */
 input::placeholder,
 textarea::placeholder {

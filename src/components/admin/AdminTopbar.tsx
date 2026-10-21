@@ -88,28 +88,29 @@ export function AdminTopbar({
       as="header"
       align="center"
       justify="space-between"
-      px={6}
+      px={{ base: 3, sm: 4, md: 6 }}
       py={3}
       bg="white"
       borderBottom="1px solid"
       borderColor="gray.200"
+      flexShrink={0}
       position="sticky"
       top={0}
-      zIndex={100}
+      zIndex={20}
     >
-      <HStack gap={3}>
+      <HStack gap={{ base: 2, md: 3 }}>
         {onToggleSidebar && (
           <IconButton
             aria-label="Toggle sidebar"
             variant="ghost"
-            display={{ base: "inline-flex", md: "none" }}
+            display={{ base: "inline-flex", xl: "none" }}
             onClick={onToggleSidebar}
             size="sm"
           >
             <Icon as={FaBars} />
           </IconButton>
         )}
-        <HStack gap={2}>
+        <HStack gap={2} display={{ base: "none", md: "flex" }}>
           <Text fontWeight="semibold" color="gray.800" fontSize="sm">
             {user.fullName || user.email}
           </Text>
@@ -126,18 +127,19 @@ export function AdminTopbar({
         </HStack>
       </HStack>
 
-      <HStack gap={4}>
+      <HStack gap={{ base: 2, sm: 3, md: 4 }}>
         <Link
           href="/"
           target="_blank"
           rel="noopener noreferrer"
+          aria-label="View Site"
           display="flex"
           alignItems="center"
           fontSize="xs"
           color="gray.600"
           _hover={{ color: "blue.600", textDecoration: "none" }}
         >
-          <Text mr={1.5}>View Site</Text>
+          <Text mr={1.5} display={{ base: "none", sm: "inline" }}>View Site</Text>
           <Icon as={FaExternalLinkAlt} boxSize={2.5} />
         </Link>
 
@@ -196,7 +198,9 @@ export function AdminTopbar({
         </Menu.Root>
 
         <Button
-          size="sm"
+          aria-label="Logout"
+          size={{ base: "xs", md: "sm" }}
+          px={{ base: 2.5, md: 3 }}
           variant="outline"
           colorPalette="gray"
           onClick={handleLogout}
