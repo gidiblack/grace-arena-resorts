@@ -3,6 +3,7 @@ import { Box, Flex, HStack, Icon, Image, SimpleGrid, Stack, Text, Badge } from "
 import PageWrapper from "@/components/layout/PageWrapper";
 import { generateRestaurantJsonLd } from "@/lib/seo/meta";
 import dining from "@/assets/dining.jpg";
+import diningPlaceholder from "@/assets/dining.jpg";
 import hut from "@/assets/hut.jpg";
 import elysian from "@/assets/gar-elysian.jpg";
 import village from "@/assets/gar-village.jpg";
@@ -458,42 +459,64 @@ export default function RestaurantsPage() {
                     {items.map((item, idx) => (
                       <Flex
                         key={idx}
-                        justify="space-between"
-                        align="flex-start"
-                        p={3.5}
+                        direction="row"
+                        align="stretch"
                         borderRadius="12px"
                         bg="#1E293B"
-                        gap={4}
+                        border="1px solid #334155"
+                        overflow="hidden"
+                        transition="all 0.2s ease"
+                        _hover={{ borderColor: "accent.500" }}
                       >
-                        <Stack gap={1}>
-                          <HStack gap={2}>
-                            <Text fontSize="15px" fontWeight="bold" color="white">
-                              {item.name}
-                            </Text>
-                            {item.dietary === "Chef Special" && (
-                              <Badge bg="accent.500" color="black" fontSize="9px">
-                                Chef Choice
-                              </Badge>
-                            )}
-                            {item.dietary === "Spicy" && (
-                              <Icon as={FaPepperHot} color="red.400" boxSize={3} />
-                            )}
-                            {item.dietary === "Vegetarian" && (
-                              <Icon as={FaLeaf} color="green.400" boxSize={3} />
-                            )}
-                          </HStack>
-                          <Text fontSize="12px" color="gray.300" lineHeight="tall">
-                            {item.desc}
-                          </Text>
-                        </Stack>
-                        <Text
-                          fontSize="16px"
-                          fontWeight="bold"
-                          color="accent.500"
-                          whiteSpace="nowrap"
+                        <Image
+                          src={diningPlaceholder.src}
+                          alt={item.name}
+                          w={{ base: "90px", sm: "115px", md: "120px" }}
+                          h="auto"
+                          minH={{ base: "95px", sm: "105px" }}
+                          objectFit="cover"
+                          flexShrink={0}
+                        />
+                        <Flex
+                          flex={1}
+                          justify="space-between"
+                          align="center"
+                          p={{ base: 3, sm: 4 }}
+                          gap={3}
+                          minW={0}
                         >
-                          ₦{item.priceNgn.toLocaleString()}
-                        </Text>
+                          <Stack gap={1} flex={1} minW={0}>
+                            <HStack gap={2} flexWrap="wrap">
+                              <Text fontSize="15px" fontWeight="bold" color="white">
+                                {item.name}
+                              </Text>
+                              {item.dietary === "Chef Special" && (
+                                <Badge bg="accent.500" color="black" fontSize="9px">
+                                  Chef Choice
+                                </Badge>
+                              )}
+                              {item.dietary === "Spicy" && (
+                                <Icon as={FaPepperHot} color="red.400" boxSize={3} />
+                              )}
+                              {item.dietary === "Vegetarian" && (
+                                <Icon as={FaLeaf} color="green.400" boxSize={3} />
+                              )}
+                            </HStack>
+                            <Text fontSize="12px" color="gray.300" lineHeight="tall">
+                              {item.desc}
+                            </Text>
+                          </Stack>
+                          <Text
+                            fontSize="16px"
+                            fontWeight="bold"
+                            color="accent.500"
+                            whiteSpace="nowrap"
+                            pl={2}
+                            flexShrink={0}
+                          >
+                            ₦{item.priceNgn.toLocaleString()}
+                          </Text>
+                        </Flex>
                       </Flex>
                     ))}
                   </SimpleGrid>

@@ -21,7 +21,7 @@ import { AiOutlineClose, AiOutlineMenu } from "react-icons/ai";
 import Button from "../ui/button";
 import { ROUTES } from "@/constants/ROUTES";
 import { showActionLoading, hideActionLoading } from "@/components/common/ActionLoadingOverlay";
-import { FaWhatsapp, FaUser, FaCalendarCheck, FaSignOutAlt } from "react-icons/fa";
+import { FaWhatsapp, FaUser, FaCalendarCheck, FaSignOutAlt, FaTachometerAlt } from "react-icons/fa";
 
 const NAV_ITEMS = [
   { label: "Home", href: ROUTES.home },
@@ -46,6 +46,7 @@ interface UserNavProfile {
   id: string;
   email: string;
   fullName?: string | null;
+  role?: string | null;
 }
 
 function getInitials(name?: string | null, email?: string | null): string {
@@ -113,6 +114,7 @@ export const Navbar = () => {
             id: json.data.id,
             email: json.data.email,
             fullName: json.data.fullName || json.data.full_name || null,
+            role: json.data.role || null,
           });
         } else if (isMounted) {
           setUser(null);
@@ -350,6 +352,31 @@ export const Navbar = () => {
 
                     {/* Nav Items */}
                     <Box py={1}>
+                      {Boolean(
+                        user.role &&
+                          ["content_manager", "resort_admin", "super_admin"].includes(user.role)
+                      ) && (
+                        <NextLink
+                          href={ROUTES.admin}
+                          onClick={() => setIsUserMenuOpen(false)}
+                          style={{ textDecoration: "none" }}
+                        >
+                          <Flex
+                            align="center"
+                            gap={2.5}
+                            px={4}
+                            py={2}
+                            fontSize="13px"
+                            color="gray.200"
+                            _hover={{ bg: "rgba(255, 255, 255, 0.08)", color: "accent.500" }}
+                            transition="all 0.15s"
+                          >
+                            <Icon as={FaTachometerAlt} boxSize={3.5} color="accent.500" />
+                            <Text fontWeight="medium">Admin Dashboard</Text>
+                          </Flex>
+                        </NextLink>
+                      )}
+
                       <NextLink
                         href={ROUTES.account}
                         onClick={() => setIsUserMenuOpen(false)}
@@ -601,6 +628,28 @@ export const Navbar = () => {
                         </Box>
                       </HStack>
                       <VStack align="stretch" gap={1}>
+                        {Boolean(
+                          user.role &&
+                            ["content_manager", "resort_admin", "super_admin"].includes(user.role)
+                        ) && (
+                          <NextLink
+                            href={ROUTES.admin}
+                            onClick={onClose}
+                            style={{
+                              padding: "8px 10px",
+                              borderRadius: "6px",
+                              color: "#F1F5F9",
+                              textDecoration: "none",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              fontSize: "13px",
+                            }}
+                          >
+                            <Icon as={FaTachometerAlt} boxSize={3.5} color="accent.500" />
+                            <Text fontWeight="medium">Admin Dashboard</Text>
+                          </NextLink>
+                        )}
                         <NextLink
                           href={ROUTES.account}
                           onClick={onClose}

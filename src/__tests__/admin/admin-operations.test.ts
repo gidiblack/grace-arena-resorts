@@ -118,6 +118,7 @@ function installAdminRpcs() {
   };
 }
 
+const SUPER_ADMIN_ID = "11111111-1111-1111-1111-111111111101";
 const CONTENT_MANAGER_ID = "22222222-2222-2222-2222-222222222201";
 const RESORT_ADMIN_ID = "33333333-3333-3333-3333-333333333301";
 const GUEST_ID = "44444444-4444-4444-4444-444444444401";
@@ -145,6 +146,7 @@ function seedUser(id: string, email: string, role: UserRole) {
 }
 
 describe("Step 12: Admin Operations & RBAC Protection", () => {
+  let superAdminToken: string;
   let contentManagerToken: string;
   let resortAdminToken: string;
   let guestToken: string;
@@ -154,6 +156,7 @@ describe("Step 12: Admin Operations & RBAC Protection", () => {
     vi.clearAllMocks();
     db.current = new FakeSupabase();
 
+    superAdminToken = seedUser(SUPER_ADMIN_ID, "super@gracearena.com", "super_admin");
     contentManagerToken = seedUser(CONTENT_MANAGER_ID, "cm@gracearena.com", "content_manager");
     resortAdminToken = seedUser(RESORT_ADMIN_ID, "admin@gracearena.com", "resort_admin");
     guestToken = seedUser(GUEST_ID, "guest@example.com", "guest");
@@ -315,7 +318,7 @@ describe("Step 12: Admin Operations & RBAC Protection", () => {
       expect(data.notificationBell.refundsToProcess).toBeUndefined();
     });
 
-    it("returns full financial metrics for Resort Admin", async () => {
+    it("omits revenue for Resort Admin (financial metrics restricted to Super Admin)", async () => {
       const nowIso = new Date().toISOString();
       db.current.seed("bookings", [
         {
@@ -337,6 +340,37 @@ describe("Step 12: Admin Operations & RBAC Protection", () => {
       const call = mockApiCall({
         method: "GET",
         headers: { authorization: `Bearer ${resortAdminToken}` },
+      });
+      await adminSummaryHandler(call.req, call.res);
+
+      expect(call.status()).toBe(200);
+      const data = call.body().data;
+      expect(data.bookings).toBeDefined();
+      expect(data.revenue).toBeUndefined();
+    });
+
+    it("returns full financial metrics for Super Admin", async () => {
+      const nowIso = new Date().toISOString();
+      db.current.seed("bookings", [
+        {
+          id: "bk-2",
+          reference: "GAR-TEST-0002",
+          status: "confirmed",
+          created_at: nowIso,
+        },
+      ]);
+      db.current.seed("payments", [
+        {
+          id: "pm-2",
+          amount: 120000,
+          status: "success",
+          paid_at: nowIso,
+        },
+      ]);
+
+      const call = mockApiCall({
+        method: "GET",
+        headers: { authorization: `Bearer ${superAdminToken}` },
       });
       await adminSummaryHandler(call.req, call.res);
 
@@ -400,7 +434,16 @@ describe("Step 12: Admin Operations & RBAC Protection", () => {
       expect(data.timeline).toBeInstanceOf(Array);
     });
 
-    it("allows Resort Admin to access revenue analytics", async () => {
+    it("forbids Resort Admin from accessing revenue analytics (403, super_admin only)", async () => {
+      const call = mockApiCall({
+        method: "GET",
+        headers: { authorization: `Bearer ${resortAdminToken}` },
+      });
+      await analyticsRevenueHandler(call.req, call.res);
+      expect(call.status()).toBe(403);
+    });
+
+    it("allows Super Admin to access revenue analytics", async () => {
       db.current.seed("payments", [
         {
           id: "p-admin-1",
@@ -413,7 +456,7 @@ describe("Step 12: Admin Operations & RBAC Protection", () => {
 
       const call = mockApiCall({
         method: "GET",
-        headers: { authorization: `Bearer ${resortAdminToken}` },
+        headers: { authorization: `Bearer ${superAdminToken}` },
       });
       await analyticsRevenueHandler(call.req, call.res);
 

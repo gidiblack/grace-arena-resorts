@@ -57,6 +57,7 @@ export const getServerSideProps: GetServerSideProps<AdminDashboardProps> = async
 
 export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
   const isContentManager = adminUser.role === "content_manager";
+  const isSuperAdmin = adminUser.role === "super_admin";
 
   const [summary, setSummary] = useState<AdminSummaryData | null>(null);
   const [bookingsAnalytics, setBookingsAnalytics] = useState<AnalyticsBookingsData | null>(null);
@@ -79,19 +80,25 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
           }
         }
 
-        // 2. Financial & operational analytics only for Resort Admin+
+        // 2. Operational & financial analytics for Resort Admin+
         if (!isContentManager) {
-          const [bRes, rRes, oRes] = await Promise.all([
+          const fetchPromises: Promise<Response>[] = [
             fetch("/api/v1/analytics/bookings"),
-            fetch("/api/v1/analytics/revenue"),
             fetch("/api/v1/analytics/occupancy"),
-          ]);
+          ];
+          if (isSuperAdmin) {
+            fetchPromises.push(fetch("/api/v1/analytics/revenue"));
+          }
+
+          const responses = await Promise.all(fetchPromises);
+          const [bRes, oRes] = responses;
+          const rRes = isSuperAdmin ? responses[2] : null;
 
           if (bRes.ok) {
             const bJson = await bRes.json();
             if (isSubscribed && bJson.data) setBookingsAnalytics(bJson.data);
           }
-          if (rRes.ok) {
+          if (rRes && rRes.ok) {
             const rJson = await rRes.json();
             if (isSubscribed && rJson.data) setRevenueAnalytics(rJson.data);
           }
@@ -111,7 +118,7 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
     return () => {
       isSubscribed = false;
     };
-  }, [isContentManager]);
+  }, [isContentManager, isSuperAdmin]);
 
   // Combine bookings & revenue timelines for chart
   const combinedTimeline: TimelineDataPoint[] = React.useMemo(() => {
@@ -189,8 +196,7 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
               <Icon as={FaExclamationCircle} color="blue.500" boxSize={4} flexShrink={0} />
               <Text fontSize="xs" color="blue.800">
                 You are signed in as <strong>Content Manager</strong> with non-financial view
-                privileges. Financial metrics, revenue analytics, and occupancy reports are
-                restricted to Resort Administrators and Super Admins.
+                privileges. Financial metrics and revenue analytics are restricted to Super Admins.
               </Text>
             </HStack>
           </Box>
@@ -198,11 +204,11 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
 
         {/* Primary Metric Cards Grid */}
         <SimpleGrid
-          columns={{ base: 1, sm: 2, lg: isContentManager ? 4 : 3, xl: isContentManager ? 4 : 6 }}
+          columns={{ base: 1, sm: 2, lg: !isSuperAdmin ? 4 : 3, xl: !isSuperAdmin ? 5 : 6 }}
           gap={4}
         >
-          {/* Revenue Card (Resort Admin+ only) */}
-          {!isContentManager && (
+          {/* Revenue Card (Super Admin only) */}
+          {isSuperAdmin && (
             <MetricCard
               title="Net Revenue (Month)"
               value={formatNgn(
@@ -315,7 +321,11 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
         {!isContentManager && (
           <>
             {/* 30-Day Trends Chart */}
-            <BookingsRevenueChart data={combinedTimeline} isLoading={isLoading} />
+            <BookingsRevenueChart
+              data={combinedTimeline}
+              isLoading={isLoading}
+              showRevenue={isSuperAdmin}
+            />
 
             {/* Occupancy Heatmap */}
             <OccupancyHeatmap
@@ -396,101 +406,103 @@ export default function AdminDashboardPage({ adminUser }: AdminDashboardProps) {
               </Box>
             </SimpleGrid>
 
-            {/* Gateway & Room Type Revenue Tables */}
-            <SimpleGrid columns={{ base: 1, lg: 2 }} gap={6}>
-              {/* Gateway Breakdown */}
-              <Box
-                bg="white"
-                p={5}
-                borderRadius="lg"
-                borderWidth="1px"
-                borderColor="gray.200"
-                boxShadow="sm"
-              >
-                <HStack gap={2} mb={4}>
-                  <Icon as={FaCreditCard} color="blue.500" />
-                  <Heading size="sm" color="gray.800">
-                    Revenue by Payment Gateway
-                  </Heading>
-                </HStack>
-                <Table.Root size="sm">
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.ColumnHeader>Gateway</Table.ColumnHeader>
-                      <Table.ColumnHeader textAlign="right">Payments</Table.ColumnHeader>
-                      <Table.ColumnHeader textAlign="right">Gross</Table.ColumnHeader>
-                      <Table.ColumnHeader textAlign="right">Refunds</Table.ColumnHeader>
-                      <Table.ColumnHeader textAlign="right">Net Revenue</Table.ColumnHeader>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {(revenueAnalytics?.gatewayBreakdown || []).map((gw) => (
-                      <Table.Row key={gw.gateway}>
-                        <Table.Cell fontWeight="medium" textTransform="capitalize">
-                          {gw.gateway.replace("_", " ")}
-                        </Table.Cell>
-                        <Table.Cell textAlign="right">{gw.paymentCount}</Table.Cell>
-                        <Table.Cell textAlign="right">{formatNgn(gw.grossRevenue)}</Table.Cell>
-                        <Table.Cell
-                          textAlign="right"
-                          color={gw.refunds > 0 ? "red.500" : undefined}
-                        >
-                          {gw.refunds > 0 ? `-${formatNgn(gw.refunds)}` : "₦0"}
-                        </Table.Cell>
-                        <Table.Cell textAlign="right" fontWeight="bold" color="green.600">
-                          {formatNgn(gw.netRevenue)}
-                        </Table.Cell>
-                      </Table.Row>
-                    ))}
-                  </Table.Body>
-                </Table.Root>
-              </Box>
-
-              {/* Revenue by Room Type */}
-              <Box
-                bg="white"
-                p={5}
-                borderRadius="lg"
-                borderWidth="1px"
-                borderColor="gray.200"
-                boxShadow="sm"
-              >
-                <HStack gap={2} mb={4}>
-                  <Icon as={FaDoorOpen} color="teal.500" />
-                  <Heading size="sm" color="gray.800">
-                    Revenue by Room Type
-                  </Heading>
-                </HStack>
-                <Table.Root size="sm">
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.ColumnHeader>Room Type</Table.ColumnHeader>
-                      <Table.ColumnHeader textAlign="right">Bookings</Table.ColumnHeader>
-                      <Table.ColumnHeader textAlign="right">Net Revenue</Table.ColumnHeader>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {(revenueAnalytics?.roomTypeBreakdown || []).length === 0 ? (
+            {/* Gateway & Room Type Revenue Tables (Super Admin only) */}
+            {isSuperAdmin && (
+              <SimpleGrid columns={{ base: 1, lg: 2 }} gap={6}>
+                {/* Gateway Breakdown */}
+                <Box
+                  bg="white"
+                  p={5}
+                  borderRadius="lg"
+                  borderWidth="1px"
+                  borderColor="gray.200"
+                  boxShadow="sm"
+                >
+                  <HStack gap={2} mb={4}>
+                    <Icon as={FaCreditCard} color="blue.500" />
+                    <Heading size="sm" color="gray.800">
+                      Revenue by Payment Gateway
+                    </Heading>
+                  </HStack>
+                  <Table.Root size="sm">
+                    <Table.Header>
                       <Table.Row>
-                        <Table.Cell colSpan={3} textAlign="center" color="gray.400" py={4}>
-                          No room revenue recorded yet
-                        </Table.Cell>
+                        <Table.ColumnHeader>Gateway</Table.ColumnHeader>
+                        <Table.ColumnHeader textAlign="right">Payments</Table.ColumnHeader>
+                        <Table.ColumnHeader textAlign="right">Gross</Table.ColumnHeader>
+                        <Table.ColumnHeader textAlign="right">Refunds</Table.ColumnHeader>
+                        <Table.ColumnHeader textAlign="right">Net Revenue</Table.ColumnHeader>
                       </Table.Row>
-                    ) : (
-                      (revenueAnalytics?.roomTypeBreakdown || []).map((rt) => (
-                        <Table.Row key={rt.roomTypeId}>
-                          <Table.Cell fontWeight="medium">{rt.roomTypeName}</Table.Cell>
-                          <Table.Cell textAlign="right">{rt.bookingsCount}</Table.Cell>
-                          <Table.Cell textAlign="right" fontWeight="bold" color="teal.600">
-                            {formatNgn(rt.revenue)}
+                    </Table.Header>
+                    <Table.Body>
+                      {(revenueAnalytics?.gatewayBreakdown || []).map((gw) => (
+                        <Table.Row key={gw.gateway}>
+                          <Table.Cell fontWeight="medium" textTransform="capitalize">
+                            {gw.gateway.replace("_", " ")}
+                          </Table.Cell>
+                          <Table.Cell textAlign="right">{gw.paymentCount}</Table.Cell>
+                          <Table.Cell textAlign="right">{formatNgn(gw.grossRevenue)}</Table.Cell>
+                          <Table.Cell
+                            textAlign="right"
+                            color={gw.refunds > 0 ? "red.500" : undefined}
+                          >
+                            {gw.refunds > 0 ? `-${formatNgn(gw.refunds)}` : "₦0"}
+                          </Table.Cell>
+                          <Table.Cell textAlign="right" fontWeight="bold" color="green.600">
+                            {formatNgn(gw.netRevenue)}
                           </Table.Cell>
                         </Table.Row>
-                      ))
-                    )}
-                  </Table.Body>
-                </Table.Root>
-              </Box>
-            </SimpleGrid>
+                      ))}
+                    </Table.Body>
+                  </Table.Root>
+                </Box>
+
+                {/* Revenue by Room Type */}
+                <Box
+                  bg="white"
+                  p={5}
+                  borderRadius="lg"
+                  borderWidth="1px"
+                  borderColor="gray.200"
+                  boxShadow="sm"
+                >
+                  <HStack gap={2} mb={4}>
+                    <Icon as={FaDoorOpen} color="teal.500" />
+                    <Heading size="sm" color="gray.800">
+                      Revenue by Room Type
+                    </Heading>
+                  </HStack>
+                  <Table.Root size="sm">
+                    <Table.Header>
+                      <Table.Row>
+                        <Table.ColumnHeader>Room Type</Table.ColumnHeader>
+                        <Table.ColumnHeader textAlign="right">Bookings</Table.ColumnHeader>
+                        <Table.ColumnHeader textAlign="right">Net Revenue</Table.ColumnHeader>
+                      </Table.Row>
+                    </Table.Header>
+                    <Table.Body>
+                      {(revenueAnalytics?.roomTypeBreakdown || []).length === 0 ? (
+                        <Table.Row>
+                          <Table.Cell colSpan={3} textAlign="center" color="gray.400" py={4}>
+                            No room revenue recorded yet
+                          </Table.Cell>
+                        </Table.Row>
+                      ) : (
+                        (revenueAnalytics?.roomTypeBreakdown || []).map((rt) => (
+                          <Table.Row key={rt.roomTypeId}>
+                            <Table.Cell fontWeight="medium">{rt.roomTypeName}</Table.Cell>
+                            <Table.Cell textAlign="right">{rt.bookingsCount}</Table.Cell>
+                            <Table.Cell textAlign="right" fontWeight="bold" color="teal.600">
+                              {formatNgn(rt.revenue)}
+                            </Table.Cell>
+                          </Table.Row>
+                        ))
+                      )}
+                    </Table.Body>
+                  </Table.Root>
+                </Box>
+              </SimpleGrid>
+            )}
           </>
         )}
 

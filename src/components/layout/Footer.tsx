@@ -147,8 +147,8 @@ export const Footer = () => {
                 Subscribe to GAR Special Retreats &amp; Deals
               </Text>
               <Text fontSize="14px" color="gray.300">
-                Receive updates on seasonal specials, spiritual retreat schedules, and campus
-                additions.
+                Be the first to hear about special offers, upcoming spiritual retreats, events, and
+                new experiences at Grace Arena Resorts.
               </Text>
             </Stack>
 

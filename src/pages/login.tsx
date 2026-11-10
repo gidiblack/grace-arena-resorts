@@ -44,8 +44,17 @@ export default function LoginPage() {
         return;
       }
 
-      // Successful login -> route to redirect URL or default
-      router.push(redirectUrl);
+      // Successful login -> route admin users directly to dashboard, guests to redirect URL or account
+      const userRole = data.data?.user?.role;
+      const isAdmin = ["content_manager", "resort_admin", "super_admin"].includes(userRole);
+
+      if (isAdmin) {
+        const hasSpecificNonAccountRedirect =
+          router.query.redirect && !redirectUrl.startsWith("/account");
+        router.push(hasSpecificNonAccountRedirect ? redirectUrl : ROUTES.admin);
+      } else {
+        router.push(redirectUrl);
+      }
     } catch {
       setErrorMsg("Network error occurred. Please check your connection and try again.");
       setIsLoading(false);

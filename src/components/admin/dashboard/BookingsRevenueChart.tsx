@@ -26,17 +26,23 @@ export interface TimelineDataPoint {
 export interface BookingsRevenueChartProps {
   data: TimelineDataPoint[];
   isLoading?: boolean;
+  showRevenue?: boolean;
 }
 
 const emptySubscribe = () => () => {};
 
-export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenueChartProps) {
+export function BookingsRevenueChart({
+  data,
+  isLoading = false,
+  showRevenue = true,
+}: BookingsRevenueChartProps) {
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
     () => false
   );
   const [viewMode, setViewMode] = useState<"both" | "bookings" | "revenue">("both");
+  const effectiveViewMode = showRevenue ? viewMode : "bookings";
 
   const formattedData = data.map((d) => {
     // Format YYYY-MM-DD to "MMM D" e.g. "Oct 12"
@@ -77,36 +83,40 @@ export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenu
             30-Day Performance Trends
           </Heading>
           <Text fontSize="xs" color="gray.500" mt={1}>
-            Daily booking volume and net revenue in West Africa Time (WAT)
+            {showRevenue
+              ? "Daily booking volume and net revenue in West Africa Time (WAT)"
+              : "Daily booking volume in West Africa Time (WAT)"}
           </Text>
         </Box>
 
-        <HStack gap={2}>
-          <Button
-            size="xs"
-            variant={viewMode === "both" ? "solid" : "outline"}
-            colorPalette="blue"
-            onClick={() => setViewMode("both")}
-          >
-            Both
-          </Button>
-          <Button
-            size="xs"
-            variant={viewMode === "bookings" ? "solid" : "outline"}
-            colorPalette="blue"
-            onClick={() => setViewMode("bookings")}
-          >
-            Bookings
-          </Button>
-          <Button
-            size="xs"
-            variant={viewMode === "revenue" ? "solid" : "outline"}
-            colorPalette="blue"
-            onClick={() => setViewMode("revenue")}
-          >
-            Revenue
-          </Button>
-        </HStack>
+        {showRevenue && (
+          <HStack gap={2}>
+            <Button
+              size="xs"
+              variant={viewMode === "both" ? "solid" : "outline"}
+              colorPalette="blue"
+              onClick={() => setViewMode("both")}
+            >
+              Both
+            </Button>
+            <Button
+              size="xs"
+              variant={viewMode === "bookings" ? "solid" : "outline"}
+              colorPalette="blue"
+              onClick={() => setViewMode("bookings")}
+            >
+              Bookings
+            </Button>
+            <Button
+              size="xs"
+              variant={viewMode === "revenue" ? "solid" : "outline"}
+              colorPalette="blue"
+              onClick={() => setViewMode("revenue")}
+            >
+              Revenue
+            </Button>
+          </HStack>
+        )}
       </Flex>
 
       {!mounted || isLoading ? (
@@ -133,7 +143,7 @@ export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenu
                 tickMargin={8}
                 interval="preserveStartEnd"
               />
-              {(viewMode === "both" || viewMode === "bookings") && (
+              {(effectiveViewMode === "both" || effectiveViewMode === "bookings") && (
                 <YAxis
                   yAxisId="left"
                   orientation="left"
@@ -148,7 +158,7 @@ export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenu
                   }}
                 />
               )}
-              {(viewMode === "both" || viewMode === "revenue") && (
+              {showRevenue && (effectiveViewMode === "both" || effectiveViewMode === "revenue") && (
                 <YAxis
                   yAxisId="right"
                   orientation="right"
@@ -195,17 +205,17 @@ export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenu
                               Confirmed: <strong>{row.confirmedBookings}</strong>
                             </Text>
                           )}
-                          {row.grossRevenue !== undefined && (
+                          {showRevenue && row.grossRevenue !== undefined && (
                             <Text color="green.600">
                               Gross: <strong>{formatNgn(row.grossRevenue)}</strong>
                             </Text>
                           )}
-                          {row.refunds !== undefined && row.refunds > 0 && (
+                          {showRevenue && row.refunds !== undefined && row.refunds > 0 && (
                             <Text color="red.500">
                               Refunds: <strong>-{formatNgn(row.refunds)}</strong>
                             </Text>
                           )}
-                          {row.netRevenue !== undefined && (
+                          {showRevenue && row.netRevenue !== undefined && (
                             <Text
                               fontWeight="bold"
                               color="purple.700"
@@ -228,7 +238,7 @@ export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenu
                 wrapperStyle={{ paddingBottom: 12, fontSize: 12 }}
               />
 
-              {(viewMode === "both" || viewMode === "bookings") && (
+              {(effectiveViewMode === "both" || effectiveViewMode === "bookings") && (
                 <Bar
                   yAxisId="left"
                   dataKey="totalBookings"
@@ -239,7 +249,7 @@ export function BookingsRevenueChart({ data, isLoading = false }: BookingsRevenu
                 />
               )}
 
-              {(viewMode === "both" || viewMode === "revenue") && (
+              {showRevenue && (effectiveViewMode === "both" || effectiveViewMode === "revenue") && (
                 <Line
                   yAxisId="right"
                   type="monotone"

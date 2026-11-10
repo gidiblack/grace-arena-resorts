@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Box, HStack, Link, SimpleGrid, Stack, Text } from "@chakra-ui/react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { Box, HStack, IconButton, Link, Stack, Text } from "@chakra-ui/react";
 import NextLink from "next/link";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import Button from "@/components/ui/button";
 import { ROUTES } from "@/constants/ROUTES";
 import HeroBg from "@/assets/hero-bg.jpg";
@@ -8,6 +9,7 @@ import suite from "@/assets/suite.jpg";
 import dining from "@/assets/dining.jpg";
 import hut from "@/assets/hut.jpg";
 import pool from "@/assets/pool.jpg";
+import useWindowDimensions from "@/helpers/useWindowDimensions";
 
 export interface GemCard {
   title: string;
@@ -55,11 +57,43 @@ export const HeroVideo: React.FC<HeroVideoProps> = ({
   posterSrc = HeroBg.src,
   gems = DEFAULT_GEMS,
 }) => {
-  const [activeGemIndex, setActiveGemIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [shouldPlayVideo, setShouldPlayVideo] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const { width } = useWindowDimensions();
+
+  // Determine how many cards are visible based on viewport width
+  const cardsVisible: number =
+    width === undefined ? 4 : width < 640 ? 1 : width < 1024 ? 2 : 4;
+
+  const totalGems = gems.length;
+
+  // Extended gems array for seamless infinite looping when there are more items than visible slots
+  const extendedGems = useMemo(() => {
+    if (gems.length <= cardsVisible) return gems;
+    return [...gems, ...gems.slice(0, cardsVisible)];
+  }, [gems, cardsVisible]);
+
+  // Handle transition end for seamless wrap
+  const handleTransitionEnd = () => {
+    if (currentIndex >= totalGems) {
+      setIsTransitioning(false);
+      setCurrentIndex(0);
+    }
+  };
+
+  // Re-enable transition after snap
+  useEffect(() => {
+    if (!isTransitioning) {
+      const frame = requestAnimationFrame(() => {
+        setIsTransitioning(true);
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [isTransitioning]);
 
   // Check prefers-reduced-motion and screen width (<768px fallback)
   useEffect(() => {
@@ -86,16 +120,57 @@ export const HeroVideo: React.FC<HeroVideoProps> = ({
     };
   }, [videoSrc]);
 
-  // 5s Auto-rotation for the 4 Gems cards with pause on hover/focus
+  // 5s Auto-rotation — advance 1 card forward each tick when more items than visible
   useEffect(() => {
-    if (isPaused || gems.length === 0) return;
+    if (isPaused || totalGems <= cardsVisible) return;
 
     const interval = setInterval(() => {
-      setActiveGemIndex((prev) => (prev + 1) % gems.length);
+      setIsTransitioning(true);
+      setCurrentIndex((prev) => prev + 1);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [isPaused, gems.length]);
+  }, [isPaused, totalGems, cardsVisible]);
+
+  // Arrow handlers
+  const goLeft = () => {
+    if (totalGems <= cardsVisible) return;
+    if (currentIndex === 0) {
+      setIsTransitioning(false);
+      setCurrentIndex(totalGems);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsTransitioning(true);
+          setCurrentIndex(totalGems - 1);
+        });
+      });
+    } else {
+      setIsTransitioning(true);
+      setCurrentIndex((prev) => prev - 1);
+    }
+  };
+
+  const goRight = () => {
+    if (totalGems <= cardsVisible) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => prev + 1);
+  };
+
+  const activeGemIndex = totalGems > 0 ? currentIndex % totalGems : 0;
+  const translateX = -(currentIndex * (100 / cardsVisible));
+  const cardWidthPct = `${100 / cardsVisible}%`;
+
+  const arrowButtonStyles = {
+    boxSize: 8,
+    borderRadius: "full" as const,
+    bg: "rgba(255,255,255,0.1)",
+    border: "1px solid rgba(255,255,255,0.2)",
+    color: "white",
+    _hover: { bg: "accent.500", borderColor: "accent.500" },
+    _active: { bg: "accent.600" },
+    zIndex: 4,
+    flexShrink: 0,
+  } as const;
 
   return (
     <Box
@@ -211,7 +286,7 @@ export const HeroVideo: React.FC<HeroVideoProps> = ({
         </HStack>
       </Stack>
 
-      {/* 4 Off-Beat Gems Cards with 5-second Auto-Rotation */}
+      {/* Sliding Carousel — All Gems */}
       <Box
         position="relative"
         zIndex={3}
@@ -223,66 +298,110 @@ export const HeroVideo: React.FC<HeroVideoProps> = ({
         onFocus={() => setIsPaused(true)}
         onBlur={() => setIsPaused(false)}
       >
-        <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} gap={{ base: 3, md: 4 }}>
-          {gems.map(({ title, subtitle, image, link }, i) => {
-            const isActive = i === activeGemIndex;
+        {/* Arrow buttons + carousel track in a row */}
+        <HStack gap={2} align="center">
+          {/* Left arrow */}
+          <IconButton
+            aria-label="Previous"
+            onClick={goLeft}
+            {...arrowButtonStyles}
+          >
+            <FaChevronLeft size={12} />
+          </IconButton>
 
-            return (
-              <NextLink key={i} href={link} style={{ textDecoration: "none" }}>
-                <Box
-                  h="150px"
-                  bg={`linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%), url(${image})`}
-                  bgSize="cover"
-                  bgPos="center"
-                  borderRadius="14px"
-                  p={4}
-                  display="flex"
-                  flexDirection="column"
-                  justifyContent="flex-end"
-                  border="2px solid"
-                  borderColor={isActive ? "accent.500" : "rgba(255, 255, 255, 0.15)"}
-                  cursor="pointer"
-                  position="relative"
-                  transform={isActive ? "translateY(-4px)" : "none"}
-                  boxShadow={isActive ? "0 10px 25px rgba(252, 202, 70, 0.25)" : "none"}
-                  transition="all 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
-                  _hover={{
-                    transform: "translateY(-4px)",
-                    borderColor: "accent.500",
-                    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
-                  }}
-                  onClick={() => setActiveGemIndex(i)}
-                  aria-label={`${title} - ${subtitle}`}
-                >
-                  {/* Active 5-second progress indicator bar */}
-                  {isActive && !isPaused && (
-                    <Box
-                      position="absolute"
-                      top={0}
-                      left={0}
-                      right={0}
-                      h="3px"
-                      bg="accent.500"
-                      borderTopRadius="12px"
-                    />
-                  )}
+          {/* Carousel viewport — clips the sliding track with vertical buffer so top borders & hover transforms are not cut off */}
+          <Box overflow="hidden" flex={1} minW={0} py="20px" my="-20px">
+            <Box
+              display="flex"
+              onTransitionEnd={handleTransitionEnd}
+              style={{
+                transform: `translateX(${translateX}%)`,
+                transition: isTransitioning
+                  ? "transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)"
+                  : "none",
+              }}
+            >
+              {extendedGems.map(({ title, subtitle, image, link }, i) => {
+                const itemIndex = i % totalGems;
+                const isActive = itemIndex === activeGemIndex;
 
-                  <Text
-                    fontSize="11px"
-                    fontWeight="semibold"
-                    color="accent.500"
-                    textTransform="uppercase"
+                return (
+                  <Box
+                    key={`${i}-${title}`}
+                    flexShrink={0}
+                    style={{ width: cardWidthPct }}
+                    px={{ base: 1, md: 2 }}
                   >
-                    {subtitle}
-                  </Text>
-                  <Text fontSize="16px" fontWeight="bold" color="white" mt={0.5}>
-                    {title}
-                  </Text>
-                </Box>
-              </NextLink>
-            );
-          })}
-        </SimpleGrid>
+                    <NextLink href={link} style={{ textDecoration: "none" }}>
+                      <Box
+                        h="150px"
+                        bg={`linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%), url(${image})`}
+                        bgSize="cover"
+                        bgPos="center"
+                        borderRadius="14px"
+                        p={4}
+                        display="flex"
+                        flexDirection="column"
+                        justifyContent="flex-end"
+                        border="2px solid"
+                        borderColor={isActive ? "accent.500" : "rgba(255, 255, 255, 0.15)"}
+                        cursor="pointer"
+                        position="relative"
+                        transform={isActive ? "translateY(-4px)" : "none"}
+                        boxShadow={isActive ? "0 10px 25px rgba(252, 202, 70, 0.25)" : "none"}
+                        transition="all 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+                        _hover={{
+                          transform: "translateY(-6px)",
+                          borderColor: "accent.500",
+                          boxShadow: "0 12px 28px rgba(0,0,0,0.6)",
+                        }}
+                        onClick={() => {
+                          setIsTransitioning(true);
+                          setCurrentIndex(i);
+                        }}
+                        aria-label={`${title} - ${subtitle}`}
+                      >
+                        {/* Active 5-second progress indicator bar */}
+                        {isActive && !isPaused && (
+                          <Box
+                            position="absolute"
+                            top={0}
+                            left={0}
+                            right={0}
+                            h="3px"
+                            bg="accent.500"
+                            borderTopRadius="12px"
+                          />
+                        )}
+
+                        <Text
+                          fontSize="11px"
+                          fontWeight="semibold"
+                          color="accent.500"
+                          textTransform="uppercase"
+                        >
+                          {subtitle}
+                        </Text>
+                        <Text fontSize="16px" fontWeight="bold" color="white" mt={0.5}>
+                          {title}
+                        </Text>
+                      </Box>
+                    </NextLink>
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
+
+          {/* Right arrow */}
+          <IconButton
+            aria-label="Next"
+            onClick={goRight}
+            {...arrowButtonStyles}
+          >
+            <FaChevronRight size={12} />
+          </IconButton>
+        </HStack>
       </Box>
     </Box>
   );

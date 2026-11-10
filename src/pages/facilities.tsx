@@ -28,7 +28,7 @@ import {
   FaMapMarkerAlt,
 } from "react-icons/fa";
 
-interface FacilityItem {
+export interface FacilityItem {
   id: string;
   name: string;
   category: "Spiritual" | "Wellness" | "Recreation" | "Dining & Retail" | "Entertainment";
@@ -41,7 +41,7 @@ interface FacilityItem {
   isSpecial?: boolean;
 }
 
-const FACILITIES_DATA: FacilityItem[] = [
+export const FACILITIES_DATA: FacilityItem[] = [
   {
     id: "prayer-hut",
     name: "The Prayer Hut",

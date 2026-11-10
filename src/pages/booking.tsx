@@ -49,6 +49,7 @@ interface AvailableRoom {
   campus: string;
   campusTitle: string;
   tier: string;
+  buildingName?: string;
   /** Average nightly rate for the selected dates (seasonal-aware) */
   pricePerNight: number;
   /** Price of one unit for the whole stay, before deals and tax (from the server) */
@@ -66,6 +67,7 @@ interface ApiAvailabilityRoom {
   tier: string;
   campus: string;
   campusTitle: string;
+  buildingName?: string;
   maxGuests: number;
   availableUnits: number;
   status: string;
@@ -93,6 +95,7 @@ function toAvailableRoom(r: ApiAvailabilityRoom): AvailableRoom {
     campus: r.campus,
     campusTitle: r.campusTitle,
     tier: r.tier.charAt(0).toUpperCase() + r.tier.slice(1),
+    buildingName: r.buildingName,
     pricePerNight: r.averageNightlyRate,
     stayPrice: r.stayPrice,
     maxGuests: r.maxGuests,
@@ -187,6 +190,84 @@ export default function BookingPage() {
     isSignedIn?: boolean;
   } | null>(null);
 
+  const SESSION_KEY = "gar_booking_session";
+
+  // Restore booking session from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved) {
+        const s = JSON.parse(saved);
+        if (s.checkInDate) setCheckInDate(s.checkInDate);
+        if (s.nights) setNights(s.nights);
+        if (s.adults) setAdults(s.adults);
+        if (typeof s.childrenCount === "number") setChildrenCount(s.childrenCount);
+        if (s.guestName) setGuestName(s.guestName);
+        if (s.guestEmail) setGuestEmail(s.guestEmail);
+        if (s.confirmEmail) setConfirmEmail(s.confirmEmail);
+        if (s.guestPhone) setGuestPhone(s.guestPhone);
+        if (typeof s.prayerHutInterest === "boolean") setPrayerHutInterest(s.prayerHutInterest);
+        if (s.specialRequests) setSpecialRequests(s.specialRequests);
+        if (typeof s.privacyConsent === "boolean") setPrivacyConsent(s.privacyConsent);
+        if (s.appliedDeal) setAppliedDeal(s.appliedDeal);
+        if (s.dealInputCode) setDealInputCode(s.dealInputCode);
+        if (s.currentStep && s.currentStep < 5) setCurrentStep(s.currentStep);
+        // selectedRooms stored as IDs+counts; rooms are re-fetched from API so restore after fetch
+        if (Array.isArray(s.selectedRoomIds)) {
+          // Store for later reconciliation after rooms load
+          (window as any).__garPendingRoomRestore = s.selectedRoomIds;
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // Save booking session to sessionStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      sessionStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({
+          checkInDate,
+          nights,
+          adults,
+          childrenCount,
+          guestName,
+          guestEmail,
+          confirmEmail,
+          guestPhone,
+          prayerHutInterest,
+          specialRequests,
+          privacyConsent,
+          appliedDeal,
+          dealInputCode,
+          currentStep,
+          selectedRoomIds: selectedRooms.map(({ room, count }) => ({ id: room.id, count })),
+        })
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [
+    checkInDate,
+    nights,
+    adults,
+    childrenCount,
+    guestName,
+    guestEmail,
+    confirmEmail,
+    guestPhone,
+    prayerHutInterest,
+    specialRequests,
+    privacyConsent,
+    appliedDeal,
+    dealInputCode,
+    currentStep,
+    selectedRooms,
+  ]);
+
   // Check-out date calculation
   const checkOutDate = useMemo(() => {
     if (!checkInDate) return "";
@@ -243,6 +324,22 @@ export default function BookingPage() {
             .filter((r) => r.status !== "under_construction")
             .map(toAvailableRoom);
           setAvailableRooms(rooms);
+          // Restore previously selected rooms if pending
+          const pending = (window as any).__garPendingRoomRestore;
+          if (pending && Array.isArray(pending)) {
+            delete (window as any).__garPendingRoomRestore;
+            setSelectedRooms((prev) => {
+              if (prev.length > 0) return prev; // already has selections
+              return pending
+                .map(({ id, count }: { id: string; count: number }) => {
+                  const room = rooms.find((r) => r.id === id);
+                  return room && room.availableUnits > 0
+                    ? { room, count: Math.min(count, room.availableUnits) }
+                    : null;
+                })
+                .filter(Boolean) as { room: AvailableRoom; count: number }[];
+            });
+          }
           if (typeof json.data.taxRate === "number") setTaxRate(json.data.taxRate);
           // Refresh prices/availability of rooms already selected for the new dates
           setSelectedRooms((prev) =>
@@ -383,6 +480,7 @@ export default function BookingPage() {
             manageUrl: json.data?.manageUrl ?? null,
             isSignedIn: Boolean(json.data?.isSignedIn),
           });
+          sessionStorage.removeItem(SESSION_KEY);
           setCurrentStep(5);
           return;
         }
@@ -655,7 +753,7 @@ export default function BookingPage() {
   };
 
   const handleNextFromStep2 = () => {
-    if (selectedRooms.length > 0) {
+    if (selectedRooms.length > 0 && !guestCapacityWarning) {
       setCurrentStep(3);
       scrollToWizardTop();
     }
@@ -667,6 +765,12 @@ export default function BookingPage() {
       scrollToWizardTop();
     }
   };
+
+  const totalRoomCapacity = selectedRooms.reduce(
+    (sum, { room, count }) => sum + (room.maxGuests ?? 2) * count,
+    0
+  );
+  const guestCapacityWarning = selectedRooms.length > 0 && adults > totalRoomCapacity;
 
   return (
     <PageWrapper
@@ -898,7 +1002,7 @@ export default function BookingPage() {
                             >
                               <Icon as={FaPlus} />
                             </Button>
-                            <Text fontSize="12px" color="gray.400">
+                            <Text fontSize="12px" color="white">
                               Check-out: {formatLongDate(checkOutDate)} (11:00 AM)
                             </Text>
                           </Flex>
@@ -1028,6 +1132,26 @@ export default function BookingPage() {
                       </Box>
                     )}
 
+                    {guestCapacityWarning && (
+                      <Box
+                        p={3}
+                        mb={4}
+                        borderRadius="10px"
+                        bg="rgba(237, 137, 54, 0.15)"
+                        border="1px solid #ED8936"
+                      >
+                        <HStack gap={2}>
+                          <Icon as={FaExclamationTriangle} color="#ED8936" boxSize={4} />
+                          <Text fontSize="13px" color="#ED8936" fontWeight="medium">
+                            Your selected rooms accommodate up to {totalRoomCapacity} guest
+                            {totalRoomCapacity !== 1 ? "s" : ""}, but you've selected {adults} adult
+                            {adults !== 1 ? "s" : ""}. Please adjust your room selection or go back
+                            to update your guest count.
+                          </Text>
+                        </HStack>
+                      </Box>
+                    )}
+
                     {/* Rooms List */}
                     {roomsLoading && (
                       <Text fontSize="14px" color="gray.400" mb={4} role="status">
@@ -1085,7 +1209,7 @@ export default function BookingPage() {
                                 <Flex justify="space-between" align="flex-start" flexWrap="wrap">
                                   <Box>
                                     <Badge bg="#334155" color="gray.300" fontSize="10px" mb={1}>
-                                      {room.campusTitle} • {room.tier}
+                                      {room.campusTitle} - {room.buildingName ?? ""} • {room.tier}
                                     </Badge>
                                     <Text fontSize="16px" fontWeight="bold" color="white">
                                       {room.name}
@@ -1148,7 +1272,12 @@ export default function BookingPage() {
                                     </HStack>
                                   ) : (
                                     <Button
-                                      variant="primary"
+                                      variant="secondary"
+                                      style={{
+                                        background: "transparent",
+                                        border: "1px solid #FCCA46",
+                                        color: "#FCCA46",
+                                      }}
                                       size="sm"
                                       disabled={room.availableUnits === 0}
                                       onClick={() => handleAddRoom(room)}
@@ -1168,10 +1297,10 @@ export default function BookingPage() {
                       <Button
                         variant="primary"
                         size="md"
-                        disabled={selectedRooms.length === 0}
+                        disabled={selectedRooms.length === 0 || guestCapacityWarning}
                         onClick={handleNextFromStep2}
                       >
-                        Guest Information &rarr;
+                        Continue &rarr;
                       </Button>
                     </Flex>
                   </Box>
@@ -1668,6 +1797,17 @@ export default function BookingPage() {
                     <Text fontSize="11px" color="gray.400" textTransform="uppercase" mb={2}>
                       Selected Rooms:
                     </Text>
+                    {selectedRooms.length > 0 && (
+                      <Image
+                        src={selectedRooms[0].room.image}
+                        alt={selectedRooms[0].room.name}
+                        borderRadius="10px"
+                        w="full"
+                        h="140px"
+                        objectFit="cover"
+                        mb={3}
+                      />
+                    )}
                     {selectedRooms.length === 0 ? (
                       <Text fontSize="13px" color="gray.500" fontStyle="italic">
                         No rooms chosen yet
@@ -1682,7 +1822,12 @@ export default function BookingPage() {
                             fontSize="13px"
                           >
                             <Box>
-                              <Text fontWeight="medium">{room.name}</Text>
+                              <Text fontWeight="medium">
+                                {room.buildingName
+                                  ? room.campusTitle + " - " + room.buildingName + " — "
+                                  : ""}
+                                {room.name}
+                              </Text>
                               <Text fontSize="11px" color="gray.400">
                                 {count}x @ ₦{room.pricePerNight.toLocaleString()} / night (avg)
                               </Text>
@@ -1741,7 +1886,7 @@ export default function BookingPage() {
                       {currentStep === 2 &&
                         (selectedRooms.length === 0
                           ? "Select a Room to Continue"
-                          : "Guest Information \u2192")}
+                          : "Continue \u2192")}
                       {currentStep === 3 && "Review & Payment \u2192"}
                     </Button>
                   ) : (

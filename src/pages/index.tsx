@@ -22,7 +22,6 @@ import NextLink from "next/link";
 
 // Assets
 import HeroBg from "@/assets/hero-bg.jpg";
-import gem1 from "@/assets/hero-placeholder.jpg";
 import elysian from "@/assets/gar-elysian.jpg";
 import village from "@/assets/gar-village.jpg";
 import sectionBg from "@/assets/paper-bg.png";
@@ -33,13 +32,12 @@ import suite from "@/assets/suite.jpg";
 import suite2 from "@/assets/suite2.jpg";
 
 // Icons
-import { FaArrowRightLong, FaArrowRight, FaArrowLeft } from "react-icons/fa6";
-import { MdKingBed, MdLocalLaundryService, MdPool } from "react-icons/md";
-import { TbAirConditioning } from "react-icons/tb";
+import { FaArrowRightLong } from "react-icons/fa6";
+import { MdKingBed, MdLocalLaundryService, MdPool, MdOutlineMuseum } from "react-icons/md";
 import { PiChefHatBold } from "react-icons/pi";
-import { BiDumbbell } from "react-icons/bi";
-import { FaWifi, FaPray } from "react-icons/fa";
+import { FaWifi, FaPray, FaSpa } from "react-icons/fa";
 import { ROUTES } from "@/constants/ROUTES";
+import { FACILITIES_DATA } from "@/pages/facilities";
 
 const CAMPUSES = [
   {
@@ -63,46 +61,42 @@ const CAMPUSES = [
 ];
 
 const AMENITIES = [
-  { title: "The Prayer Hut", icon: FaPray, highlight: true },
+  { title: "The Prayer Hut", icon: FaPray },
   { title: "Luxury Rooms & Suites", icon: MdKingBed },
-  { title: "Air Conditioning", icon: TbAirConditioning },
+  { title: "Art Gallery", icon: MdOutlineMuseum },
   { title: "Free High-Speed Wi-Fi", icon: FaWifi },
   { title: "Complimentary Breakfast", icon: PiChefHatBold },
   { title: "Swimming Pool", icon: MdPool },
-  { title: "Fitness Center", icon: BiDumbbell },
+  { title: "Wellness Center", icon: FaSpa },
   { title: "Laundry & Room Service", icon: MdLocalLaundryService },
 ];
 
-const FACILITIES = [
+const SIGNATURE_BUILDINGS = [
   {
-    title: "Modern Mall & Spa",
-    category: "Wellness & Leisure",
-    image: pool.src,
-    description:
-      "A premier leisure destination featuring our relaxation spa, sauna, library lounge, mini-mart, and indoor arcade with human glass facade.",
+    name: "The Fountain Haven",
+    image: "/assets/suite2.jpg",
   },
   {
-    title: "The Prayer Hut",
-    category: "Spiritual Sanctuary",
-    image: hut.src,
-    description:
-      "A dedicated, quiet Christian retreat pavilion nestled in serene greenery, designed for personal communion, prayer sessions, and meditation.",
+    name: "The Oasis Villa",
+    image: "/assets/suite.jpg",
   },
   {
-    title: "Love Garden & Recreation Park",
-    category: "Outdoor Leisure",
-    image: gem1.src,
-    description:
-      "Sprawling umbrella trees, manicured lawns, tennis court, and mini soccer pitch providing rejuvenating family outdoor recreation.",
+    name: "The Cabana",
+    image: "/assets/gar-elysian.jpg",
   },
   {
-    title: "Village Mall & Dining Pavilion",
-    category: "Culinary Experience",
-    image: dining.src,
-    description:
-      "Sample authentic Yoruba and continental cuisine prepared fresh by expert resort chefs in an open-air rustic dining ambiance.",
+    name: "Royal Huts",
+    image: "/assets/hut.jpg",
   },
 ];
+
+const HERO_FACILITIES = FACILITIES_DATA.map((f) => ({
+  title: f.name,
+  subtitle: f.category,
+  image: f.image,
+  link: ROUTES.facilities,
+  description: f.description,
+}));
 
 const GALLERY_PHOTOS: LightboxImage[] = [
   {
@@ -158,19 +152,10 @@ const GALLERY_PHOTOS: LightboxImage[] = [
 export default function Home() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [activeFacilityIndex, setActiveFacilityIndex] = useState(0);
 
   const openLightbox = (index: number) => {
     setLightboxIndex(index);
     setLightboxOpen(true);
-  };
-
-  const nextFacility = () => {
-    setActiveFacilityIndex((prev) => (prev + 1) % FACILITIES.length);
-  };
-
-  const prevFacility = () => {
-    setActiveFacilityIndex((prev) => (prev - 1 + FACILITIES.length) % FACILITIES.length);
   };
 
   return (
@@ -180,7 +165,7 @@ export default function Home() {
       jsonLd={generateHotelJsonLd()}
     >
       {/* 1. Hero Section with Video & 5s Auto-Rotating Gems */}
-      <HeroVideo />
+      <HeroVideo gems={HERO_FACILITIES} />
 
       {/* 2. Welcome & Christian Retreat Philosophy */}
       <PageSection
@@ -230,14 +215,14 @@ export default function Home() {
               letterSpacing="3px"
               textTransform="uppercase"
             >
-              Two Distinct Campuses, One Sacred Destination
+              Two Unique Experiences, One Sacred Destination
             </Text>
             <Text fontSize={{ base: "26px", md: "36px" }} fontWeight="bold">
               Choose Your Retreat Ambience
             </Text>
             <Text fontSize="15px" color="gray.400" maxW="38rem">
-              Whether you prefer modern luxury suites or authentic thatched village huts, each
-              campus delivers uncompromising comfort.
+              Whether you&apos;re drawn to modern luxury or authentic, traditional-style escapes, both
+              experiences offer the same exceptional comfort and unforgettable stay.
             </Text>
           </Stack>
 
@@ -356,32 +341,43 @@ export default function Home() {
             {/* Right Amenities 4x2 Grid */}
             <GridItem colSpan={{ base: 1, lg: 7 }}>
               <SimpleGrid columns={{ base: 2, sm: 4 }} gap={4}>
-                {AMENITIES.map(({ title, icon, highlight }, i) => (
+                {AMENITIES.map(({ title, icon }, i) => (
                   <Flex
                     key={i}
+                    role="group"
                     direction="column"
                     align="center"
                     justify="center"
                     p={4}
                     minH="130px"
-                    bg={highlight ? "rgba(252, 202, 70, 0.12)" : "rgba(255, 255, 255, 0.04)"}
+                    bg="rgba(255, 255, 255, 0.04)"
                     border="1px solid"
-                    borderColor={highlight ? "accent.500" : "rgba(255, 255, 255, 0.1)"}
+                    borderColor="rgba(255, 255, 255, 0.1)"
                     borderRadius="14px"
                     textAlign="center"
-                    transition="all 0.2s"
-                    _hover={{ bg: "rgba(255, 255, 255, 0.1)", transform: "translateY(-3px)" }}
+                    transition="all 0.25s ease"
+                    cursor="pointer"
+                    _hover={{
+                      bg: "rgba(252, 202, 70, 0.12)",
+                      borderColor: "accent.500",
+                      transform: "translateY(-4px)",
+                      boxShadow: "0 8px 25px rgba(252, 202, 70, 0.2)",
+                    }}
                   >
                     <Icon
                       as={icon}
                       boxSize={7}
-                      color={highlight ? "accent.500" : "#E2E8F0"}
+                      color="#E2E8F0"
+                      _groupHover={{ color: "accent.500" }}
+                      transition="color 0.25s ease"
                       mb={2.5}
                     />
                     <Text
                       fontSize="13px"
                       fontWeight="semibold"
-                      color={highlight ? "accent.500" : "white"}
+                      color="white"
+                      _groupHover={{ color: "accent.500" }}
+                      transition="color 0.25s ease"
                     >
                       {title}
                     </Text>
@@ -393,128 +389,70 @@ export default function Home() {
         </Box>
       </Box>
 
-      {/* 5. Facilities Showcase with Interactive Navigation */}
-      <Box py={{ base: 16, md: 20 }} px={{ base: 4, md: 8, xl: 12 }} bg="#F1F5F9">
+      {/* 5. Our Signature Buildings */}
+      <Box py={{ base: 16, md: 20 }} px={{ base: 4, md: 8, xl: 12 }} bg="#070707" color="white">
         <Box maxW="80rem" mx="auto">
-          <Flex
-            justify="space-between"
-            align={{ base: "flex-start", sm: "flex-end" }}
-            mb={{ base: 8, md: 10 }}
-            flexDir={{ base: "column", sm: "row" }}
-            gap={4}
-          >
-            <Stack gap={1}>
-              <Text
-                fontSize="13px"
-                fontWeight="bold"
-                color="accent.600"
-                letterSpacing="3px"
-                textTransform="uppercase"
-              >
-                Recreation &amp; Gathering
-              </Text>
-              <Text fontSize={{ base: "26px", md: "34px" }} fontWeight="bold" color="#0F172A">
-                Our Signature Facilities
-              </Text>
-            </Stack>
+          <Stack align="center" textAlign="center" mb={{ base: 10, md: 14 }} gap={2}>
+            <Text
+              fontSize="13px"
+              fontWeight="bold"
+              color="accent.500"
+              letterSpacing="3px"
+              textTransform="uppercase"
+            >
+              Our Accommodations
+            </Text>
+            <Text fontSize={{ base: "26px", md: "36px" }} fontWeight="bold" color="white">
+              Our Signature Buildings
+            </Text>
+          </Stack>
 
-            <HStack gap={3}>
-              <Box
-                as="button"
-                onClick={prevFacility}
-                boxSize={10}
-                borderRadius="full"
-                bg="white"
-                border="1px solid #CBD5E1"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                color="#0F172A"
-                cursor="pointer"
-                _hover={{ bg: "accent.500", borderColor: "accent.500" }}
-                aria-label="Previous facility"
-              >
-                <Icon as={FaArrowLeft} boxSize={3.5} />
-              </Box>
-              <Box
-                as="button"
-                onClick={nextFacility}
-                boxSize={10}
-                borderRadius="full"
-                bg="white"
-                border="1px solid #CBD5E1"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                color="#0F172A"
-                cursor="pointer"
-                _hover={{ bg: "accent.500", borderColor: "accent.500" }}
-                aria-label="Next facility"
-              >
-                <Icon as={FaArrowRight} boxSize={3.5} />
-              </Box>
-            </HStack>
-          </Flex>
-
-          <SimpleGrid columns={{ base: 1, md: 3 }} gap={6}>
-            {[
-              FACILITIES[activeFacilityIndex % FACILITIES.length],
-              FACILITIES[(activeFacilityIndex + 1) % FACILITIES.length],
-              FACILITIES[(activeFacilityIndex + 2) % FACILITIES.length],
-            ].map((facility, idx) => (
-              <Box
-                key={idx}
-                bg="white"
-                borderRadius="18px"
+          <SimpleGrid columns={{ base: 1, md: 2 }} gap={{ base: 6, md: 8 }}>
+            {SIGNATURE_BUILDINGS.map(({ name, image }, i) => (
+              <Flex
+                key={i}
+                direction="column"
+                borderRadius="24px"
+                bg="#111827"
+                border="1px solid #1F2937"
                 overflow="hidden"
-                boxShadow="0 4px 20px rgba(0,0,0,0.06)"
-                border="1px solid #E2E8F0"
-                display="flex"
-                flexDirection="column"
+                transition="all 0.3s ease"
+                _hover={{ borderColor: "accent.500", transform: "translateY(-4px)" }}
               >
                 <Box
-                  h="220px"
-                  bg={`url(${facility.image})`}
+                  h={{ base: "300px", sm: "360px", md: "420px" }}
+                  bg={`linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(17, 24, 39, 0.95)), url(${image})`}
                   bgSize="cover"
                   bgPos="center"
                   position="relative"
+                />
+
+                <Flex
+                  p={{ base: 6, md: 7 }}
+                  justify="space-between"
+                  align="center"
+                  bg="#111827"
+                  flexWrap="wrap"
+                  gap={3}
                 >
-                  <Text
-                    position="absolute"
-                    top={4}
-                    left={4}
-                    bg="rgba(15, 23, 42, 0.85)"
-                    color="accent.500"
-                    px={3}
-                    py={1}
-                    borderRadius="full"
-                    fontSize="11px"
-                    fontWeight="bold"
-                  >
-                    {facility.category}
+                  <Text fontSize={{ base: "22px", md: "26px" }} fontWeight="bold" color="white">
+                    {name}
                   </Text>
-                </Box>
-                <Stack p={6} gap={2} flex="1" justify="space-between">
-                  <Stack gap={1.5}>
-                    <Text fontSize="19px" fontWeight="bold" color="#0F172A">
-                      {facility.title}
-                    </Text>
-                    <Text fontSize="13px" color="#64748B" lineHeight="tall">
-                      {facility.description}
-                    </Text>
-                  </Stack>
-                  <Link href={ROUTES.facilities} pt={2}>
-                    <Text
-                      fontSize="13px"
+
+                  <NextLink href={ROUTES.rooms} style={{ textDecoration: "none" }}>
+                    <HStack
+                      color="accent.500"
                       fontWeight="bold"
-                      color="accent.600"
-                      _hover={{ textDecoration: "underline" }}
+                      fontSize="14px"
+                      letterSpacing="wider"
+                      textTransform="uppercase"
+                      _hover={{ color: "white" }}
                     >
-                      Learn More &rarr;
-                    </Text>
-                  </Link>
-                </Stack>
-              </Box>
+                      <Text>Explore Rooms &rarr;</Text>
+                    </HStack>
+                  </NextLink>
+                </Flex>
+              </Flex>
             ))}
           </SimpleGrid>
         </Box>

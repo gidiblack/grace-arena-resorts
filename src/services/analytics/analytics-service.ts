@@ -261,6 +261,7 @@ export async function getNotificationCounts(userRole: UserRole): Promise<AdminNo
  */
 export async function getAdminSummary(userRole: UserRole): Promise<AdminSummaryData> {
   const supabase = getSupabaseAdminClient();
+  const isSuperAdmin = userRole === "super_admin";
   const isFinancialRole = userRole === "resort_admin" || userRole === "super_admin";
 
   const todayStr = getWATDateString();
@@ -319,10 +320,10 @@ export async function getAdminSummary(userRole: UserRole): Promise<AdminSummaryD
   const notifications = await getNotificationCounts(userRole);
   const { unreadContactSubmissions, unreadEventInquiries, refundsToProcess } = notifications;
 
-  // 4. Financial items if Resort Admin+
+  // 4. Financial items if Super Admin
   let revenueSummary: AdminSummaryData["revenue"] | undefined;
 
-  if (isFinancialRole) {
+  if (isSuperAdmin) {
     // Revenue calculation
     const payments =
       unwrap(
@@ -410,7 +411,7 @@ export async function getAdminSummary(userRole: UserRole): Promise<AdminSummaryD
       totalSubscribers: unwrapCount(totalSubsResult, "newsletter subscribers"),
       confirmedSubscribers: unwrapCount(confirmedSubsResult, "confirmed newsletter subscribers"),
     },
-    ...(isFinancialRole && revenueSummary ? { revenue: revenueSummary } : {}),
+    ...(isSuperAdmin && revenueSummary ? { revenue: revenueSummary } : {}),
   };
 }
 

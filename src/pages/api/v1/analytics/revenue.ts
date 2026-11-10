@@ -19,6 +19,6 @@ export default withApi(
   },
   {
     allowedMethods: ["GET"],
-    requiredRoles: ["resort_admin", "super_admin"],
+    requiredRoles: ["super_admin"],
   }
 );

@@ -103,8 +103,9 @@ export default function ContactPage() {
             Contact Grace Arena Resorts
           </Text>
           <Text fontSize="15px" color="gray.300">
-            Have questions about room rates, campus directions, church retreat dates, or special
-            dietary arrangements? Reach out to our hospitality team.
+            From room reservations and hall bookings to retreats, group stays and special requests,
+            we&apos;re here to help. Contact our hospitality team for guidance, enquiries and
+            assistance in planning your visit.
           </Text>
         </Stack>
       </Box>
@@ -205,8 +206,9 @@ export default function ContactPage() {
                     </Text>
                   </HStack>
                   <Text fontSize="13px" color="gray.300" mb={4}>
-                    Get immediate responses for booking inquiries, road directions, or custom food
-                    preferences directly with the manager on duty.
+                    Have questions about room rates, resort directions, events and retreats, halls
+                    booking, special or group bookings, or special dietary requirements? Reach out
+                    to our hospitality team.
                   </Text>
                   <a
                     href="https://wa.me/2348123456789?text=Hello%20Grace%20Arena%20Resorts,%20I%20have%20an%20inquiry."
